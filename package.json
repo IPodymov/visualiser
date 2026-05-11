@@ -15,6 +15,7 @@
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "npm run build -w apps/backend",
     "build:frontend": "npm run build -w apps/frontend",
+    "preview": "npm run preview -w apps/frontend",
     "start": "npm run start -w apps/backend",
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "npm run lint -w apps/backend",

@@ -15,11 +15,32 @@ import { specialitiesRoutes } from './modules/specialities/specialities.routes';
 import { usersRoutes } from './modules/users/users.routes';
 import { openApiDocument } from './shared/openapi';
 
+const resolveCorsOrigins = () => {
+  const configuredOrigins = env.CORS_ORIGIN ?? env.FRONTEND_URL;
+  return configuredOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+};
+
 export const createApp = () => {
   const app = express();
+  const allowedOrigins = resolveCorsOrigins();
+  const allowAnyLocalOrigin = env.NODE_ENV !== 'production' && allowedOrigins.includes('*');
 
   app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN }));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || allowAnyLocalOrigin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(null, false);
+      },
+    }),
+  );
   app.use(express.json({ limit: '2mb' }));
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));

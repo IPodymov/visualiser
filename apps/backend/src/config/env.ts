@@ -16,13 +16,14 @@ const envSchema = z.object({
   JWT_SECRET: z.string().default('development-only-jwt-secret'),
   JWT_EXPIRES_IN: z.string().default('1d'),
   FIT_DIR: z.string().default('../../FIT'),
-  CORS_ORIGIN: z.string().default('*'),
+  FRONTEND_URL: z.string().default('http://localhost:5173'),
+  CORS_ORIGIN: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
 
 for (const [key, value] of Object.entries(env)) {
-  if (!process.env[key]) {
+  if (value !== undefined && !process.env[key]) {
     process.env[key] = String(value);
   }
 }

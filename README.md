@@ -68,10 +68,36 @@ npm run dev             # frontend + backend + postgres
 npm run dev:frontend    # только frontend
 npm run dev:backend     # только backend
 npm run build           # сборка frontend и backend
+npm run preview         # preview frontend production build
 npm run lint            # lint frontend и backend
 npm run test            # backend tests
 npm run import:fit      # импорт учебных планов из FIT/
 ```
+
+## Deployment
+
+Рекомендуемая схема деплоя:
+
+- frontend (`apps/frontend`) деплоится на Vercel как Vite-приложение;
+- backend (`apps/backend`) деплоится отдельно как Node/Express API с PostgreSQL;
+- Vercel frontend подключается к backend через `VITE_API_BASE_URL`.
+
+Настройки Vercel для frontend:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `apps/frontend` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
+
+Обязательная production env-переменная для Vercel:
+
+```env
+VITE_API_BASE_URL=https://your-backend-domain.com
+```
+
+Подробнее: [docs/deployment.md](./docs/deployment.md).
 
 ## Основные маршруты
 
