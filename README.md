@@ -1,55 +1,49 @@
-# Curricula Visualiser Backend
+# EduPlan Compare
 
-Backend for the diploma project "Visualization and comparison of curricula".
+Веб-приложение для визуализации, поиска и сравнения учебных планов. Проект оформлен как монорепозиторий: React frontend получает данные из Express/Prisma backend, а backend хранит и обрабатывает учебные планы из FIT Excel-выгрузок.
 
-## Stack
+![Главная страница](./docs/assets/screenshots/homepage.png)
 
-- Node.js, Express, TypeScript
-- PostgreSQL, Prisma ORM
-- JWT auth, bcrypt
-- multer for `.xlsx` uploads
-- xlsx for FIT curricula import
-- zod validation
-- Swagger/OpenAPI
-- eslint, prettier, vitest
+## Возможности
 
-## Structure
+- каталог учебных планов с поиском и фильтрами;
+- детальная страница плана с дисциплинами по семестрам;
+- radar chart компетенций направления;
+- сравнение двух учебных планов с графиком и таблицей различий;
+- регистрация, авторизация, профиль пользователя;
+- избранное, история просмотров и список сравнения;
+- Swagger-документация backend API;
+- адаптивный dark university-tech интерфейс.
+
+## Стек
+
+| Часть    | Технологии                                                                                                            |
+| -------- | --------------------------------------------------------------------------------------------------------------------- |
+| Frontend | React, TypeScript, Vite, React Router, Tailwind CSS, CSS modules-by-component, Zustand, Axios, Recharts, lucide-react |
+| Backend  | Node.js, Express, TypeScript, Prisma, PostgreSQL, JWT, Zod, Swagger UI                                                |
+| Monorepo | npm workspaces, concurrently, Docker Compose                                                                          |
+
+## Структура
 
 ```text
-apps/
-  backend/
-    src/
-      modules/
-        auth/
-        users/
-        curricula/
-        disciplines/
-        specialities/
-        comparison/
-        files/
-        profile/
-        downloads/
-      config/
-      middlewares/
-      shared/
-      main.ts
-    prisma/
-packages/
-  shared/
-FIT/
-  *.xlsx
+.
+├── apps/
+│   ├── frontend/        # React/Vite приложение
+│   └── backend/         # Express API + Prisma
+├── packages/
+│   └── shared/          # место для общих пакетов
+├── docs/                # подробная документация
+├── docker-compose.yml
+├── package.json
+└── README.md
 ```
 
-## Quick Start
+> Локальная папка `FIT/` с Excel-выгрузками игнорируется git и не должна попадать в репозиторий.
+
+## Быстрый старт
 
 ```bash
 cp .env.example .env
-```
-
-Set real local values in `.env` before starting Docker or running Prisma commands. Keep `.env` private; it is ignored by git.
-
-```bash
-docker compose up -d
 npm install
 npm run prisma:generate
 npm run prisma:migrate
@@ -58,122 +52,83 @@ npm run import:fit
 npm run dev
 ```
 
-API: `http://localhost:4000/api`
+После запуска:
 
-Swagger: `http://localhost:4000/api/docs`
+| Сервис      | URL                              |
+| ----------- | -------------------------------- |
+| Frontend    | `http://localhost:5173`          |
+| Backend API | `http://localhost:4000`          |
+| Swagger     | `http://localhost:4000/api/docs` |
+| Healthcheck | `http://localhost:4000/health`   |
 
-Healthcheck: `http://localhost:4000/health`
-
-Frontend dev server: `http://localhost:5173`
-
-## Development Mode
-
-Run frontend and backend together from the monorepo root:
-
-```bash
-npm run dev
-```
-
-This command keeps PostgreSQL in Docker, stops production-like backend/frontend containers if they are running, and starts:
-
-- backend on `http://localhost:4000` with `tsx watch`
-- frontend on `http://localhost:5173` with Vite HMR
-
-Before starting, the command frees local dev ports `4000` and `5173`, so stale Node/Vite processes from previous runs do not block startup.
-
-Backend TypeScript changes restart the API automatically. Frontend React/CSS changes update in the browser without manual restart.
-
-Useful separate commands:
+## Команды
 
 ```bash
-npm run dev:db
-npm run dev:backend
-npm run dev:frontend
+npm run dev             # frontend + backend + postgres
+npm run dev:frontend    # только frontend
+npm run dev:backend     # только backend
+npm run build           # сборка frontend и backend
+npm run lint            # lint frontend и backend
+npm run test            # backend tests
+npm run import:fit      # импорт учебных планов из FIT/
 ```
 
-## Docker
+## Основные маршруты
 
-`docker-compose.yml` contains PostgreSQL, backend and frontend services. PostgreSQL has a healthcheck; backend waits for it, applies migrations, runs seed, and then starts the API.
+| Route        | Назначение                        |
+| ------------ | --------------------------------- |
+| `/`          | главная страница                  |
+| `/login`     | авторизация                       |
+| `/register`  | регистрация                       |
+| `/plans`     | каталог учебных планов            |
+| `/plans/:id` | детальная страница учебного плана |
+| `/compare`   | сравнение планов                  |
+| `/profile`   | профиль пользователя              |
 
-```bash
-docker compose up --build
-```
-
-The backend container mounts the root `FIT/` directory as read-only, so import uses the same Excel files as local development.
-
-All sensitive Docker values are read from `.env`. You can start from:
-
-```bash
-cp .env.docker.example .env
-```
-
-Then replace `POSTGRES_PASSWORD`, `DOCKER_DATABASE_URL`, and `JWT_SECRET` with real local values.
-
-Docker frontend: `http://localhost:8080`
-
-## Frontend
-
-The React/Vite frontend template lives in `apps/frontend`. It includes a promo home page and working panels for:
-
-- curriculum search and filtering
-- curriculum validation report
-- semester/discipline preview
-- two-curriculum comparison
-- links to Swagger and download-ready backend endpoints
-
-```bash
-npm run dev:frontend
-npm run build:frontend
-```
-
-## FIT Import
-
-Put Excel curricula files into the root `FIT/` directory and run:
-
-```bash
-npm run import:fit
-```
-
-The importer recursively scans `.xlsx` files, calculates `sourceFileHash`, skips already imported files, parses curriculum metadata and discipline rows, then stores them in PostgreSQL.
-
-During import each curriculum is validated. Files with critical validation errors are not saved; warnings are returned in the import report.
-
-You can also trigger import through the protected endpoint:
-
-```http
-POST /api/curricula/import-fit
-Authorization: Bearer <token>
-```
-
-## Main Endpoints
+## Основные API endpoints
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `GET /api/curricula`
 - `GET /api/curricula/:id`
-- `GET /api/curricula/:id/disciplines`
-- `GET /api/curricula/:id/validation`
-- `POST /api/curricula/import-fit`
-- `GET /api/specialities`
-- `GET /api/specialities/:id`
 - `GET /api/comparison?firstCurriculumId=1&secondCurriculumId=2`
 - `GET /api/profile/favorites`
-- `POST /api/profile/favorites/:curriculumId`
-- `DELETE /api/profile/favorites/:curriculumId`
 - `GET /api/profile/history`
-- `GET /api/downloads/curricula/:id`
-- `GET /api/downloads/curricula/:id/discipline-map`
-- `GET /api/downloads/comparison?firstCurriculumId=1&secondCurriculumId=2`
 
-## Tests and Quality
+Подробнее: [docs/api.md](./docs/api.md).
+
+## Документация
+
+| Документ                                            | Описание                                  |
+| --------------------------------------------------- | ----------------------------------------- |
+| [architecture.md](./docs/architecture.md)           | архитектура и flow данных                 |
+| [frontend.md](./docs/frontend.md)                   | frontend структура, компоненты, состояние |
+| [backend.md](./docs/backend.md)                     | backend модули, Prisma, обработка данных  |
+| [api.md](./docs/api.md)                             | API endpoints и примеры                   |
+| [routing.md](./docs/routing.md)                     | frontend маршруты                         |
+| [auth.md](./docs/auth.md)                           | авторизация и хранение токена             |
+| [comparison-system.md](./docs/comparison-system.md) | система сравнения                         |
+| [filters.md](./docs/filters.md)                     | архитектура фильтров                      |
+| [styling.md](./docs/styling.md)                     | CSS/Tailwind стратегия                    |
+| [deployment.md](./docs/deployment.md)               | build и deployment                        |
+| [development.md](./docs/development.md)             | правила разработки                        |
+| [screenshots.md](./docs/screenshots.md)             | скриншоты интерфейса                      |
+
+## Скриншоты
+
+![Каталог учебных планов](./docs/assets/screenshots/plans-page.png)
+
+![Детальная страница](./docs/assets/screenshots/plan-details-page.png)
+
+![Сравнение](./docs/assets/screenshots/compare-page.png)
+
+## Качество
+
+Перед изменениями и перед PR рекомендуется запускать:
 
 ```bash
 npm run lint
-npm run test
 npm run build
+npm run test
 ```
-
-## Database Normalization
-
-The schema separates users, specialities, curricula, canonical disciplines, curriculum-specific discipline facts, classification dictionaries, many-to-many discipline classifications, favorites, view history, and download history. This keeps reference data and transactional/user data separate and satisfies 3NF for the requested domain model.
