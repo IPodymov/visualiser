@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int                @id @default(autoincrement())
+  email             String             @unique
+  passwordHash      String             @map("password_hash")
+  fullName          String?            @map("full_name")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  viewHistory       ViewHistory[]
+  favoriteCurricula FavoriteCurriculum[]
+  downloadHistory   DownloadHistory[]
+
+  @@map("users")
+}
+
+model Speciality {
+  id        Int          @id @default(autoincrement())
+  code      String       @unique
+  name      String
+  curricula Curriculum[]
+
+  @@map("specialities")
+}
+
+model Curriculum {
+  id              Int                    @id @default(autoincrement())
+  specialityId    Int                    @map("speciality_id")
+  admissionYear   Int?                   @map("admission_year")
+  educationLevel  String?                @map("education_level")
+  educationForm   String?                @map("education_form")
+  profileName     String?                @map("profile_name")
+  sourceFileName  String                 @map("source_file_name")
+  sourceFilePath  String                 @map("source_file_path")
+  sourceFileHash  String                 @unique @map("source_file_hash")
+  uploadedAt      DateTime               @default(now()) @map("uploaded_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  speciality      Speciality             @relation(fields: [specialityId], references: [id], onDelete: Restrict)
+  disciplines     CurriculumDiscipline[]
+  viewHistory     ViewHistory[]
+  favorites       FavoriteCurriculum[]
+  downloadHistory DownloadHistory[]
+
+  @@index([specialityId])
+  @@index([admissionYear])
+  @@map("curricula")
+}
+
+model Discipline {
+  id              Int                         @id @default(autoincrement())
+  name            String                      @unique
+  curricula       CurriculumDiscipline[]
+  classifications DisciplineClassification[]
+
+  @@map("disciplines")
+}
+
+model CurriculumDiscipline {
+  id                     Int         @id @default(autoincrement())
+  curriculumId           Int         @map("curriculum_id")
+  disciplineId           Int         @map("discipline_id")
+  externalDisciplineCode String?     @map("external_discipline_code")
+  semesterNumber         Int?        @map("semester_number")
+  controlForm            String?     @map("control_form")
+  totalHours             Int?        @map("total_hours")
+  credits                Decimal?    @db.Decimal(6, 2)
+  lectureHours           Int?        @map("lecture_hours")
+  practiceHours          Int?        @map("practice_hours")
+  labHours               Int?        @map("lab_hours")
+  curriculum             Curriculum  @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  discipline             Discipline  @relation(fields: [disciplineId], references: [id], onDelete: Restrict)
+
+  @@index([curriculumId])
+  @@index([disciplineId])
+  @@unique([curriculumId, disciplineId, semesterNumber, externalDisciplineCode])
+  @@map("curriculum_disciplines")
+}
+
+model ClassificationGroup {
+  id     Int                   @id @default(autoincrement())
+  code   String                @unique
+  name   String
+  values ClassificationValue[]
+
+  @@map("classification_groups")
+}
+
+model ClassificationValue {
+  id              Int                         @id @default(autoincrement())
+  groupId         Int                         @map("group_id")
+  code            String
+  name            String
+  group           ClassificationGroup         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  classifications DisciplineClassification[]
+
+  @@unique([groupId, code])
+  @@map("classification_values")
+}
+
+model DisciplineClassification {
+  disciplineId          Int                 @map("discipline_id")
+  classificationValueId Int                 @map("classification_value_id")
+  weight                Decimal?            @db.Decimal(5, 2)
+  discipline            Discipline          @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  classificationValue   ClassificationValue @relation(fields: [classificationValueId], references: [id], onDelete: Cascade)
+
+  @@id([disciplineId, classificationValueId])
+  @@map("discipline_classifications")
+}
+
+model ViewHistory {
+  id           Int        @id @default(autoincrement())
+  userId       Int        @map("user_id")
+  curriculumId Int        @map("curriculum_id")
+  viewedAt     DateTime   @default(now()) @map("viewed_at")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@index([userId, viewedAt])
+  @@map("view_history")
+}
+
+model FavoriteCurriculum {
+  userId       Int        @map("user_id")
+  curriculumId Int        @map("curriculum_id")
+  addedAt      DateTime   @default(now()) @map("added_at")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@id([userId, curriculumId])
+  @@map("favorite_curricula")
+}
+
+model DownloadHistory {
+  id           Int        @id @default(autoincrement())
+  userId       Int?       @map("user_id")
+  curriculumId Int?       @map("curriculum_id")
+  downloadType String     @map("download_type")
+  downloadedAt DateTime   @default(now()) @map("downloaded_at")
+  user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  curriculum   Curriculum? @relation(fields: [curriculumId], references: [id], onDelete: SetNull)
+
+  @@index([userId, downloadedAt])
+  @@map("download_history")
+}

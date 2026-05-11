@@ -1,0 +1,10 @@
+.plan-details__hero {
+  display: grid;
+  gap: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+  .plan-details__hero {
+    grid-template-columns: 1fr 0.9fr;
+  }
+}

@@ -1,0 +1,18 @@
+@layer components {
+  .text-gradient {
+    @apply bg-gradient-to-r from-sky-200 via-blue-300 to-violet-300 bg-clip-text text-transparent;
+  }
+
+  .panel-title {
+    color: var(--color-text);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .muted-copy {
+    color: var(--color-text-soft);
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+  }
+}

@@ -1,0 +1,41 @@
+:root {
+  --background: 230 35% 6%;
+  --foreground: 214 40% 96%;
+  --card: 225 34% 10%;
+  --card-foreground: 214 40% 96%;
+  --primary: 217 93% 66%;
+  --primary-foreground: 222 47% 8%;
+  --secondary: 258 78% 68%;
+  --secondary-foreground: 214 40% 98%;
+  --muted: 223 22% 18%;
+  --muted-foreground: 219 18% 72%;
+  --accent: 188 86% 55%;
+  --accent-foreground: 222 47% 8%;
+  --destructive: 0 72% 58%;
+  --destructive-foreground: 214 40% 98%;
+  --border: 222 24% 22%;
+  --input: 222 24% 22%;
+  --ring: 217 93% 66%;
+  --radius: 0.5rem;
+
+  --color-text: #f8fbff;
+  --color-text-soft: #cbd5e1;
+  --color-muted: #94a3b8;
+  --color-border-soft: rgba(255, 255, 255, 0.1);
+  --surface-glass: rgba(255, 255, 255, 0.065);
+  --gradient-primary: linear-gradient(135deg, #38bdf8, #3b82f6 52%, #8b5cf6);
+  --shadow-glass: 0 18px 80px rgba(2, 8, 23, 0.38);
+  --shadow-glow: 0 24px 90px rgba(91, 141, 255, 0.28);
+  --blur-panel: 24px;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.5rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --transition-base: 180ms ease;
+}

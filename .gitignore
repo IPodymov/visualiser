@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+coverage/
+.vite/
+**/.vite/
+*.tsbuildinfo
+.turbo/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Prisma local/runtime artifacts
+*.db
+*.db-journal
+prisma/dev.db
+**/prisma/dev.db
+**/prisma/dev.db-journal
+
+# Docker and local volumes
+.docker/
+docker-data/
+postgres-data/
+docker-compose.override.yml
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Local source data exports
+FIT/

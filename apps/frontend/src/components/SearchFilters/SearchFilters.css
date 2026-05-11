@@ -1,0 +1,28 @@
+.search-filters {
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(var(--blur-panel));
+  padding: var(--space-4);
+}
+
+.search-filters__grid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.search-filters__input {
+  border-color: rgba(255, 255, 255, 0.14);
+  padding-inline: 0.9rem;
+}
+
+.search-filters__input:focus {
+  border-color: rgba(125, 211, 252, 0.45);
+}
+
+@media (min-width: 1024px) {
+  .search-filters__grid {
+    grid-template-columns: 1.3fr 0.9fr 0.9fr 0.9fr 0.7fr auto;
+  }
+}

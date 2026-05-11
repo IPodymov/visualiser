@@ -1,0 +1,20 @@
+.site-footer {
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block: var(--space-8);
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  .site-footer__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

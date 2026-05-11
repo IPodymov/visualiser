@@ -1,0 +1,113 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--color-border-soft);
+  background: rgba(7, 9, 20, 0.78);
+  backdrop-filter: blur(22px);
+}
+
+.site-header__inner,
+.site-header__brand,
+.site-header__actions {
+  display: flex;
+  align-items: center;
+}
+
+.site-header__inner {
+  min-height: 4rem;
+  justify-content: space-between;
+}
+
+.site-header__brand {
+  gap: var(--space-3);
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.site-header__brand-mark {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--gradient-primary);
+  box-shadow: var(--shadow-glow);
+}
+
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.site-header__menu-button {
+  display: inline-flex;
+}
+
+.site-header__profile {
+  position: relative;
+}
+
+.site-header__profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 50;
+  min-width: 10rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: rgba(2, 6, 23, 0.98);
+  box-shadow: var(--shadow-glass);
+  padding: 0.35rem;
+}
+
+.site-header__profile-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.site-header__profile-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+}
+
+.site-header__mobile {
+  border-top: 1px solid var(--color-border-soft);
+  background: rgba(2, 6, 23, 0.96);
+  padding: var(--space-4);
+}
+
+.site-header__mobile-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.site-header__mobile-link {
+  border-radius: var(--radius-md);
+  color: var(--color-text-soft);
+  font-size: 0.925rem;
+  padding: 0.75rem;
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
+}
+
+.site-header__mobile-link:hover,
+.site-header__mobile-link--active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text);
+}
