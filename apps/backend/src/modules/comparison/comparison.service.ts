@@ -24,6 +24,8 @@ const loadDisciplines = (curriculumId: number) =>
     orderBy: [{ semesterNumber: 'asc' }, { discipline: { name: 'asc' } }],
   });
 
+type LoadedDiscipline = Awaited<ReturnType<typeof loadDisciplines>>[number];
+
 export class ComparisonService {
   async compare(firstCurriculumId: number, secondCurriculumId: number) {
     if (firstCurriculumId === secondCurriculumId) {
@@ -47,11 +49,11 @@ export class ComparisonService {
       throw new AppError(404, 'One of curricula was not found');
     }
 
-    const firstMap = new Map(
-      firstDisciplines.map((item) => [normalizeName(item.discipline.name), item]),
+    const firstMap = new Map<string, LoadedDiscipline>(
+      firstDisciplines.map((item: LoadedDiscipline) => [normalizeName(item.discipline.name), item]),
     );
-    const secondMap = new Map(
-      secondDisciplines.map((item) => [normalizeName(item.discipline.name), item]),
+    const secondMap = new Map<string, LoadedDiscipline>(
+      secondDisciplines.map((item: LoadedDiscipline) => [normalizeName(item.discipline.name), item]),
     );
 
     const common = [...firstMap.entries()]

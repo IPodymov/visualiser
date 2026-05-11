@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import type { PrismaClient } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { env } from '../../config/env';
 import { parseCurriculumWorkbook } from './fit-parser';
@@ -30,6 +31,11 @@ const findXlsxFiles = async (dir: string): Promise<string[]> => {
 };
 
 const fitDir = () => path.resolve(process.cwd(), env.FIT_DIR);
+
+type PrismaTransactionClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 export const importFitCurricula = async () => {
   const directory = fitDir();
@@ -72,7 +78,7 @@ export const importFitCurricula = async () => {
         continue;
       }
 
-      const curriculum = await prisma.$transaction(async (tx) => {
+      const curriculum = await prisma.$transaction(async (tx: PrismaTransactionClient) => {
         const speciality = await tx.speciality.upsert({
           where: { code: parsed.specialityCode },
           create: { code: parsed.specialityCode, name: parsed.specialityName },

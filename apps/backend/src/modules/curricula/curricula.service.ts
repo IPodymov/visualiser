@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../shared/app-error';
 import { importFitCurricula } from './fit-importer.service';
@@ -25,9 +24,20 @@ const curriculumInclude = {
   },
 };
 
+const loadVisualizationCurriculum = (id: number) =>
+  prisma.curriculum.findUnique({
+    where: { id },
+    include: curriculumInclude,
+  });
+
+type CurriculumWhere = NonNullable<Parameters<typeof prisma.curriculum.findMany>[0]>['where'];
+type VisualizationCurriculum = NonNullable<Awaited<ReturnType<typeof loadVisualizationCurriculum>>>;
+type VisualizationDiscipline = VisualizationCurriculum['disciplines'][number];
+type VisualizationClassification = VisualizationDiscipline['discipline']['classifications'][number];
+
 export class CurriculaService {
   async list(query: ListCurriculaQuery) {
-    const where: Prisma.CurriculumWhereInput = {
+    const where: CurriculumWhere = {
       admissionYear: query.admissionYear,
       speciality: {
         code: query.specialityCode ? { contains: query.specialityCode, mode: 'insensitive' } : undefined,
@@ -45,10 +55,7 @@ export class CurriculaService {
   }
 
   async getById(id: number, userId?: number) {
-    const curriculum = await prisma.curriculum.findUnique({
-      where: { id },
-      include: curriculumInclude,
-    });
+    const curriculum = await loadVisualizationCurriculum(id);
 
     if (!curriculum) {
       throw new AppError(404, 'Curriculum not found');
@@ -113,31 +120,12 @@ export class CurriculaService {
     return curriculum;
   }
 
-  private toVisualizationDto(curriculum: Prisma.CurriculumGetPayload<{ include: typeof curriculumInclude }>) {
-    const semesters = new Map<number, unknown[]>();
+  private toVisualizationDto(curriculum: VisualizationCurriculum) {
+    const semesters = new Map<number, Array<ReturnType<typeof this.toDisciplineDto>>>();
 
     for (const item of curriculum.disciplines) {
       const semester = item.semesterNumber ?? 0;
-      const disciplineDto = {
-        curriculumDisciplineId: item.id,
-        disciplineId: item.disciplineId,
-        name: item.discipline.name,
-        externalDisciplineCode: item.externalDisciplineCode,
-        semesterNumber: item.semesterNumber,
-        controlForm: item.controlForm,
-        totalHours: item.totalHours,
-        credits: item.credits,
-        lectureHours: item.lectureHours,
-        practiceHours: item.practiceHours,
-        labHours: item.labHours,
-        classifications: item.discipline.classifications.map((classification) => ({
-          groupCode: classification.classificationValue.group.code,
-          groupName: classification.classificationValue.group.name,
-          valueCode: classification.classificationValue.code,
-          valueName: classification.classificationValue.name,
-          weight: classification.weight,
-        })),
-      };
+      const disciplineDto = this.toDisciplineDto(item);
       semesters.set(semester, [...(semesters.get(semester) ?? []), disciplineDto]);
     }
 
@@ -146,6 +134,29 @@ export class CurriculaService {
       semesters: [...semesters.entries()]
         .sort(([left], [right]) => left - right)
         .map(([number, disciplines]) => ({ number: number || null, disciplines })),
+    };
+  }
+
+  private toDisciplineDto(item: VisualizationDiscipline) {
+    return {
+      curriculumDisciplineId: item.id,
+      disciplineId: item.disciplineId,
+      name: item.discipline.name,
+      externalDisciplineCode: item.externalDisciplineCode,
+      semesterNumber: item.semesterNumber,
+      controlForm: item.controlForm,
+      totalHours: item.totalHours,
+      credits: item.credits,
+      lectureHours: item.lectureHours,
+      practiceHours: item.practiceHours,
+      labHours: item.labHours,
+      classifications: item.discipline.classifications.map((classification: VisualizationClassification) => ({
+        groupCode: classification.classificationValue.group.code,
+        groupName: classification.classificationValue.group.name,
+        valueCode: classification.classificationValue.code,
+        valueName: classification.classificationValue.name,
+        weight: classification.weight,
+      })),
     };
   }
 }

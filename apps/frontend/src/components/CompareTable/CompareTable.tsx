@@ -3,7 +3,9 @@ import './CompareTable.css';
 import type { PlanComparison } from '../../types/plan';
 
 export const CompareTable = ({ comparison }: { comparison: PlanComparison }) => {
-  const rows = comparison.commonDisciplines.filter((item) => item.differences.length > 0).slice(0, 40);
+  const rows = comparison.commonDisciplines
+    .filter((item) => item.differences.length > 0)
+    .slice(0, 40);
 
   return (
     <Table>

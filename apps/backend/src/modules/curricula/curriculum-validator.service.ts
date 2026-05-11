@@ -1,4 +1,3 @@
-import type { Prisma } from '@prisma/client';
 import type { ParsedCurriculum, ParsedCurriculumDiscipline } from './fit-parser';
 
 export type CurriculumValidationIssue = {
@@ -20,12 +19,31 @@ export type CurriculumValidationResult = {
   };
 };
 
-type StoredCurriculum = Prisma.CurriculumGetPayload<{
-  include: {
-    speciality: true;
-    disciplines: { include: { discipline: true } };
+type StoredCurriculum = {
+  speciality: {
+    code: string;
+    name: string;
   };
-}>;
+  admissionYear: number | null;
+  educationLevel: string | null;
+  educationForm: string | null;
+  profileName: string | null;
+  disciplines: StoredCurriculumDiscipline[];
+};
+
+type StoredCurriculumDiscipline = {
+  discipline: {
+    name: string;
+  };
+  externalDisciplineCode: string | null;
+  semesterNumber: number | null;
+  controlForm: string | null;
+  totalHours: number | null;
+  credits: { toString(): string } | number | string | null;
+  lectureHours: number | null;
+  practiceHours: number | null;
+  labHours: number | null;
+};
 
 const CURRENT_YEAR = new Date().getFullYear();
 const MIN_ADMISSION_YEAR = 1990;
@@ -150,7 +168,7 @@ export class CurriculumValidatorService {
       educationLevel: curriculum.educationLevel ?? undefined,
       educationForm: curriculum.educationForm ?? undefined,
       profileName: curriculum.profileName ?? undefined,
-      disciplines: curriculum.disciplines.map((item) => ({
+      disciplines: curriculum.disciplines.map((item: StoredCurriculumDiscipline) => ({
         name: item.discipline.name,
         externalDisciplineCode: item.externalDisciplineCode ?? undefined,
         semesterNumber: item.semesterNumber ?? undefined,

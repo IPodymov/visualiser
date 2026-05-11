@@ -62,7 +62,13 @@ export const PlanCard = ({ plan }: { plan: EducationPlan }) => {
           >
             <Heart className={cn('h-4 w-4', isFavorite && 'fill-rose-400 text-rose-400')} />
           </Button>
-          <Button type="button" size="icon" variant="secondary" onClick={() => addToCompare(plan.id)} aria-label="Сравнить">
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            onClick={() => addToCompare(plan.id)}
+            aria-label="Сравнить"
+          >
             <BarChart3 className="h-4 w-4" />
           </Button>
         </CardFooter>
