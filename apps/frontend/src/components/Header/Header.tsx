@@ -60,7 +60,11 @@ export const Header = () => {
                     <UserRound className="h-4 w-4" />
                     Профиль
                   </button>
-                  <button type="button" className="site-header__profile-item" onClick={handleLogout}>
+                  <button
+                    type="button"
+                    className="site-header__profile-item"
+                    onClick={handleLogout}
+                  >
                     <LogOut className="h-4 w-4" />
                     Выйти
                   </button>
@@ -75,7 +79,12 @@ export const Header = () => {
               </Link>
             </Button>
           )}
-          <Button className="site-header__menu-button" size="icon" variant="ghost" onClick={() => setOpen((value) => !value)}>
+          <Button
+            className="site-header__menu-button"
+            size="icon"
+            variant="ghost"
+            onClick={() => setOpen((value) => !value)}
+          >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>

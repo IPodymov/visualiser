@@ -38,11 +38,16 @@ type StoredCurriculumDiscipline = {
   externalDisciplineCode: string | null;
   semesterNumber: number | null;
   controlForm: string | null;
+  blockName?: string | null;
+  partName?: string | null;
+  moduleName?: string | null;
+  recordType?: string | null;
   totalHours: number | null;
   credits: { toString(): string } | number | string | null;
   lectureHours: number | null;
   practiceHours: number | null;
   labHours: number | null;
+  independentHours?: number | null;
 };
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -173,11 +178,16 @@ export class CurriculumValidatorService {
         externalDisciplineCode: item.externalDisciplineCode ?? undefined,
         semesterNumber: item.semesterNumber ?? undefined,
         controlForm: item.controlForm ?? undefined,
+        blockName: item.blockName ?? undefined,
+        partName: item.partName ?? undefined,
+        moduleName: item.moduleName ?? undefined,
+        recordType: item.recordType ?? undefined,
         totalHours: item.totalHours ?? undefined,
         credits: item.credits ? Number(item.credits) : undefined,
         lectureHours: item.lectureHours ?? undefined,
         practiceHours: item.practiceHours ?? undefined,
         labHours: item.labHours ?? undefined,
+        independentHours: item.independentHours ?? undefined,
       })),
     });
   }

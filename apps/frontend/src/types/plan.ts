@@ -6,9 +6,44 @@ export type Discipline = {
   hours: number;
   credits: number;
   controlForm?: string | null;
+  blockName?: string | null;
+  partName?: string | null;
+  moduleName?: string | null;
+  recordType?: string | null;
   lectureHours?: number | null;
   practiceHours?: number | null;
   labHours?: number | null;
+  independentHours?: number | null;
+};
+
+export type PlanChartBucket = {
+  key: string;
+  label: string;
+  disciplinesCount: number;
+  totalHours: number;
+  credits: number;
+  lectureHours: number;
+  practiceHours: number;
+  labHours: number;
+  independentHours: number;
+};
+
+export type PlanVisualization = {
+  totals: {
+    disciplinesCount: number;
+    totalHours: number;
+    credits: number;
+    lectureHours: number;
+    practiceHours: number;
+    labHours: number;
+    independentHours: number;
+    contactHours: number;
+  };
+  bySemester: PlanChartBucket[];
+  byBlock: PlanChartBucket[];
+  byPart: PlanChartBucket[];
+  workload: Array<{ key: string; label: string; hours: number }>;
+  controlForms: Array<{ form: string; count: number }>;
 };
 
 export type CompetencyScore = {
@@ -30,6 +65,7 @@ export type EducationPlan = {
   semesters: number;
   competencies: CompetencyScore[];
   disciplines: Discipline[];
+  visualization?: PlanVisualization;
   sourceFileName?: string;
   code?: string;
   uploadedAt?: string;

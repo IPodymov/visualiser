@@ -13,6 +13,8 @@ export const PlanCard = ({ plan }: { plan: EducationPlan }) => {
   const favorites = useAppStore((state) => state.favorites);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
   const addToCompare = useAppStore((state) => state.addToCompare);
+  const compareIds = useAppStore((state) => state.compareIds);
+  const isInCompare = compareIds.includes(plan.id);
   const isFavorite = favorites.includes(plan.id);
 
   return (
@@ -68,8 +70,9 @@ export const PlanCard = ({ plan }: { plan: EducationPlan }) => {
             variant="secondary"
             onClick={() => addToCompare(plan.id)}
             aria-label="Сравнить"
+            className={isInCompare ? 'plan-card__compare-button--active' : undefined}
           >
-            <BarChart3 className="h-4 w-4" />
+            <BarChart3 className={cn('h-4 w-4', isInCompare && 'fill-cyan-400 text-cyan-400')} />
           </Button>
         </CardFooter>
       </Card>

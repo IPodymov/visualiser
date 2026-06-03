@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
 import { apiClient } from './client';
 import { fallbackPlans } from './fallbackPlans';
-import type { EducationPlan, PlanComparison, PlanFilters } from '../../types/plan';
+import type { EducationPlan, PlanComparison, PlanFilters, PlanVisualization } from '../../types/plan';
 
 type BackendCurriculum = {
   id: number;
@@ -22,6 +22,7 @@ type BackendCurriculum = {
     disciplines: BackendDiscipline[];
   }>;
   disciplines?: BackendDiscipline[];
+  visualization?: PlanVisualization;
 };
 
 type BackendDiscipline = {
@@ -33,9 +34,14 @@ type BackendDiscipline = {
   totalHours: number | null;
   credits: string | number | null;
   controlForm?: string | null;
+  blockName?: string | null;
+  partName?: string | null;
+  moduleName?: string | null;
+  recordType?: string | null;
   lectureHours?: number | null;
   practiceHours?: number | null;
   labHours?: number | null;
+  independentHours?: number | null;
   classifications?: Array<{
     groupCode: string;
     groupName?: string;
@@ -107,14 +113,25 @@ export const toPlan = (curriculum: BackendCurriculum): EducationPlan => {
   const disciplines = backendDisciplines.map((item, index) => ({
     id: item.curriculumDisciplineId ?? item.disciplineId ?? item.id ?? index,
     name: item.name,
-    module: item.classifications?.[0]?.valueName ?? item.classifications?.[0]?.groupName ?? 'Учебный модуль',
+    module:
+      item.moduleName ??
+      item.partName ??
+      item.blockName ??
+      item.classifications?.[0]?.valueName ??
+      item.classifications?.[0]?.groupName ??
+      'Учебный модуль',
     semester: item.semesterNumber,
     hours: item.totalHours ?? 0,
     credits: asNumber(item.credits),
     controlForm: item.controlForm,
+    blockName: item.blockName,
+    partName: item.partName,
+    moduleName: item.moduleName,
+    recordType: item.recordType,
     lectureHours: item.lectureHours,
     practiceHours: item.practiceHours,
     labHours: item.labHours,
+    independentHours: item.independentHours,
   }));
   const totalHours = disciplines.reduce((sum, item) => sum + item.hours, 0);
   const credits = Math.round(disciplines.reduce((sum, item) => sum + item.credits, 0));
@@ -135,6 +152,7 @@ export const toPlan = (curriculum: BackendCurriculum): EducationPlan => {
     semesters,
     competencies: buildCompetencies(backendDisciplines),
     disciplines,
+    visualization: curriculum.visualization,
     sourceFileName: curriculum.sourceFileName,
     code: curriculum.speciality.code,
     uploadedAt: curriculum.uploadedAt,

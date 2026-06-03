@@ -112,11 +112,16 @@ export const importFitCurricula = async () => {
               externalDisciplineCode: parsedDiscipline.externalDisciplineCode,
               semesterNumber: parsedDiscipline.semesterNumber,
               controlForm: parsedDiscipline.controlForm,
+              blockName: parsedDiscipline.blockName,
+              partName: parsedDiscipline.partName,
+              moduleName: parsedDiscipline.moduleName,
+              recordType: parsedDiscipline.recordType,
               totalHours: parsedDiscipline.totalHours,
               credits: parsedDiscipline.credits,
               lectureHours: parsedDiscipline.lectureHours,
               practiceHours: parsedDiscipline.practiceHours,
               labHours: parsedDiscipline.labHours,
+              independentHours: parsedDiscipline.independentHours,
             },
           });
         }

@@ -10,9 +10,9 @@ When called from the Vite frontend, `/api` is proxied to the backend.
 
 ## Health
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| GET | `/health` | No |
+| Method | URL       | Auth |
+| ------ | --------- | ---- |
+| GET    | `/health` | No   |
 
 Response:
 
@@ -24,9 +24,9 @@ Response:
 
 ### Register
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| POST | `/api/auth/register` | No |
+| Method | URL                  | Auth |
+| ------ | -------------------- | ---- |
+| POST   | `/api/auth/register` | No   |
 
 Request:
 
@@ -55,9 +55,9 @@ Response:
 
 ### Login
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| POST | `/api/auth/login` | No |
+| Method | URL               | Auth |
+| ------ | ----------------- | ---- |
+| POST   | `/api/auth/login` | No   |
 
 Request:
 
@@ -70,32 +70,32 @@ Request:
 
 Errors:
 
-| Status | Reason |
-| --- | --- |
-| 401 | Invalid email or password |
-| 400 | Validation error |
+| Status | Reason                    |
+| ------ | ------------------------- |
+| 401    | Invalid email or password |
+| 400    | Validation error          |
 
 ### Current User
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| GET | `/api/auth/me` | Bearer token |
+| Method | URL            | Auth         |
+| ------ | -------------- | ------------ |
+| GET    | `/api/auth/me` | Bearer token |
 
 ## Curricula
 
 ### List Curricula
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| GET | `/api/curricula` | No |
+| Method | URL              | Auth |
+| ------ | ---------------- | ---- |
+| GET    | `/api/curricula` | No   |
 
 Query parameters:
 
-| Parameter | Type | Required | Example |
-| --- | --- | --- | --- |
-| `specialityName` | string | No | `Веб-технологии` |
-| `specialityCode` | string | No | `09.03` |
-| `admissionYear` | integer | No | `2025` |
+| Parameter        | Type    | Required | Example          |
+| ---------------- | ------- | -------- | ---------------- |
+| `specialityName` | string  | No       | `Веб-технологии` |
+| `specialityCode` | string  | No       | `09.03`          |
+| `admissionYear`  | integer | No       | `2025`           |
 
 Example:
 
@@ -125,42 +125,42 @@ Response item:
 
 ### Curriculum Details
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| GET | `/api/curricula/:id` | Optional |
+| Method | URL                  | Auth     |
+| ------ | -------------------- | -------- |
+| GET    | `/api/curricula/:id` | Optional |
 
 Returns curriculum metadata and disciplines grouped by semester.
 
 ### Curriculum Disciplines
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| GET | `/api/curricula/:id/disciplines` | No |
+| Method | URL                              | Auth |
+| ------ | -------------------------------- | ---- |
+| GET    | `/api/curricula/:id/disciplines` | No   |
 
 ### Curriculum Validation
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| GET | `/api/curricula/:id/validation` | No |
+| Method | URL                             | Auth |
+| ------ | ------------------------------- | ---- |
+| GET    | `/api/curricula/:id/validation` | No   |
 
 ### Import FIT Files
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| POST | `/api/curricula/import-fit` | Bearer token |
+| Method | URL                         | Auth         |
+| ------ | --------------------------- | ------------ |
+| POST   | `/api/curricula/import-fit` | Bearer token |
 
 ## Comparison
 
-| Method | URL | Auth |
-| --- | --- | --- |
-| GET | `/api/comparison` | No |
+| Method | URL               | Auth |
+| ------ | ----------------- | ---- |
+| GET    | `/api/comparison` | No   |
 
 Query:
 
-| Parameter | Type | Required |
-| --- | --- | --- |
-| `firstCurriculumId` | integer | Yes |
-| `secondCurriculumId` | integer | Yes |
+| Parameter            | Type    | Required |
+| -------------------- | ------- | -------- |
+| `firstCurriculumId`  | integer | Yes      |
+| `secondCurriculumId` | integer | Yes      |
 
 Example:
 
@@ -200,28 +200,28 @@ Response:
 
 All profile endpoints require a Bearer token.
 
-| Method | URL | Description |
-| --- | --- | --- |
-| GET | `/api/profile/favorites` | List favorite curricula |
-| POST | `/api/profile/favorites/:curriculumId` | Add favorite |
-| DELETE | `/api/profile/favorites/:curriculumId` | Remove favorite |
-| GET | `/api/profile/history` | View history |
+| Method | URL                                    | Description             |
+| ------ | -------------------------------------- | ----------------------- |
+| GET    | `/api/profile/favorites`               | List favorite curricula |
+| POST   | `/api/profile/favorites/:curriculumId` | Add favorite            |
+| DELETE | `/api/profile/favorites/:curriculumId` | Remove favorite         |
+| GET    | `/api/profile/history`                 | View history            |
 
 ## Files and Downloads
 
-| Method | URL | Auth | Description |
-| --- | --- | --- | --- |
-| POST | `/api/files/fit` | Bearer | Upload `.xlsx` FIT file |
-| GET | `/api/downloads/curricula/:id` | Optional | Download source file |
-| GET | `/api/downloads/curricula/:id/discipline-map` | Optional | Download discipline map |
-| GET | `/api/downloads/comparison` | Optional | Download comparison export |
+| Method | URL                                           | Auth     | Description                |
+| ------ | --------------------------------------------- | -------- | -------------------------- |
+| POST   | `/api/files/fit`                              | Bearer   | Upload `.xlsx` FIT file    |
+| GET    | `/api/downloads/curricula/:id`                | Optional | Download source file       |
+| GET    | `/api/downloads/curricula/:id/discipline-map` | Optional | Download discipline map    |
+| GET    | `/api/downloads/comparison`                   | Optional | Download comparison export |
 
 ## Common Errors
 
-| Status | Meaning |
-| --- | --- |
-| 400 | Validation error |
-| 401 | Missing or invalid authentication |
-| 404 | Entity not found |
-| 409 | Conflict, such as duplicate user email |
-| 500 | Unexpected server error |
+| Status | Meaning                                |
+| ------ | -------------------------------------- |
+| 400    | Validation error                       |
+| 401    | Missing or invalid authentication      |
+| 404    | Entity not found                       |
+| 409    | Conflict, such as duplicate user email |
+| 500    | Unexpected server error                |

@@ -10,11 +10,16 @@ const mapItem = (item: Awaited<ReturnType<typeof loadDisciplines>>[number]) => (
   externalDisciplineCode: item.externalDisciplineCode,
   semesterNumber: item.semesterNumber,
   controlForm: item.controlForm,
+  blockName: item.blockName,
+  partName: item.partName,
+  moduleName: item.moduleName,
+  recordType: item.recordType,
   totalHours: item.totalHours,
   credits: item.credits,
   lectureHours: item.lectureHours,
   practiceHours: item.practiceHours,
   labHours: item.labHours,
+  independentHours: item.independentHours,
 });
 
 const loadDisciplines = (curriculumId: number) =>
@@ -53,7 +58,10 @@ export class ComparisonService {
       firstDisciplines.map((item: LoadedDiscipline) => [normalizeName(item.discipline.name), item]),
     );
     const secondMap = new Map<string, LoadedDiscipline>(
-      secondDisciplines.map((item: LoadedDiscipline) => [normalizeName(item.discipline.name), item]),
+      secondDisciplines.map((item: LoadedDiscipline) => [
+        normalizeName(item.discipline.name),
+        item,
+      ]),
     );
 
     const common = [...firstMap.entries()]
@@ -101,6 +109,7 @@ export class ComparisonService {
       'lectureHours',
       'practiceHours',
       'labHours',
+      'independentHours',
     ] as const;
 
     return fields

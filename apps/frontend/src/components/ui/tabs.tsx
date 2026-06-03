@@ -9,7 +9,10 @@ export const TabsList = ({
   ...props
 }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>) => (
   <TabsPrimitive.List
-    className={cn('inline-flex h-11 items-center justify-center rounded-md bg-white/10 p-1 text-slate-300', className)}
+    className={cn(
+      'inline-flex h-11 items-center justify-center rounded-md bg-white/10 p-1 text-slate-300',
+      className,
+    )}
     {...props}
   />
 );
