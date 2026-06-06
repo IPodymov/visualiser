@@ -3,11 +3,16 @@ import { authMiddleware } from '../../middlewares/auth.middleware';
 import { optionalAuthMiddleware } from '../../middlewares/optional-auth.middleware';
 import { validate } from '../../shared/validate';
 import { curriculaController } from './curricula.controller';
-import { curriculumIdSchema, listCurriculaSchema } from './curricula.dto';
+import { curriculumIdSchema, listCurriculaSchema, recommendationSchema } from './curricula.dto';
 
 export const curriculaRoutes = Router();
 
 curriculaRoutes.get('/', validate(listCurriculaSchema), curriculaController.list);
+curriculaRoutes.post(
+  '/recommendations',
+  validate(recommendationSchema),
+  curriculaController.recommend,
+);
 curriculaRoutes.get('/:id', optionalAuthMiddleware, validate(curriculumIdSchema), curriculaController.getById);
 curriculaRoutes.get(
   '/:id/disciplines',

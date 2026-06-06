@@ -1,6 +1,7 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { useEffect } from 'react';
 import { AppLayout } from './layouts/AppLayout';
+import { AdmissionSurveyPage } from './pages/AdmissionSurveyPage/AdmissionSurveyPage';
 import { AuthPage } from './pages/AuthPage/AuthPage';
 import { ComparePage } from './pages/ComparePage/ComparePage';
 import { HomePage } from './pages/HomePage/HomePage';
@@ -15,6 +16,7 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { path: '/', element: <HomePage /> },
+      { path: '/survey', element: <AdmissionSurveyPage /> },
       { path: '/login', element: <AuthPage mode="login" /> },
       { path: '/register', element: <AuthPage mode="register" /> },
       { path: '/plans', element: <PlansPage /> },

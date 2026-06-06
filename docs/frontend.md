@@ -61,10 +61,10 @@ All backend calls live in `services/api`.
 | File | Responsibility |
 | --- | --- |
 | `client.ts` | Axios instance, auth header interceptor |
-| `plans.ts` | Curricula listing, details, compare, DTO mapping |
+| `plans.ts` | Curricula listing, details, compare, recommendations |
+| `planMapper.ts` | Backend curriculum DTO to frontend plan mapping |
 | `auth.ts` | Login, register, current user, logout storage cleanup |
 | `profile.ts` | Favorites and history endpoints |
-| `fallbackPlans.ts` | Small fallback dataset for backend-unavailable cases |
 
 ## State
 
@@ -83,11 +83,13 @@ The store persists user, token-adjacent profile data, favorites, and compare IDs
 
 ## Filters
 
-Filters are configured in `constants/filterConfig.ts`. `SearchFilters` receives config through props and does not infer options from API responses.
+Filters are generated from loaded plans in `utils/planFilters.ts`. `SearchFilters` still receives config through props, but options now reflect real API data instead of a static list.
 
 ```tsx
+const { filterConfig, filters, setFilters, reload } = usePlans();
+
 <SearchFilters
-  config={planFilterConfig}
+  config={filterConfig}
   filters={filters}
   onChange={setFilters}
   onSubmit={() => reload(filters)}

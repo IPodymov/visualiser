@@ -1,16 +1,16 @@
 # Filters
 
-Filters are intentionally frontend-owned and independent from backend response shape.
+Filters are generated from the loaded curriculum list so the UI stays aligned with real database values.
 
-## Config
+## Config Shape
 
-Filter options live in:
+`usePlans` builds select filter config with `buildPlanFilterConfig(plans)` from:
 
 ```text
-apps/frontend/src/constants/filterConfig.ts
+apps/frontend/src/utils/planFilters.ts
 ```
 
-The config describes visible select filters:
+The generated config describes visible select filters:
 
 ```ts
 export type SelectFilterConfig = {
@@ -26,8 +26,10 @@ export type SelectFilterConfig = {
 `SearchFilters` receives config and state via props:
 
 ```tsx
+const { filterConfig, filters, setFilters, reload } = usePlans();
+
 <SearchFilters
-  config={planFilterConfig}
+  config={filterConfig}
   filters={filters}
   onChange={setFilters}
   onSubmit={() => reload(filters)}

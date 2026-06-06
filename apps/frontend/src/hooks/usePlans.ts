@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { plansApi } from '../services/api/plans';
 import type { EducationPlan, PlanFilters } from '../types/plan';
+import { buildPlanFilterConfig } from '../utils/planFilters';
 
 const defaultFilters: PlanFilters = {
   query: '',
@@ -50,5 +51,7 @@ export const usePlans = () => {
     [filters, plans],
   );
 
-  return { plans, filteredPlans, filters, setFilters, loading, error, reload: load };
+  const filterConfig = useMemo(() => buildPlanFilterConfig(plans), [plans]);
+
+  return { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload: load };
 };

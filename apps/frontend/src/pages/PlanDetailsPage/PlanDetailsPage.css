@@ -3,6 +3,43 @@
   gap: var(--space-8);
 }
 
+.plan-details__favorite-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.plan-details__favorite-tooltip::after {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.65rem);
+  z-index: 20;
+  width: max-content;
+  max-width: 16rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 0.75rem 1.75rem rgba(2, 6, 23, 0.32);
+  color: #e2e8f0;
+  content: attr(data-tooltip);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.4;
+  opacity: 0;
+  padding: 0.55rem 0.7rem;
+  pointer-events: none;
+  transform: translate(-50%, 0.25rem);
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+  white-space: normal;
+}
+
+.plan-details__favorite-tooltip:hover::after,
+.plan-details__favorite-tooltip:focus-within::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 @media (min-width: 1024px) {
   .plan-details__hero {
     grid-template-columns: 1fr 0.9fr;

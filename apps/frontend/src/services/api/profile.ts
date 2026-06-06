@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { toPlan } from './plans';
+import { toPlan } from './planMapper';
 import type { EducationPlan } from '../../types/plan';
 
 type ProfileItem = {

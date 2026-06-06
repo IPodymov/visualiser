@@ -35,9 +35,11 @@ const readUser = () => {
   }
 };
 
+const initialUser = readUser();
+
 export const useAppStore = create<AppState>((set, get) => ({
-  user: readUser(),
-  favorites: readNumbers('eduplan-favorites'),
+  user: initialUser,
+  favorites: initialUser ? readNumbers('eduplan-favorites') : [],
   compareIds: readNumbers('eduplan-compare').slice(0, 3),
   history: [],
   setUser: (user) => {
@@ -45,15 +47,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       localStorage.setItem('eduplan-user', JSON.stringify(user));
     } else {
       localStorage.removeItem('eduplan-user');
+      localStorage.removeItem('eduplan-favorites');
     }
-    set({ user });
+    set({ user, favorites: user ? get().favorites : [] });
   },
   logout: () => {
     localStorage.removeItem('eduplan-token');
     localStorage.removeItem('eduplan-user');
-    set({ user: null });
+    localStorage.removeItem('eduplan-favorites');
+    set({ user: null, favorites: [] });
   },
   toggleFavorite: (planId) => {
+    if (!get().user) return;
+
     const favorites = get().favorites.includes(planId)
       ? get().favorites.filter((id) => id !== planId)
       : [...get().favorites, planId];

@@ -8,6 +8,7 @@ import { cn } from '../../utils/cn';
 
 const links = [
   { to: '/', label: 'Главная' },
+  { to: '/survey', label: 'Подбор' },
   { to: '/plans', label: 'Учебные планы' },
   { to: '/compare', label: 'Сравнение' },
 ];
@@ -34,6 +35,20 @@ export const Header = () => {
           </span>
           <span>EduPlan Compare</span>
         </Link>
+
+        <nav className="site-header__nav" aria-label="Основная навигация">
+          {links.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              className={({ isActive }) =>
+                cn('site-header__nav-link', isActive && 'site-header__nav-link--active')
+              }
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
 
         <div className="site-header__actions">
           {user ? (

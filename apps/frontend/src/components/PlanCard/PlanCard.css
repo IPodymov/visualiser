@@ -13,12 +13,99 @@
   background: rgba(255, 255, 255, 0.085);
 }
 
-.plan-card__compare-button--active {
-  border-color: rgba(56, 189, 248, 0.5);
-  background: rgba(56, 189, 248, 0.16);
-  color: #7dd3fc;
+.plan-card__compare-button {
+  position: relative;
+  overflow: visible;
+  color: #cbd5e1;
 }
 
+.plan-card__compare-button:hover {
+  border-color: rgba(125, 211, 252, 0.34);
+  color: #e0f2fe;
+}
+
+.plan-card__compare-button--active {
+  border-color: rgba(34, 211, 238, 0.56);
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(59, 130, 246, 0.12)),
+    rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.12) inset,
+    0 0.75rem 1.75rem rgba(8, 145, 178, 0.16);
+  color: #a5f3fc;
+}
+
+.plan-card__compare-icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+
+.plan-card__compare-icon svg {
+  transition:
+    color var(--transition-base),
+    transform var(--transition-base);
+}
+
+.plan-card__compare-button--active .plan-card__compare-icon > svg {
+  transform: scale(0.94);
+}
+
+.plan-card__compare-check {
+  position: absolute;
+  right: -0.62rem;
+  top: -0.62rem;
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+  border: 1px solid rgba(6, 182, 212, 0.38);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #67e8f9, #22c55e);
+  color: #04111f;
+  box-shadow: 0 0.4rem 1rem rgba(34, 211, 238, 0.24);
+}
+
+.plan-card__favorite-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.plan-card__favorite-tooltip::after {
+  position: absolute;
+  right: 50%;
+  bottom: calc(100% + 0.65rem);
+  z-index: 20;
+  width: max-content;
+  max-width: 14rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 0.75rem 1.75rem rgba(2, 6, 23, 0.32);
+  color: #e2e8f0;
+  content: attr(data-tooltip);
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+  opacity: 0;
+  padding: 0.5rem 0.65rem;
+  pointer-events: none;
+  transform: translate(50%, 0.25rem);
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+  white-space: normal;
+}
+
+.plan-card__favorite-tooltip:hover::after,
+.plan-card__favorite-tooltip:focus-within::after {
+  opacity: 1;
+  transform: translate(50%, 0);
+}
+
+.plan-card__favorite-button--locked {
+  cursor: not-allowed;
+}
 
 .plan-card__badges {
   display: flex;

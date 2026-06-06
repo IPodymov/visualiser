@@ -15,6 +15,10 @@ export const curriculaController = {
     res.json(await curriculaService.getDisciplines(Number(req.params.id)));
   }),
 
+  recommend: asyncHandler(async (req: Request, res: Response) => {
+    res.json(await curriculaService.recommend(req.body));
+  }),
+
   validate: asyncHandler(async (req: Request, res: Response) => {
     res.json(await curriculaService.validate(Number(req.params.id)));
   }),

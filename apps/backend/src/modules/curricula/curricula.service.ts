@@ -1,8 +1,18 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../shared/app-error';
 import { importFitCurricula } from './fit-importer.service';
-import type { ListCurriculaQuery } from './curricula.dto';
+import type { CurriculumRecommendationRequest, ListCurriculaQuery } from './curricula.dto';
 import { curriculumValidatorService } from './curriculum-validator.service';
+import {
+  defaultFaculty,
+  defaultStudyForm,
+  educationLevelLabels,
+  recommendationCategoryLabels,
+  recommendationCategoryTokens,
+  sourceFacultyMarkers,
+  type RecommendationCategory,
+  studyFormLabels,
+} from './recommendation.config';
 
 const curriculumInclude = {
   speciality: true,
@@ -37,6 +47,14 @@ type VisualizationClassification = VisualizationDiscipline['discipline']['classi
 
 const decimalToNumber = (value: VisualizationDiscipline['credits']) => (value === null ? 0 : Number(value));
 
+const loadRecommendationCurricula = () =>
+  prisma.curriculum.findMany({
+    include: curriculumInclude,
+    orderBy: [{ admissionYear: 'desc' }, { uploadedAt: 'desc' }],
+  });
+
+type RecommendationCurriculum = Awaited<ReturnType<typeof loadRecommendationCurricula>>[number];
+
 type ChartBucket = {
   key: string;
   label: string;
@@ -70,6 +88,80 @@ const addToBucket = (bucket: ChartBucket, item: VisualizationDiscipline) => {
   bucket.labHours += item.labHours ?? 0;
   bucket.independentHours += item.independentHours ?? 0;
 };
+
+const normalize = (value: string) => value.toLowerCase().replace(/ё/g, 'е');
+
+const inferEducationLevel = (curriculum: RecommendationCurriculum) => {
+  const explicitLevel = curriculum.educationLevel?.trim();
+  if (explicitLevel) return explicitLevel;
+  const code = curriculum.speciality.code;
+  if (code.includes('.04.')) return educationLevelLabels.master;
+  if (code.includes('.05.')) return educationLevelLabels.specialist;
+  return educationLevelLabels.bachelor;
+};
+
+const getDuration = (curriculum: RecommendationCurriculum) => {
+  const semesters = new Set(
+    curriculum.disciplines.map((item) => item.semesterNumber).filter(Boolean),
+  ).size;
+  if (semesters > 4) return '4 года';
+  if (semesters > 0) return '2 года';
+  return 'не указана';
+};
+
+const facultyFromSource = (source?: string) => {
+  if (!source) return defaultFaculty;
+  if (source.includes('/')) return source.split('/').find((part) => part.includes('Ф')) ?? defaultFaculty;
+  const facultyMarker = sourceFacultyMarkers.find((marker) => source.includes(marker));
+  if (facultyMarker) return facultyMarker;
+  return defaultFaculty;
+};
+
+const getTopCategories = (weights: CurriculumRecommendationRequest['weights']) =>
+  (Object.entries(weights) as Array<[RecommendationCategory, number]>)
+    .sort((first, second) => second[1] - first[1])
+    .filter(([, value]) => value > 0)
+    .slice(0, 3)
+    .map(([category]) => category);
+
+const matchesEducationLevel = (
+  curriculum: RecommendationCurriculum,
+  educationLevel?: CurriculumRecommendationRequest['educationLevel'],
+) => {
+  if (!educationLevel) return true;
+  return normalize(inferEducationLevel(curriculum)).includes(normalize(educationLevelLabels[educationLevel]));
+};
+
+const matchesStudyForm = (
+  curriculum: RecommendationCurriculum,
+  studyForm?: CurriculumRecommendationRequest['studyForm'],
+) => {
+  if (!studyForm) return true;
+  return normalize(curriculum.educationForm ?? '') === normalize(studyFormLabels[studyForm]);
+};
+
+const getDisciplineSearchText = (item: RecommendationCurriculum['disciplines'][number]) =>
+  normalize(
+    [
+      item.discipline.name,
+      item.blockName,
+      item.partName,
+      item.moduleName,
+      item.recordType,
+      item.discipline.classifications
+        .map((classification) =>
+          [
+            classification.classificationValue.group.code,
+            classification.classificationValue.group.name,
+            classification.classificationValue.code,
+            classification.classificationValue.name,
+          ].join(' '),
+        )
+        .join(' '),
+    ]
+      .filter(Boolean)
+      .join(' '),
+  );
 
 export class CurriculaService {
   async list(query: ListCurriculaQuery) {
@@ -118,6 +210,113 @@ export class CurriculaService {
         },
       },
       orderBy: [{ semesterNumber: 'asc' }, { discipline: { name: 'asc' } }],
+    });
+  }
+
+  async recommend(request: CurriculumRecommendationRequest) {
+    const curricula = await loadRecommendationCurricula();
+    const topCategories = getTopCategories(request.weights);
+    const strictMatchedCurricula = curricula.filter(
+      (curriculum) =>
+        matchesEducationLevel(curriculum, request.educationLevel) &&
+        matchesStudyForm(curriculum, request.studyForm),
+    );
+    const levelMatchedCurricula = curricula.filter((curriculum) =>
+      matchesEducationLevel(curriculum, request.educationLevel),
+    );
+    const candidates = strictMatchedCurricula.length
+      ? strictMatchedCurricula
+      : levelMatchedCurricula.length
+        ? levelMatchedCurricula
+        : curricula;
+
+    const ranked = candidates
+      .map((curriculum) => {
+        const matchedDisciplines = curriculum.disciplines
+          .map((item) => {
+            const searchText = getDisciplineSearchText(item);
+            const score = topCategories.reduce((sum, category) => {
+              const hasMatch = recommendationCategoryTokens[category].some((token) => searchText.includes(normalize(token)));
+              const hours = Math.max(item.totalHours ?? 0, 36);
+              const classificationBoost = item.discipline.classifications.length ? 1.35 : 1;
+              return hasMatch ? sum + (request.weights[category] ?? 0) * classificationBoost * Math.log2(hours) : sum;
+            }, 0);
+
+            return {
+              name: item.discipline.name,
+              score,
+            };
+          })
+          .filter((item) => item.score > 0)
+          .sort((first, second) => second.score - first.score);
+
+        const titleSearchText = normalize(
+          [
+            curriculum.profileName,
+            curriculum.speciality.name,
+            curriculum.speciality.code,
+            curriculum.sourceFileName,
+          ]
+            .filter(Boolean)
+            .join(' '),
+        );
+        const titleScore = topCategories.reduce((sum, category) => {
+          const hasMatch = recommendationCategoryTokens[category].some((token) =>
+            titleSearchText.includes(normalize(token)),
+          );
+          return hasMatch ? sum + (request.weights[category] ?? 0) * 5 : sum;
+        }, 0);
+        const workloadScore =
+          Math.min(curriculum.disciplines.length, 12) +
+          Math.min(
+            curriculum.disciplines.reduce((sum, item) => sum + decimalToNumber(item.credits), 0) / 12,
+            10,
+          );
+        const levelScore = matchesEducationLevel(curriculum, request.educationLevel) ? 30 : 0;
+        const studyFormScore = matchesStudyForm(curriculum, request.studyForm) ? 12 : 0;
+
+        return {
+          curriculum,
+          matchedDisciplines,
+          score:
+            matchedDisciplines.reduce((sum, item) => sum + item.score, 0) +
+            titleScore +
+            workloadScore +
+            levelScore +
+            studyFormScore,
+        };
+      })
+      .sort((first, second) => second.score - first.score)
+      .slice(0, request.limit ?? 8);
+
+    const maxScore = Math.max(ranked[0]?.score ?? 1, 1);
+    const reason = `Подходит под ${topCategories
+      .map((category) => recommendationCategoryLabels[category])
+      .join(', ')}`;
+
+    return ranked.map(({ curriculum, matchedDisciplines, score }) => {
+      const disciplinesCount = curriculum.disciplines.length;
+      const totalHours = curriculum.disciplines.reduce((sum, item) => sum + (item.totalHours ?? 0), 0);
+      const credits = Math.round(
+        curriculum.disciplines.reduce((sum, item) => sum + decimalToNumber(item.credits), 0),
+      );
+      const title = curriculum.profileName || curriculum.speciality.name;
+
+      return {
+        planId: curriculum.id,
+        title,
+        faculty: facultyFromSource(curriculum.sourceFileName),
+        level: inferEducationLevel(curriculum),
+        studyForm: curriculum.educationForm ?? defaultStudyForm,
+        year: curriculum.admissionYear ?? new Date(curriculum.uploadedAt).getFullYear(),
+        duration: getDuration(curriculum),
+        disciplinesCount,
+        totalHours,
+        credits,
+        matchPercent: Math.max(62, Math.min(98, Math.round((score / maxScore) * 96))),
+        reason,
+        matchedDisciplines: matchedDisciplines.slice(0, 4).map((item) => item.name),
+      };
     });
   }
 

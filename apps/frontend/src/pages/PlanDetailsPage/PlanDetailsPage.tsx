@@ -20,6 +20,7 @@ export const PlanDetailsPage = () => {
   const [plan, setPlan] = useState<EducationPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const user = useAppStore((state) => state.user);
   const favorites = useAppStore((state) => state.favorites);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
   const addToCompare = useAppStore((state) => state.addToCompare);
@@ -55,7 +56,13 @@ export const PlanDetailsPage = () => {
     return <main className="container py-12 text-red-100">{error ?? 'План не найден'}</main>;
   }
 
-  const isFavorite = favorites.includes(plan.id);
+  const canUseFavorites = Boolean(user);
+  const isFavorite = canUseFavorites && favorites.includes(plan.id);
+  const favoriteHint = canUseFavorites
+    ? isFavorite
+      ? 'Убрать из избранного'
+      : 'Добавить в избранное'
+    : 'Авторизуйтесь, чтобы добавлять планы в избранное';
 
   return (
     <main className="container py-10">
@@ -70,10 +77,16 @@ export const PlanDetailsPage = () => {
           <h1 className="text-4xl font-black tracking-normal text-white md:text-6xl">{plan.title}</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">{plan.description}</p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <GradientButton onClick={() => toggleFavorite(plan.id)}>
-              <Heart className={isFavorite ? 'h-5 w-5 fill-white' : 'h-5 w-5'} />
-              Добавить в избранное
-            </GradientButton>
+            <span className="plan-details__favorite-tooltip" data-tooltip={favoriteHint}>
+              <GradientButton
+                disabled={!canUseFavorites}
+                onClick={() => toggleFavorite(plan.id)}
+                aria-label={favoriteHint}
+              >
+                <Heart className={isFavorite ? 'h-5 w-5 fill-white' : 'h-5 w-5'} />
+                {isFavorite ? 'В избранном' : 'Добавить в избранное'}
+              </GradientButton>
+            </span>
             <Button asChild variant="secondary" onClick={() => addToCompare(plan.id)}>
               <Link to="/compare">
                 <BarChart3 className="h-5 w-5" />

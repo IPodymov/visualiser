@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { BarChart3, Loader2, X } from 'lucide-react';
+import { BarChart3, BookOpenCheck, Info, Loader2, SplitSquareHorizontal, X } from 'lucide-react';
 import './ComparePage.css';
 import { CompareTable } from '../../components/CompareTable/CompareTable';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
@@ -42,9 +42,16 @@ export const ComparePage = () => {
 
   const chartData = comparison
     ? [
-        { name: 'Всего дисциплин', first: comparison.summary.firstDisciplinesCount, second: comparison.summary.secondDisciplinesCount },
-        { name: 'Общие', first: comparison.summary.commonCount, second: comparison.summary.commonCount },
-        { name: 'Уникальные', first: comparison.summary.onlyFirstCount, second: comparison.summary.onlySecondCount },
+        {
+          name: comparison.firstPlan.title,
+          common: comparison.summary.commonCount,
+          unique: comparison.summary.onlyFirstCount,
+        },
+        {
+          name: comparison.secondPlan.title,
+          common: comparison.summary.commonCount,
+          unique: comparison.summary.onlySecondCount,
+        },
       ]
     : [];
 
@@ -109,21 +116,83 @@ export const ComparePage = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>График сравнения</CardTitle>
+              <CardTitle>Насколько учебные планы похожи</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="compare-page__chart">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
-                    <XAxis dataKey="name" stroke="#cbd5e1" />
-                    <YAxis stroke="#cbd5e1" />
-                    <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 8 }} />
-                    <Legend />
-                    <Bar dataKey="first" fill="#38bdf8" name={comparison.firstPlan.title} radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="second" fill="#8b5cf6" name={comparison.secondPlan.title} radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="compare-page__chart-layout">
+                <div className="compare-page__chart">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 8, right: 16, left: 8, bottom: 48 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#cbd5e1"
+                        interval={0}
+                        tickFormatter={(value: string) =>
+                          value.length > 28 ? `${value.slice(0, 28)}...` : value
+                        }
+                      />
+                      <YAxis stroke="#cbd5e1" allowDecimals={false} />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          `${Number(value ?? 0)} дисциплин`,
+                          name === 'common' ? 'Совпадают в обоих планах' : 'Есть только в этом плане',
+                        ]}
+                        labelFormatter={(label) => `Учебный план: ${label}`}
+                        contentStyle={{
+                          background: '#0f172a',
+                          border: '1px solid rgba(255,255,255,0.14)',
+                          borderRadius: 8,
+                        }}
+                      />
+                      <Legend
+                        formatter={(value) =>
+                          value === 'common' ? 'Общая база' : 'Уникальная специализация'
+                        }
+                      />
+                      <Bar
+                        dataKey="common"
+                        stackId="disciplines"
+                        fill="#22c55e"
+                        name="common"
+                        radius={[0, 0, 6, 6]}
+                      />
+                      <Bar
+                        dataKey="unique"
+                        stackId="disciplines"
+                        fill="#38bdf8"
+                        name="unique"
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="compare-page__chart-notes" aria-label="Пояснения к графику">
+                  <div>
+                    <BookOpenCheck className="h-5 w-5" />
+                    <strong>Общая база</strong>
+                    <span>
+                      Зеленая часть показывает дисциплины, которые есть в обоих планах. Чем она
+                      больше, тем ближе фундамент обучения.
+                    </span>
+                  </div>
+                  <div>
+                    <SplitSquareHorizontal className="h-5 w-5" />
+                    <strong>Уникальная специализация</strong>
+                    <span>
+                      Голубая часть показывает дисциплины, которые есть только в выбранном плане.
+                      Они сильнее всего отличают траекторию.
+                    </span>
+                  </div>
+                  <div>
+                    <Info className="h-5 w-5" />
+                    <strong>Как читать</strong>
+                    <span>
+                      Если уникальных дисциплин много, планы ведут к разным навыкам. Если мало,
+                      можно выбирать по форме, году и деталям нагрузки.
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -133,6 +202,11 @@ export const ComparePage = () => {
               <CardTitle>Таблица различий</CardTitle>
             </CardHeader>
             <CardContent>
+              <p className="compare-page__table-intro">
+                Здесь показаны общие дисциплины, у которых отличаются семестр, форма контроля или
+                нагрузка. Пояснение в последнем столбце помогает понять, как это может повлиять на
+                учебный опыт.
+              </p>
               <CompareTable comparison={comparison} />
             </CardContent>
           </Card>

@@ -30,7 +30,7 @@ export const HomePage = () => (
             </p>
           </div>
           <Button asChild variant="secondary">
-            <Link to="/plans">Перейти к планам</Link>
+            <Link to="/survey">Подобрать дисциплины</Link>
           </Button>
         </div>
       </div>

@@ -4,11 +4,10 @@ import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { PlanCard } from '../../components/PlanCard/PlanCard';
 import { SearchFilters } from '../../components/SearchFilters/SearchFilters';
 import { Skeleton } from '../../components/ui/skeleton';
-import { planFilterConfig } from '../../constants/filterConfig';
 import { usePlans } from '../../hooks/usePlans';
 
 export const PlansPage = () => {
-  const { filteredPlans, filters, setFilters, loading, error, reload } = usePlans();
+  const { filteredPlans, filterConfig, filters, setFilters, loading, error, reload } = usePlans();
 
   return (
     <main className="container py-10">
@@ -23,7 +22,7 @@ export const PlansPage = () => {
       </div>
 
       <SearchFilters
-        config={planFilterConfig}
+        config={filterConfig}
         filters={filters}
         onChange={setFilters}
         onSubmit={() => void reload(filters)}
