@@ -62,6 +62,8 @@ For local development you can leave the base URL empty and use Vite proxy, or se
 VITE_API_BASE_URL=http://localhost:4000
 ```
 
+Do not upload local `.env` files to Vercel. The frontend reads `VITE_*` values from Vercel Environment Variables during the build. `apps/frontend/.vercelignore` excludes `.env*` files from Vercel uploads so local examples cannot affect the deployed frontend.
+
 ## Backend Deployment
 
 Deploy `apps/backend` to a Node hosting provider.
@@ -83,6 +85,8 @@ Required Railway variables:
 | `CORS_ORIGIN` | `https://your-vercel-app.vercel.app` |
 
 Do not set a fixed `PORT` in Railway. The backend reads Railway's injected `PORT` automatically.
+
+Do not deploy `.env`, `.env.example`, or `.env.docker.example` to Railway. The backend ignores local `.env` loading in production and reads only Railway service variables. The root `.dockerignore` excludes `.env*` files from the Docker build context.
 
 Required backend environment variables:
 

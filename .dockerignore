@@ -3,6 +3,9 @@ dist
 coverage
 .git
 .env
+.env.*
+**/.env
+**/.env.*
 *.log
 apps/backend/dist
 packages/shared/dist

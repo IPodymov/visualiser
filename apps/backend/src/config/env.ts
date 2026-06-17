@@ -2,21 +2,34 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import { z } from 'zod';
 
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
-dotenv.config({ path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env', override: true });
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (!isProduction) {
+  dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+  dotenv.config({
+    path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+    override: process.env.NODE_ENV === 'test',
+  });
+}
 
 const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
-  DATABASE_URL: z
-    .string()
-    .default(
-      'postgresql://replace-with-db-user:replace-with-db-password@localhost:5432/curricula_visualiser',
-    ),
+  DATABASE_URL: isProduction
+    ? z.string().min(1, 'DATABASE_URL is required in production')
+    : z
+        .string()
+        .default(
+          'postgresql://replace-with-db-user:replace-with-db-password@localhost:5432/curricula_visualiser',
+        ),
   PORT: z.coerce.number().default(4000),
-  JWT_SECRET: z.string().default('development-only-jwt-secret'),
+  JWT_SECRET: isProduction
+    ? z.string().min(1, 'JWT_SECRET is required in production')
+    : z.string().default('development-only-jwt-secret'),
   JWT_EXPIRES_IN: z.string().default('1d'),
   FIT_DIR: z.string().default('../../FIT'),
-  FRONTEND_URL: z.string().default('http://localhost:5173'),
+  FRONTEND_URL: isProduction
+    ? z.string().min(1, 'FRONTEND_URL is required in production')
+    : z.string().default('http://localhost:5173'),
   CORS_ORIGIN: z.string().optional(),
 });
 
