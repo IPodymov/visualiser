@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+import axios from 'axios';
 import { apiClient } from './client';
 import { asNumber, type BackendCurriculum, toPlan } from './planMapper';
 import type {
@@ -19,12 +19,27 @@ type BackendComparison = {
   onlyInSecond: Array<{ name: string; totalHours?: number; credits?: string | number }>;
 };
 
-
 const isNetworkProblem = (error: unknown) =>
-  error instanceof AxiosError && (!error.response || error.code === 'ECONNABORTED');
+  axios.isAxiosError(error) && (!error.response || error.code === 'ECONNABORTED');
 
 const toApiError = (error: unknown, fallbackMessage: string) => {
-  if (isNetworkProblem(error)) return new Error('Сервер учебных планов недоступен. Проверьте подключение и повторите запрос.');
+  if (isNetworkProblem(error)) {
+    return new Error('Сервер учебных планов недоступен. Проверьте подключение и повторите запрос.');
+  }
+
+  if (axios.isAxiosError(error)) {
+    const backendMessage =
+      typeof error.response?.data === 'object' &&
+      error.response.data !== null &&
+      'message' in error.response.data &&
+      typeof error.response.data.message === 'string'
+        ? error.response.data.message
+        : null;
+
+    return new Error(
+      backendMessage ? `${fallbackMessage}: ${backendMessage}` : `${fallbackMessage}. Повторите запрос позже.`,
+    );
+  }
   if (error instanceof Error) return error;
   return new Error(fallbackMessage);
 };

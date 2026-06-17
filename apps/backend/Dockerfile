@@ -43,4 +43,4 @@ WORKDIR /app/apps/backend
 
 EXPOSE 4000
 
-CMD ["node", "dist/src/main.js"]
+CMD ["npm", "run", "start"]

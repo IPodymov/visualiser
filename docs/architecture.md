@@ -47,7 +47,7 @@ flowchart TB
 
 ## Frontend and Backend Interaction
 
-The frontend uses `services/api/client.ts` to create a single Axios instance. During development, Vite proxies `/api` and `/health` to `http://localhost:4000`. In production, `VITE_API_URL` can point to a deployed API host.
+The frontend uses `services/api/client.ts` to create a single Axios instance. During development, Vite proxies `/api` and `/health` to `http://localhost:4000`. In production, `VITE_API_BASE_URL` must point to the deployed backend origin without `/api`.
 
 ```mermaid
 sequenceDiagram

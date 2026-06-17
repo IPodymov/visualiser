@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "prisma generate --schema prisma/schema.prisma && tsc -p tsconfig.json",
-    "start": "node dist/src/main.js",
+    "start": "prisma generate --schema prisma/schema.prisma && node dist/src/main.js",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest run",
     "prisma:generate": "dotenv -e ../../.env -- prisma generate --schema prisma/schema.prisma",

@@ -3,11 +3,13 @@ import './PlansPage.css';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { PlanCard } from '../../components/PlanCard/PlanCard';
 import { SearchFilters } from '../../components/SearchFilters/SearchFilters';
+import { Button } from '../../components/ui/button';
 import { Skeleton } from '../../components/ui/skeleton';
 import { usePlans } from '../../hooks/usePlans';
 
 export const PlansPage = () => {
-  const { filteredPlans, filterConfig, filters, setFilters, loading, error, reload } = usePlans();
+  const { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload } = usePlans();
+  const hasActiveFilters = Object.values(filters).some((value) => value !== '' && value !== 'all');
 
   return (
     <main className="container py-10">
@@ -40,6 +42,18 @@ export const PlansPage = () => {
             <Skeleton key={index} className="h-80" />
           ))}
         </div>
+      ) : error && !plans.length ? (
+        <div className="mt-8">
+          <EmptyState
+            title="Не удалось загрузить учебные планы"
+            text="Проверьте доступность backend и настройки API URL, затем повторите запрос."
+            action={
+              <Button type="button" onClick={() => void reload(filters)}>
+                Повторить
+              </Button>
+            }
+          />
+        </div>
       ) : filteredPlans.length ? (
         <div className="plans-grid">
           <AnimatePresence>
@@ -47,6 +61,13 @@ export const PlansPage = () => {
               <PlanCard key={plan.id} plan={plan} />
             ))}
           </AnimatePresence>
+        </div>
+      ) : !plans.length && !hasActiveFilters ? (
+        <div className="mt-8">
+          <EmptyState
+            title="Учебные планы пока не загружены"
+            text="База данных пуста. Выполните seed или импорт FIT на backend, затем обновите страницу."
+          />
         </div>
       ) : (
         <div className="mt-8">

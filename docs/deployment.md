@@ -5,7 +5,7 @@ This project is a monorepo with `apps/frontend` and `apps/backend`.
 The recommended deployment strategy is:
 
 - deploy the Vite frontend to Vercel;
-- deploy the Express/Prisma backend as a separate long-running Node service on Render, Railway, Fly.io, VPS, or similar hosting;
+- deploy the Express/Prisma backend as a separate long-running Node service on Railway;
 - connect the Vercel frontend to the backend through `VITE_API_BASE_URL`.
 
 ## Why Backend Is External
@@ -45,7 +45,7 @@ Set this in Vercel:
 
 | Variable | Example |
 | --- | --- |
-| `VITE_API_BASE_URL` | `https://your-backend-domain.com` |
+| `VITE_API_BASE_URL` | `https://your-railway-backend-domain.com` |
 
 The frontend API client appends endpoint paths such as `/api/curricula`, so the value must be the Railway backend origin without `/api`.
 
@@ -95,10 +95,11 @@ Required Railway variables:
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
 | `JWT_SECRET` | Long random secret |
 | `JWT_EXPIRES_IN` | `1d` |
-| `FRONTEND_URL` | `https://your-vercel-app.vercel.app` |
-| `CORS_ORIGIN` | `https://your-vercel-app.vercel.app,https://*.vercel.app` |
+| `FRONTEND_URL` | `https://your-vercel-domain.vercel.app` |
+| `CORS_ORIGIN` | `https://your-vercel-domain.vercel.app` |
+| `PORT` | `4000` |
 
-Do not set a fixed `PORT` in Railway. The backend reads Railway's injected `PORT` automatically.
+Railway usually injects `PORT` automatically. If you set it manually, keep it aligned with the exposed service port.
 
 Do not deploy `.env`, `.env.example`, or `.env.docker.example` to Railway. The backend ignores local `.env` loading in production and reads only Railway service variables. The root `.dockerignore` excludes `.env*` files from the Docker build context.
 
@@ -118,13 +119,19 @@ Example production CORS:
 
 ```env
 FRONTEND_URL=https://your-vercel-app.vercel.app
-CORS_ORIGIN=https://your-vercel-app.vercel.app,https://*.vercel.app
+CORS_ORIGIN=https://your-vercel-app.vercel.app
 ```
 
 For preview deployments, add additional exact origins separated by commas, or keep the `https://*.vercel.app` wildcard:
 
 ```env
 CORS_ORIGIN=https://your-vercel-app.vercel.app,https://your-git-branch.vercel.app
+```
+
+The current production frontend origin should be included in Railway `CORS_ORIGIN`:
+
+```env
+CORS_ORIGIN=https://visualiser-frontend-7n3std6dr-ipodymovs-projects.vercel.app
 ```
 
 ## Backend Build and Start
@@ -141,6 +148,15 @@ Run Prisma migrations before start:
 ```bash
 npm run prisma:migrate -w apps/backend
 ```
+
+Importing FIT Excel files is a manual data operation, not part of backend startup:
+
+```bash
+npm run seed -w apps/backend
+npm run import:fit -w apps/backend
+```
+
+Only run `import:fit` in an environment where the `FIT_DIR` folder exists.
 
 ## Local Production Check
 
@@ -166,6 +182,15 @@ After deploy:
 5. Confirm network requests go to `VITE_API_BASE_URL`.
 6. Confirm backend CORS allows the Vercel domain.
 7. Confirm login/register requests reach backend.
+
+Useful backend checks:
+
+```bash
+curl https://your-railway-backend-domain.com/health
+curl https://your-railway-backend-domain.com/api/docs
+curl https://your-railway-backend-domain.com/api/curricula
+curl -i -H "Origin: https://your-vercel-domain.vercel.app" https://your-railway-backend-domain.com/api/curricula
+```
 
 ## Typical Issues
 

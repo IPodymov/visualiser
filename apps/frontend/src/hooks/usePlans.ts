@@ -22,8 +22,12 @@ export const usePlans = () => {
     setError(null);
     try {
       setPlans(await plansApi.list(nextFilters));
-    } catch {
-      setError('Не удалось загрузить учебные планы. Попробуйте обновить страницу.');
+    } catch (loadError) {
+      const message =
+        loadError instanceof Error
+          ? loadError.message
+          : 'Не удалось загрузить учебные планы. Попробуйте обновить страницу.';
+      setError(message);
     } finally {
       setLoading(false);
     }

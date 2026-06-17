@@ -3,6 +3,7 @@ import path from 'node:path';
 import { z } from 'zod';
 
 const isProduction = process.env.NODE_ENV === 'production';
+const localhostPattern = /(^|\/\/)(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i;
 
 if (!isProduction) {
   dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
@@ -12,10 +13,24 @@ if (!isProduction) {
   });
 }
 
+const productionUrl = (name: string) =>
+  z
+    .string()
+    .min(1, `${name} is required in production`)
+    .refine((value) => !localhostPattern.test(value), `${name} cannot use localhost in production`);
+
+const productionCommaSeparatedOrigins = z
+  .string()
+  .optional()
+  .refine(
+    (value) => !value || value.split(',').every((origin) => !localhostPattern.test(origin.trim())),
+    'CORS_ORIGIN cannot use localhost in production',
+  );
+
 const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   DATABASE_URL: isProduction
-    ? z.string().min(1, 'DATABASE_URL is required in production')
+    ? productionUrl('DATABASE_URL')
     : z
         .string()
         .default(
@@ -28,12 +43,21 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('1d'),
   FIT_DIR: z.string().default('../../FIT'),
   FRONTEND_URL: isProduction
-    ? z.string().min(1, 'FRONTEND_URL is required in production')
+    ? productionUrl('FRONTEND_URL')
     : z.string().default('http://localhost:5173'),
-  CORS_ORIGIN: z.string().optional(),
+  CORS_ORIGIN: isProduction ? productionCommaSeparatedOrigins : z.string().optional(),
 });
 
-export const env = envSchema.parse(process.env);
+const parsedEnv = envSchema.safeParse(process.env);
+
+if (!parsedEnv.success) {
+  const details = parsedEnv.error.issues
+    .map((issue) => `${issue.path.join('.') || 'env'}: ${issue.message}`)
+    .join('; ');
+  throw new Error(`Invalid backend environment: ${details}`);
+}
+
+export const env = parsedEnv.data;
 
 for (const [key, value] of Object.entries(env)) {
   if (value !== undefined && !process.env[key]) {
