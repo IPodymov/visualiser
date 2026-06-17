@@ -1,6 +1,17 @@
 import axios from 'axios';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+const normalizeApiBaseUrl = (value?: string) => {
+  const trimmed = value?.trim();
+  if (!trimmed) return '';
+
+  return trimmed.replace(/\/+$/, '').replace(/\/api$/, '');
+};
+
+const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+
+if (import.meta.env.PROD && !apiBaseUrl) {
+  throw new Error('VITE_API_BASE_URL is required in production');
+}
 
 export const apiClient = axios.create({
   baseURL: apiBaseUrl,

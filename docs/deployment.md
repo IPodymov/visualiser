@@ -47,7 +47,21 @@ Set this in Vercel:
 | --- | --- |
 | `VITE_API_BASE_URL` | `https://your-backend-domain.com` |
 
-The frontend API client appends endpoint paths such as `/api/curricula`, so the value should normally be the backend origin, not a duplicated endpoint path.
+The frontend API client appends endpoint paths such as `/api/curricula`, so the value must be the Railway backend origin without `/api`.
+
+Correct:
+
+```env
+VITE_API_BASE_URL=https://your-backend.up.railway.app
+```
+
+Incorrect:
+
+```env
+VITE_API_BASE_URL=https://your-backend.up.railway.app/api
+```
+
+Vercel builds now fail when `VITE_API_BASE_URL` is missing, so a broken frontend is not deployed silently.
 
 Local examples live in:
 
@@ -82,7 +96,7 @@ Required Railway variables:
 | `JWT_SECRET` | Long random secret |
 | `JWT_EXPIRES_IN` | `1d` |
 | `FRONTEND_URL` | `https://your-vercel-app.vercel.app` |
-| `CORS_ORIGIN` | `https://your-vercel-app.vercel.app` |
+| `CORS_ORIGIN` | `https://your-vercel-app.vercel.app,https://*.vercel.app` |
 
 Do not set a fixed `PORT` in Railway. The backend reads Railway's injected `PORT` automatically.
 
@@ -104,10 +118,10 @@ Example production CORS:
 
 ```env
 FRONTEND_URL=https://your-vercel-app.vercel.app
-CORS_ORIGIN=https://your-vercel-app.vercel.app
+CORS_ORIGIN=https://your-vercel-app.vercel.app,https://*.vercel.app
 ```
 
-For preview deployments, add additional origins separated by commas:
+For preview deployments, add additional exact origins separated by commas, or keep the `https://*.vercel.app` wildcard:
 
 ```env
 CORS_ORIGIN=https://your-vercel-app.vercel.app,https://your-git-branch.vercel.app

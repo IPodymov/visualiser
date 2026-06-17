@@ -19,20 +19,46 @@ const resolveCorsOrigins = () => {
   const configuredOrigins = env.CORS_ORIGIN ?? env.FRONTEND_URL;
   return configuredOrigins
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => normalizeOrigin(origin))
     .filter(Boolean);
+};
+
+const normalizeOrigin = (origin: string) => {
+  const trimmed = origin.trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+
+  try {
+    const url = new URL(trimmed);
+    return url.origin;
+  } catch {
+    return trimmed;
+  }
+};
+
+const wildcardOriginPattern = (origin: string) => {
+  const escaped = origin.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^.]+');
+  return new RegExp(`^${escaped}$`);
+};
+
+const isOriginAllowed = (origin: string, allowedOrigins: string[]) => {
+  const normalizedOrigin = normalizeOrigin(origin);
+  return allowedOrigins.some((allowedOrigin) => {
+    if (allowedOrigin === '*') return true;
+    if (allowedOrigin.includes('*')) return wildcardOriginPattern(allowedOrigin).test(normalizedOrigin);
+    return allowedOrigin === normalizedOrigin;
+  });
 };
 
 export const createApp = () => {
   const app = express();
   const allowedOrigins = resolveCorsOrigins();
-  const allowAnyLocalOrigin = env.NODE_ENV !== 'production' && allowedOrigins.includes('*');
+  const allowAnyOrigin = allowedOrigins.includes('*');
 
   app.use(helmet());
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (!origin || allowAnyLocalOrigin || allowedOrigins.includes(origin)) {
+        if (!origin || allowAnyOrigin || isOriginAllowed(origin, allowedOrigins)) {
           callback(null, true);
           return;
         }
