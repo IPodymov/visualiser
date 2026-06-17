@@ -11,6 +11,7 @@
     "test": "vitest run",
     "prisma:generate": "dotenv -e ../../.env -- prisma generate --schema prisma/schema.prisma",
     "prisma:migrate": "dotenv -e ../../.env -- prisma migrate deploy --schema prisma/schema.prisma",
+    "prisma:migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
     "prisma:migrate:dev": "dotenv -e ../../.env -- prisma migrate dev --schema prisma/schema.prisma",
     "seed": "dotenv -e ../../.env -- tsx prisma/seed.ts",
     "import:fit": "dotenv -e ../../.env -- tsx src/scripts/import-fit.ts"

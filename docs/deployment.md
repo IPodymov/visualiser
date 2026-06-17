@@ -68,7 +68,9 @@ Deploy `apps/backend` to a Node hosting provider.
 
 ### Railway
 
-The repository includes `railway.json` for the backend service. Railway will build the backend with `apps/backend/Dockerfile`, run Prisma migrations before starting the service, and use `/health` as the healthcheck path.
+The repository includes `railway.json` for the backend service. Railway will build the backend with `apps/backend/Dockerfile`, run `npm run prisma:migrate:deploy` before starting the service, and use `/health` as the healthcheck path.
+
+Railway does not provide a post-deploy command in config-as-code. The migration command is configured as `preDeployCommand`, which means it runs after the image is built and before the new backend container is started. If migrations fail, Railway will not promote that deployment.
 
 Required Railway variables:
 

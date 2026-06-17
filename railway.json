@@ -13,7 +13,7 @@
     ]
   },
   "deploy": {
-    "preDeployCommand": "npx prisma migrate deploy --schema prisma/schema.prisma",
+    "preDeployCommand": "npm run prisma:migrate:deploy",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
