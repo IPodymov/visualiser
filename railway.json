@@ -13,7 +13,7 @@
     ]
   },
   "deploy": {
-    "preDeployCommand": "npm run prisma:migrate -w apps/backend",
+    "preDeployCommand": "npx prisma migrate deploy --schema prisma/schema.prisma",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
