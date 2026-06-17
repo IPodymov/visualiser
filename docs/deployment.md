@@ -66,6 +66,22 @@ VITE_API_BASE_URL=http://localhost:4000
 
 Deploy `apps/backend` to a Node hosting provider.
 
+### Railway
+
+The repository includes `railway.json` for the backend service. Railway will build the backend with `apps/backend/Dockerfile`, run Prisma migrations before starting the service, and use `/health` as the healthcheck path.
+
+Required Railway variables:
+
+| Variable | Example |
+| --- | --- |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `JWT_SECRET` | Long random secret |
+| `JWT_EXPIRES_IN` | `1d` |
+| `FRONTEND_URL` | `https://your-vercel-app.vercel.app` |
+| `CORS_ORIGIN` | `https://your-vercel-app.vercel.app` |
+
+Do not set a fixed `PORT` in Railway. The backend reads Railway's injected `PORT` automatically.
+
 Required backend environment variables:
 
 | Variable | Description |
