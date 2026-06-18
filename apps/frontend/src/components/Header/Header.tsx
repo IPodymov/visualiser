@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { GraduationCap, LogOut, Menu, UserRound, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './Header.css';
 import { Button } from '../ui/button';
 import { useAppStore } from '../../store/useAppStore';
@@ -20,8 +20,29 @@ export const Header = () => {
   const user = useAppStore((state) => state.user);
   const logout = useAppStore((state) => state.logout);
 
+  useEffect(() => {
+    document.body.classList.toggle('site-header--menu-open', open);
+
+    return () => {
+      document.body.classList.remove('site-header--menu-open');
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const closeDesktopMenu = () => {
+      if (mediaQuery.matches) setOpen(false);
+    };
+
+    closeDesktopMenu();
+    mediaQuery.addEventListener('change', closeDesktopMenu);
+
+    return () => mediaQuery.removeEventListener('change', closeDesktopMenu);
+  }, []);
+
   const handleLogout = () => {
     logout();
+    setOpen(false);
     setProfileOpen(false);
     navigate('/');
   };
@@ -98,6 +119,9 @@ export const Header = () => {
             className="site-header__menu-button"
             size="icon"
             variant="ghost"
+            type="button"
+            aria-label={open ? 'Закрыть меню' : 'Открыть меню'}
+            aria-expanded={open}
             onClick={() => setOpen((value) => !value)}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -106,20 +130,66 @@ export const Header = () => {
       </div>
 
       {open && (
-        <div className="site-header__mobile">
+        <div className="site-header__mobile" role="dialog" aria-modal="true" aria-label="Мобильное меню">
+          <div className="site-header__mobile-top">
+            <Link to="/" className="site-header__mobile-brand" onClick={() => setOpen(false)}>
+              <span className="site-header__mobile-brand-mark">
+                <GraduationCap className="h-5 w-5" />
+              </span>
+              <span>EduPlan Compare</span>
+            </Link>
+            <button
+              type="button"
+              className="site-header__mobile-close"
+              aria-label="Закрыть меню"
+              onClick={() => setOpen(false)}
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
           <div className="site-header__mobile-list">
-            {links.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) =>
-                  cn('site-header__mobile-link', isActive && 'site-header__mobile-link--active')
-                }
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </NavLink>
-            ))}
+            <nav aria-label="Мобильная навигация">
+              {links.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    cn('site-header__mobile-link', isActive && 'site-header__mobile-link--active')
+                  }
+                  onClick={() => setOpen(false)}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+              {user ? (
+                <>
+                  <button
+                    type="button"
+                    className="site-header__mobile-link"
+                    onClick={() => {
+                      setOpen(false);
+                      navigate('/profile');
+                    }}
+                  >
+                    Профиль
+                  </button>
+                  <button type="button" className="site-header__mobile-link" onClick={handleLogout}>
+                    Выйти
+                  </button>
+                </>
+              ) : (
+                <NavLink
+                  to="/login"
+                  className={({ isActive }) =>
+                    cn('site-header__mobile-link', isActive && 'site-header__mobile-link--active')
+                  }
+                  onClick={() => setOpen(false)}
+                >
+                  Войти
+                </NavLink>
+              )}
+            </nav>
           </div>
         </div>
       )}

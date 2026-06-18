@@ -155,3 +155,13 @@
   grid-template-columns: 1fr auto auto;
   gap: var(--space-2);
 }
+
+@media (max-width: 380px) {
+  .plan-card__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-card__metric {
+    padding: 0.7rem;
+  }
+}
