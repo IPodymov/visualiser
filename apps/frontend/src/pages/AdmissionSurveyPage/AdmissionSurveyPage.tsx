@@ -23,6 +23,7 @@ import type {
   PlanRecommendation,
 } from '../../types/plan';
 import { cn } from '../../utils/cn';
+import { getCreditsNorm, getCreditsPercent } from '../../utils/credits';
 
 const storageKey = 'eduplan-admission-survey-v2';
 
@@ -75,7 +76,7 @@ const questions: SurveyQuestion[] = [
     id: 'educationLevel',
     block: 'context',
     title: 'На какой уровень образования вы поступаете?',
-    hint: 'В базе есть бакалавриат, специалитет, магистратура и аспирантура.',
+    hint: 'В подборе используются учебные планы всех факультетов, уровней и форм обучения.',
     options: [
       {
         id: 'bachelor',
@@ -536,6 +537,10 @@ export const AdmissionSurveyPage = () => {
         limit: 8,
       });
 
+      if (!planRecommendations.length) {
+        throw new Error('No matching curriculum recommendations');
+      }
+
       setState((previous) => ({
         ...previous,
         confirmedAt: new Date().toISOString(),
@@ -629,6 +634,12 @@ export const AdmissionSurveyPage = () => {
                   Список сохранен на устройстве после подтверждения. Его можно открыть повторно,
                   даже если пользователь не зарегистрирован.
                 </p>
+                <div className="admission-survey__credits-help">
+                  ЗЕТ - зачетная единица трудоемкости. Она показывает объем учебной работы:
+                  занятия, практику, проекты и самостоятельную подготовку. В карточках 100% означает
+                  полный нормативный объем программы: 240 ЗЕТ для бакалавриата и 300 ЗЕТ для
+                  специалитета.
+                </div>
               </div>
               <Button type="button" variant="secondary" onClick={resetSurvey}>
                 <RotateCcw className="h-4 w-4" />
@@ -654,7 +665,10 @@ export const AdmissionSurveyPage = () => {
                       <span>{item.duration}</span>
                       <span>{item.disciplinesCount} дисциплин</span>
                       <span>{item.totalHours} ч.</span>
-                      <span>{item.credits} ЗЕТ</span>
+                      <span>
+                        {getCreditsPercent(item.credits, item.level)}% нагрузки ({item.credits} ЗЕТ из{' '}
+                        {getCreditsNorm(item.level)})
+                      </span>
                     </div>
                     {item.matchedDisciplines.length ? (
                       <div className="admission-survey__matched">

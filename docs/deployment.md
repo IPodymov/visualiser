@@ -112,6 +112,7 @@ Required backend environment variables:
 | `JWT_EXPIRES_IN` | Example: `1d` |
 | `PORT` | Provider-defined or `4000` locally |
 | `FIT_DIR` | Directory for FIT Excel files, if import is used |
+| `FIT_IMPORT_ADMISSION_YEAR` | Optional year filter for import, for example `2025` |
 | `FRONTEND_URL` | Vercel frontend URL |
 | `CORS_ORIGIN` | Comma-separated allowed origins |
 
@@ -157,6 +158,14 @@ npm run import:fit -w apps/backend
 ```
 
 Only run `import:fit` in an environment where the `FIT_DIR` folder exists.
+
+`FIT_DIR` can contain several directories separated by commas. The importer scans nested folders and
+supports `.xlsx`, `.xls`, and `.xlsm` workbooks. To import only the admission year used by the
+frontend selection, set:
+
+```env
+FIT_IMPORT_ADMISSION_YEAR=2025
+```
 
 ## Local Production Check
 

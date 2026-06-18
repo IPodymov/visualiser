@@ -1,3 +1,26 @@
+.plans-credits-note {
+  margin-top: var(--space-4);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius-md);
+  background: rgba(14, 165, 233, 0.08);
+  color: #dbeafe;
+  padding: var(--space-4);
+}
+
+.plans-credits-note h2 {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.plans-credits-note p {
+  margin-top: var(--space-2);
+  max-width: 68rem;
+  color: var(--color-text-soft);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
 .plans-grid {
   display: grid;
   gap: var(--space-5);

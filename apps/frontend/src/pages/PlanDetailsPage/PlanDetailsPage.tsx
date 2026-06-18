@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { plansApi } from '../../services/api/plans';
 import { useAppStore } from '../../store/useAppStore';
+import { getCreditsSummary } from '../../utils/credits';
 import type { EducationPlan } from '../../types/plan';
 
 export const PlanDetailsPage = () => {
@@ -103,6 +104,12 @@ export const PlanDetailsPage = () => {
         <StatsCard icon={<WalletCards className="h-5 w-5" />} label="ЗЕТ" value={plan.credits} />
         <StatsCard icon={<BookOpen className="h-5 w-5" />} label="дисциплин" value={plan.disciplines.length} />
         <StatsCard icon={<GraduationCap className="h-5 w-5" />} label="семестров" value={plan.semesters} />
+      </div>
+
+      <div className="mt-4 rounded-md border border-sky-300/20 bg-sky-500/10 p-4 text-sm leading-6 text-slate-300">
+        <strong className="text-white">ЗЕТ</strong> - зачетная единица трудоемкости. Она складывается
+        из лекций, практик, лабораторных, проектов, контроля и самостоятельной работы. Для этой
+        программы: {getCreditsSummary(plan.credits, plan.level)}.
       </div>
 
       <Card className="mt-8">

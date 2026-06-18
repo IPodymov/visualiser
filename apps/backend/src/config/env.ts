@@ -42,6 +42,7 @@ const envSchema = z.object({
     : z.string().default('development-only-jwt-secret'),
   JWT_EXPIRES_IN: z.string().default('1d'),
   FIT_DIR: z.string().default('../../FIT'),
+  FIT_IMPORT_ADMISSION_YEAR: z.string().optional(),
   FRONTEND_URL: isProduction
     ? productionUrl('FRONTEND_URL')
     : z.string().default('http://localhost:5173'),

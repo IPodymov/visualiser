@@ -30,9 +30,21 @@ model Speciality {
   @@map("specialities")
 }
 
+model Faculty {
+  id        Int          @id @default(autoincrement())
+  name      String       @unique
+  slug      String       @unique
+  curricula Curriculum[]
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@map("faculties")
+}
+
 model Curriculum {
   id              Int                    @id @default(autoincrement())
   specialityId    Int                    @map("speciality_id")
+  facultyId       Int?                   @map("faculty_id")
   admissionYear   Int?                   @map("admission_year")
   educationLevel  String?                @map("education_level")
   educationForm   String?                @map("education_form")
@@ -44,12 +56,14 @@ model Curriculum {
   createdAt       DateTime               @default(now()) @map("created_at")
   updatedAt       DateTime               @updatedAt @map("updated_at")
   speciality      Speciality             @relation(fields: [specialityId], references: [id], onDelete: Restrict)
+  faculty         Faculty?               @relation(fields: [facultyId], references: [id], onDelete: SetNull)
   disciplines     CurriculumDiscipline[]
   viewHistory     ViewHistory[]
   favorites       FavoriteCurriculum[]
   downloadHistory DownloadHistory[]
 
   @@index([specialityId])
+  @@index([facultyId])
   @@index([admissionYear])
   @@map("curricula")
 }

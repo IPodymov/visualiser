@@ -15,6 +15,7 @@ import {
 } from './recommendation.config';
 
 const curriculumInclude = {
+  faculty: true,
   speciality: true,
   disciplines: {
     include: {
@@ -45,7 +46,8 @@ type VisualizationCurriculum = NonNullable<Awaited<ReturnType<typeof loadVisuali
 type VisualizationDiscipline = VisualizationCurriculum['disciplines'][number];
 type VisualizationClassification = VisualizationDiscipline['discipline']['classifications'][number];
 
-const decimalToNumber = (value: VisualizationDiscipline['credits']) => (value === null ? 0 : Number(value));
+const decimalToNumber = (value: VisualizationDiscipline['credits']) =>
+  value === null ? 0 : Number(value);
 
 const loadRecommendationCurricula = () =>
   prisma.curriculum.findMany({
@@ -111,7 +113,8 @@ const getDuration = (curriculum: RecommendationCurriculum) => {
 
 const facultyFromSource = (source?: string) => {
   if (!source) return defaultFaculty;
-  if (source.includes('/')) return source.split('/').find((part) => part.includes('Ф')) ?? defaultFaculty;
+  if (source.includes('/'))
+    return source.split('/').find((part) => part.includes('Ф')) ?? defaultFaculty;
   const facultyMarker = sourceFacultyMarkers.find((marker) => source.includes(marker));
   if (facultyMarker) return facultyMarker;
   return defaultFaculty;
@@ -129,7 +132,9 @@ const matchesEducationLevel = (
   educationLevel?: CurriculumRecommendationRequest['educationLevel'],
 ) => {
   if (!educationLevel) return true;
-  return normalize(inferEducationLevel(curriculum)).includes(normalize(educationLevelLabels[educationLevel]));
+  return normalize(inferEducationLevel(curriculum)).includes(
+    normalize(educationLevelLabels[educationLevel]),
+  );
 };
 
 const matchesStudyForm = (
@@ -167,8 +172,11 @@ export class CurriculaService {
   async list(query: ListCurriculaQuery) {
     const where: CurriculumWhere = {
       admissionYear: query.admissionYear,
+      facultyId: query.facultyId,
       speciality: {
-        code: query.specialityCode ? { contains: query.specialityCode, mode: 'insensitive' } : undefined,
+        code: query.specialityCode
+          ? { contains: query.specialityCode, mode: 'insensitive' }
+          : undefined,
         name: query.specialityName
           ? { contains: query.specialityName, mode: 'insensitive' }
           : undefined,
@@ -177,7 +185,22 @@ export class CurriculaService {
 
     return prisma.curriculum.findMany({
       where,
-      include: { speciality: true },
+      include: {
+        faculty: true,
+        speciality: true,
+        disciplines: {
+          select: {
+            id: true,
+            disciplineId: true,
+            semesterNumber: true,
+            totalHours: true,
+            credits: true,
+            discipline: {
+              select: { name: true },
+            },
+          },
+        },
+      },
       orderBy: [{ admissionYear: 'desc' }, { uploadedAt: 'desc' }],
     });
   }
@@ -224,11 +247,16 @@ export class CurriculaService {
     const levelMatchedCurricula = curricula.filter((curriculum) =>
       matchesEducationLevel(curriculum, request.educationLevel),
     );
+    const formMatchedCurricula = curricula.filter((curriculum) =>
+      matchesStudyForm(curriculum, request.studyForm),
+    );
     const candidates = strictMatchedCurricula.length
       ? strictMatchedCurricula
       : levelMatchedCurricula.length
         ? levelMatchedCurricula
-        : curricula;
+        : formMatchedCurricula.length
+          ? formMatchedCurricula
+          : curricula;
 
     const ranked = candidates
       .map((curriculum) => {
@@ -236,10 +264,14 @@ export class CurriculaService {
           .map((item) => {
             const searchText = getDisciplineSearchText(item);
             const score = topCategories.reduce((sum, category) => {
-              const hasMatch = recommendationCategoryTokens[category].some((token) => searchText.includes(normalize(token)));
+              const hasMatch = recommendationCategoryTokens[category].some((token) =>
+                searchText.includes(normalize(token)),
+              );
               const hours = Math.max(item.totalHours ?? 0, 36);
               const classificationBoost = item.discipline.classifications.length ? 1.35 : 1;
-              return hasMatch ? sum + (request.weights[category] ?? 0) * classificationBoost * Math.log2(hours) : sum;
+              return hasMatch
+                ? sum + (request.weights[category] ?? 0) * classificationBoost * Math.log2(hours)
+                : sum;
             }, 0);
 
             return {
@@ -269,7 +301,8 @@ export class CurriculaService {
         const workloadScore =
           Math.min(curriculum.disciplines.length, 12) +
           Math.min(
-            curriculum.disciplines.reduce((sum, item) => sum + decimalToNumber(item.credits), 0) / 12,
+            curriculum.disciplines.reduce((sum, item) => sum + decimalToNumber(item.credits), 0) /
+              12,
             10,
           );
         const levelScore = matchesEducationLevel(curriculum, request.educationLevel) ? 30 : 0;
@@ -290,13 +323,18 @@ export class CurriculaService {
       .slice(0, request.limit ?? 8);
 
     const maxScore = Math.max(ranked[0]?.score ?? 1, 1);
-    const reason = `Подходит под ${topCategories
-      .map((category) => recommendationCategoryLabels[category])
-      .join(', ')}`;
+    const reason = topCategories.length
+      ? `Подходит под ${topCategories
+          .map((category) => recommendationCategoryLabels[category])
+          .join(', ')}`
+      : 'Подходит под выбранные параметры поступления';
 
     return ranked.map(({ curriculum, matchedDisciplines, score }) => {
       const disciplinesCount = curriculum.disciplines.length;
-      const totalHours = curriculum.disciplines.reduce((sum, item) => sum + (item.totalHours ?? 0), 0);
+      const totalHours = curriculum.disciplines.reduce(
+        (sum, item) => sum + (item.totalHours ?? 0),
+        0,
+      );
       const credits = Math.round(
         curriculum.disciplines.reduce((sum, item) => sum + decimalToNumber(item.credits), 0),
       );
@@ -305,7 +343,7 @@ export class CurriculaService {
       return {
         planId: curriculum.id,
         title,
-        faculty: facultyFromSource(curriculum.sourceFileName),
+        faculty: curriculum.faculty?.name ?? facultyFromSource(curriculum.sourceFilePath),
         level: inferEducationLevel(curriculum),
         studyForm: curriculum.educationForm ?? defaultStudyForm,
         year: curriculum.admissionYear ?? new Date(curriculum.uploadedAt).getFullYear(),
@@ -391,13 +429,15 @@ export class CurriculaService {
       practiceHours: item.practiceHours,
       labHours: item.labHours,
       independentHours: item.independentHours,
-      classifications: item.discipline.classifications.map((classification: VisualizationClassification) => ({
-        groupCode: classification.classificationValue.group.code,
-        groupName: classification.classificationValue.group.name,
-        valueCode: classification.classificationValue.code,
-        valueName: classification.classificationValue.name,
-        weight: classification.weight,
-      })),
+      classifications: item.discipline.classifications.map(
+        (classification: VisualizationClassification) => ({
+          groupCode: classification.classificationValue.group.code,
+          groupName: classification.classificationValue.group.name,
+          valueCode: classification.classificationValue.code,
+          valueName: classification.classificationValue.name,
+          weight: classification.weight,
+        }),
+      ),
     };
   }
 
@@ -428,7 +468,10 @@ export class CurriculaService {
       addToBucket(partBucket, item);
       byPart.set(partKey, partBucket);
 
-      for (const form of item.controlForm?.split(',').map((value) => value.trim()).filter(Boolean) ?? []) {
+      for (const form of item.controlForm
+        ?.split(',')
+        .map((value) => value.trim())
+        .filter(Boolean) ?? []) {
         controlForms.set(form, (controlForms.get(form) ?? 0) + 1);
       }
     }
@@ -444,7 +487,9 @@ export class CurriculaService {
         independentHours: total.independentHours,
         contactHours: total.lectureHours + total.practiceHours + total.labHours,
       },
-      bySemester: [...bySemester.values()].sort((left, right) => Number(left.key) - Number(right.key)),
+      bySemester: [...bySemester.values()].sort(
+        (left, right) => Number(left.key) - Number(right.key),
+      ),
       byBlock: [...byBlock.values()].sort((left, right) => right.totalHours - left.totalHours),
       byPart: [...byPart.values()].sort((left, right) => right.totalHours - left.totalHours),
       workload: [

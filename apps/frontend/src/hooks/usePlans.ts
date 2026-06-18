@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { facultiesApi, type FacultyOption } from '../services/api/faculties';
 import { plansApi } from '../services/api/plans';
 import type { EducationPlan, PlanFilters } from '../types/plan';
 import { buildPlanFilterConfig } from '../utils/planFilters';
@@ -13,6 +14,7 @@ const defaultFilters: PlanFilters = {
 
 export const usePlans = () => {
   const [plans, setPlans] = useState<EducationPlan[]>([]);
+  const [faculties, setFaculties] = useState<FacultyOption[]>([]);
   const [filters, setFilters] = useState<PlanFilters>(defaultFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,12 @@ export const usePlans = () => {
     setLoading(true);
     setError(null);
     try {
-      setPlans(await plansApi.list(nextFilters));
+      const [nextPlans, nextFaculties] = await Promise.all([
+        plansApi.list(nextFilters),
+        facultiesApi.list(),
+      ]);
+      setPlans(nextPlans);
+      setFaculties(nextFaculties);
     } catch (loadError) {
       const message =
         loadError instanceof Error
@@ -46,7 +53,7 @@ export const usePlans = () => {
           plan.title.toLowerCase().includes(query) ||
           plan.faculty.toLowerCase().includes(query) ||
           plan.code?.toLowerCase().includes(query);
-        const matchesFaculty = filters.faculty === 'all' || plan.faculty === filters.faculty;
+        const matchesFaculty = filters.faculty === 'all' || String(plan.facultyId) === filters.faculty;
         const matchesLevel = filters.level === 'all' || plan.level === filters.level;
         const matchesForm = filters.studyForm === 'all' || plan.studyForm === filters.studyForm;
         const matchesYear = filters.year === 'all' || String(plan.year) === filters.year;
@@ -55,7 +62,7 @@ export const usePlans = () => {
     [filters, plans],
   );
 
-  const filterConfig = useMemo(() => buildPlanFilterConfig(plans), [plans]);
+  const filterConfig = useMemo(() => buildPlanFilterConfig(plans, faculties), [plans, faculties]);
 
   return { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload: load };
 };

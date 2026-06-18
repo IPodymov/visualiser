@@ -46,11 +46,14 @@ const toApiError = (error: unknown, fallbackMessage: string) => {
 
 const buildListParams = (filters?: Partial<PlanFilters>) => {
   const params: Record<string, string | number> = {};
-  const query = filters?.query?.trim();
   const year = filters?.year;
+  const faculty = filters?.faculty;
 
-  if (query) {
-    params.specialityName = query;
+  if (faculty && faculty !== 'all') {
+    const facultyId = Number(faculty);
+    if (Number.isInteger(facultyId)) {
+      params.facultyId = facultyId;
+    }
   }
 
   if (year && year !== 'all') {
@@ -63,12 +66,45 @@ const buildListParams = (filters?: Partial<PlanFilters>) => {
   return params;
 };
 
+const hasCurriculumMetrics = (curriculum: BackendCurriculum) =>
+  Boolean(curriculum.disciplines?.length || curriculum.semesters?.some((semester) => semester.disciplines.length));
+
+const enrichMissingMetrics = async (curricula: BackendCurriculum[]) => {
+  const enriched = [...curricula];
+  const missingMetrics = curricula
+    .map((curriculum, index) => ({ curriculum, index }))
+    .filter(({ curriculum }) => !hasCurriculumMetrics(curriculum));
+
+  const batchSize = 4;
+
+  for (let start = 0; start < missingMetrics.length; start += batchSize) {
+    const batch = missingMetrics.slice(start, start + batchSize);
+    const details = await Promise.all(
+      batch.map(async ({ curriculum, index }) => {
+        try {
+          const response = await apiClient.get<BackendCurriculum>(`/api/curricula/${curriculum.id}`);
+          return { curriculum: response.data, index };
+        } catch {
+          return { curriculum, index };
+        }
+      }),
+    );
+
+    details.forEach(({ curriculum, index }) => {
+      enriched[index] = curriculum;
+    });
+  }
+
+  return enriched;
+};
+
 export const plansApi = {
   async list(filters?: Partial<PlanFilters>) {
     try {
       const params = buildListParams(filters);
       const response = await apiClient.get<BackendCurriculum[]>('/api/curricula', { params });
-      return response.data.map(toPlan);
+      const curricula = await enrichMissingMetrics(response.data);
+      return curricula.map(toPlan);
     } catch (error) {
       throw toApiError(error, 'Не удалось загрузить учебные планы');
     }

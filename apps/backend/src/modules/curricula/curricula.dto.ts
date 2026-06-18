@@ -4,6 +4,7 @@ export const listCurriculaSchema = z.object({
   query: z.object({
     specialityName: z.string().optional(),
     specialityCode: z.string().optional(),
+    facultyId: z.coerce.number().int().positive().optional(),
     admissionYear: z.coerce.number().int().optional(),
   }),
 });

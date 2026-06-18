@@ -10,6 +10,22 @@
 .search-filters__grid {
   display: grid;
   gap: var(--space-3);
+  align-items: end;
+}
+
+.search-filters__query,
+.search-filters__field {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.search-filters__label {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .search-filters__input {
@@ -23,6 +39,6 @@
 
 @media (min-width: 1024px) {
   .search-filters__grid {
-    grid-template-columns: 1.3fr 0.9fr 0.9fr 0.9fr 0.7fr auto;
+    grid-template-columns: minmax(14rem, 1.2fr) repeat(4, minmax(8.5rem, 0.85fr)) auto;
   }
 }

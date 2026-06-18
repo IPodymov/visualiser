@@ -54,6 +54,7 @@ export type CompetencyScore = {
 export type EducationPlan = {
   id: number;
   title: string;
+  facultyId?: number;
   faculty: string;
   level: string;
   studyForm: string;

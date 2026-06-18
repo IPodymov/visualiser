@@ -55,7 +55,7 @@ export const HeroSection = () => (
         <div className="mb-5 flex items-center justify-between">
           <div>
             <div className="text-sm text-slate-400">Карта учебного плана</div>
-            <div className="text-2xl font-bold text-white">Программы 2025</div>
+            <div className="text-2xl font-bold text-white">Все программы</div>
           </div>
           <Database className="h-8 w-8 text-sky-200" />
         </div>

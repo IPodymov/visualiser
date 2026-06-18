@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card
 import { useAppStore } from '../../store/useAppStore';
 import type { EducationPlan } from '../../types/plan';
 import { cn } from '../../utils/cn';
+import { getCreditsPercent } from '../../utils/credits';
 
 export const PlanCard = ({ plan }: { plan: EducationPlan }) => {
   const user = useAppStore((state) => state.user);
@@ -59,8 +60,9 @@ export const PlanCard = ({ plan }: { plan: EducationPlan }) => {
             </div>
             <div className="plan-card__metric">
               <BarChart3 className="mb-2 h-4 w-4 text-cyan-200" />
-              <b className="text-white">{plan.credits}</b>
-              <span className="block text-xs text-slate-400">ЗЕТ</span>
+              <b className="text-white">{getCreditsPercent(plan.credits, plan.level)}%</b>
+              <span className="block text-xs text-slate-400">нагрузки</span>
+              <span className="plan-card__metric-note">{plan.credits} ЗЕТ</span>
             </div>
           </div>
         </CardContent>

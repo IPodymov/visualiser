@@ -15,7 +15,13 @@ export type BackendCurriculum = {
   educationForm: string | null;
   profileName: string | null;
   sourceFileName: string;
+  sourceFilePath?: string;
   uploadedAt: string;
+  faculty?: {
+    id: number;
+    name: string;
+    slug?: string;
+  } | null;
   speciality: {
     id: number;
     code: string;
@@ -33,7 +39,10 @@ export type BackendDiscipline = {
   curriculumDisciplineId?: number;
   disciplineId?: number;
   id?: number;
-  name: string;
+  name?: string;
+  discipline?: {
+    name: string;
+  };
   semesterNumber: number | null;
   totalHours: number | null;
   credits: string | number | null;
@@ -88,11 +97,14 @@ const flattenDisciplines = (curriculum: BackendCurriculum) => {
   return curriculum.disciplines ?? [];
 };
 
+const getDisciplineName = (discipline: BackendDiscipline) =>
+  discipline.name ?? discipline.discipline?.name ?? 'Дисциплина';
+
 const buildCompetencies = (disciplines: BackendDiscipline[]) => {
   const total = Math.max(disciplines.reduce((sum, item) => sum + (item.totalHours ?? 0), 0), 1);
   const byName = (tokens: string[]) =>
     disciplines
-      .filter((item) => tokens.some((token) => item.name.toLowerCase().includes(token)))
+      .filter((item) => tokens.some((token) => getDisciplineName(item).toLowerCase().includes(token)))
       .reduce((sum, item) => sum + (item.totalHours ?? 0), 0);
 
   const scores = [
@@ -113,7 +125,7 @@ export const toPlan = (curriculum: BackendCurriculum): EducationPlan => {
   const backendDisciplines = flattenDisciplines(curriculum);
   const disciplines = backendDisciplines.map((item, index) => ({
     id: item.curriculumDisciplineId ?? item.disciplineId ?? item.id ?? index,
-    name: item.name,
+    name: getDisciplineName(item),
     module:
       item.moduleName ??
       item.partName ??
@@ -142,7 +154,8 @@ export const toPlan = (curriculum: BackendCurriculum): EducationPlan => {
   return {
     id: curriculum.id,
     title,
-    faculty: facultyFromSource(curriculum.sourceFileName),
+    facultyId: curriculum.faculty?.id,
+    faculty: curriculum.faculty?.name ?? facultyFromSource(curriculum.sourceFilePath ?? curriculum.sourceFileName),
     level: levelByCode(curriculum.speciality.code, curriculum.educationLevel),
     studyForm: curriculum.educationForm ?? defaultStudyForm,
     year: curriculum.admissionYear ?? new Date(curriculum.uploadedAt).getFullYear(),

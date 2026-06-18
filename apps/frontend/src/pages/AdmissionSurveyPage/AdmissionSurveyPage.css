@@ -286,6 +286,18 @@
   line-height: 1.55;
 }
 
+.admission-survey__credits-help {
+  max-width: 48rem;
+  margin-top: var(--space-4);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius-md);
+  background: rgba(14, 165, 233, 0.08);
+  color: #dbeafe;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: var(--space-4);
+}
+
 .admission-survey__meta {
   flex-wrap: wrap;
   gap: var(--space-2);

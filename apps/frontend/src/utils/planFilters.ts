@@ -1,5 +1,6 @@
 import type { SelectFilterConfig } from '../types/filter';
 import type { EducationPlan } from '../types/plan';
+import type { FacultyOption } from '../services/api/faculties';
 
 const compareNumbersDesc = (left: string, right: string) => Number(right) - Number(left);
 
@@ -11,12 +12,32 @@ const uniqueSortedOptions = (
     .sort(sort ?? ((left, right) => left.localeCompare(right, 'ru')))
     .map((value) => ({ label: value, value }));
 
-export const buildPlanFilterConfig = (plans: EducationPlan[]): SelectFilterConfig[] => [
+const uniqueFacultyOptions = (plans: EducationPlan[]) =>
+  [
+    ...new Map(
+      plans
+        .filter((plan) => plan.facultyId)
+        .map((plan) => [String(plan.facultyId), { label: plan.faculty, value: String(plan.facultyId) }]),
+    ).values(),
+  ].sort((left, right) => left.label.localeCompare(right.label, 'ru'));
+
+const facultyOptions = (plans: EducationPlan[], faculties?: FacultyOption[]) => {
+  if (faculties?.length) {
+    return faculties.map((faculty) => ({ label: faculty.name, value: String(faculty.id) }));
+  }
+
+  return uniqueFacultyOptions(plans);
+};
+
+export const buildPlanFilterConfig = (
+  plans: EducationPlan[],
+  faculties?: FacultyOption[],
+): SelectFilterConfig[] => [
   {
     key: 'faculty',
     label: 'Факультет',
     placeholder: 'Факультет',
-    options: uniqueSortedOptions(plans.map((plan) => plan.faculty)),
+    options: facultyOptions(plans, faculties),
   },
   {
     key: 'level',

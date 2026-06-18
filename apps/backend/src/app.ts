@@ -10,6 +10,7 @@ import { comparisonRoutes } from './modules/comparison/comparison.routes';
 import { curriculaRoutes } from './modules/curricula/curricula.routes';
 import { disciplinesRoutes } from './modules/disciplines/disciplines.routes';
 import { downloadsRoutes } from './modules/downloads/downloads.routes';
+import { facultiesRoutes } from './modules/faculties/faculties.routes';
 import { filesRoutes } from './modules/files/files.routes';
 import { profileRoutes } from './modules/profile/profile.routes';
 import { specialitiesRoutes } from './modules/specialities/specialities.routes';
@@ -85,6 +86,7 @@ export const createApp = () => {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
   app.use('/api/auth', authRoutes);
   app.use('/api/curricula', curriculaRoutes);
+  app.use('/api/faculties', facultiesRoutes);
   app.use('/api/specialities', specialitiesRoutes);
   app.use('/api/disciplines', disciplinesRoutes);
   app.use('/api/comparison', comparisonRoutes);
