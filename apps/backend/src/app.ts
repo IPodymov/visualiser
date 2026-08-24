@@ -20,8 +20,14 @@ import { usersRoutes } from './modules/users/users.routes';
 import { AppError } from './shared/app-error';
 import { openApiDocument } from './shared/openapi';
 
-const defaultCorsOrigins = [
+const developmentCorsOrigins = [
   'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://[::1]:5173',
+];
+
+const defaultCorsOrigins = [
+  ...(env.NODE_ENV === 'production' ? [] : developmentCorsOrigins),
   'https://visualiser-frontend-7n3std6dr-ipodymovs-projects.vercel.app',
 ];
 

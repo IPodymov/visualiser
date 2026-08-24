@@ -49,13 +49,49 @@ describe('web application security controls', () => {
       .get('/health')
       .set('Origin', 'http://localhost:5173')
       .expect(200);
+    const loopback = await request(createApp())
+      .get('/health')
+      .set('Origin', 'http://127.0.0.1:5173')
+      .expect(200);
+    const ipv6Loopback = await request(createApp())
+      .get('/health')
+      .set('Origin', 'http://[::1]:5173')
+      .expect(200);
     const denied = await request(createApp())
       .get('/health')
       .set('Origin', 'https://evil.example')
       .expect(200);
 
     expect(allowed.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+    expect(loopback.headers['access-control-allow-origin']).toBe('http://127.0.0.1:5173');
+    expect(ipv6Loopback.headers['access-control-allow-origin']).toBe('http://[::1]:5173');
     expect(denied.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('keeps development loopback origins out of production defaults', async () => {
+    vi.resetModules();
+    vi.doMock('../config/env', () => ({
+      env: {
+        ...env,
+        NODE_ENV: 'production',
+        FRONTEND_URL: 'https://eduplan.example',
+        CORS_ORIGIN: undefined,
+        ENABLE_API_DOCS: false,
+      },
+    }));
+
+    try {
+      const { createApp: createProductionApp } = await import('../app');
+      const response = await request(createProductionApp())
+        .get('/health')
+        .set('Origin', 'http://127.0.0.1:5173')
+        .expect(200);
+
+      expect(response.headers['access-control-allow-origin']).toBeUndefined();
+    } finally {
+      vi.doUnmock('../config/env');
+      vi.resetModules();
+    }
   });
 
   it('supports bounded HTTPS preview subdomains and ignores malformed configured origins', async () => {
