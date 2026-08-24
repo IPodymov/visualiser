@@ -1,0 +1,4 @@
+interface:
+  display_name: "EduPlan Design System"
+  short_description: "Build consistent academic analytical interfaces"
+  default_prompt: "Use $eduplan-design-system to implement this UI with the project's shared tokens, components, responsive rules, and states."

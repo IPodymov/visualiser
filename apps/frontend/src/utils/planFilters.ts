@@ -8,7 +8,13 @@ const uniqueSortedOptions = (
   values: Array<string | number | null | undefined>,
   sort?: (left: string, right: string) => number,
 ) =>
-  [...new Set(values.filter((value): value is string | number => value !== null && value !== undefined).map(String))]
+  [
+    ...new Set(
+      values
+        .filter((value): value is string | number => value !== null && value !== undefined)
+        .map(String),
+    ),
+  ]
     .sort(sort ?? ((left, right) => left.localeCompare(right, 'ru')))
     .map((value) => ({ label: value, value }));
 
@@ -17,7 +23,10 @@ const uniqueFacultyOptions = (plans: EducationPlan[]) =>
     ...new Map(
       plans
         .filter((plan) => plan.facultyId)
-        .map((plan) => [String(plan.facultyId), { label: plan.faculty, value: String(plan.facultyId) }]),
+        .map((plan) => [
+          String(plan.facultyId),
+          { label: plan.faculty, value: String(plan.facultyId) },
+        ]),
     ).values(),
   ].sort((left, right) => left.label.localeCompare(right.label, 'ru'));
 
@@ -38,6 +47,18 @@ export const buildPlanFilterConfig = (
     label: 'Факультет',
     placeholder: 'Факультет',
     options: facultyOptions(plans, faculties),
+  },
+  {
+    key: 'direction',
+    label: 'Направление',
+    placeholder: 'Направление',
+    options: uniqueSortedOptions(plans.map((plan) => plan.direction)),
+  },
+  {
+    key: 'profile',
+    label: 'Профиль',
+    placeholder: 'Профиль',
+    options: uniqueSortedOptions(plans.map((plan) => plan.profile)),
   },
   {
     key: 'level',

@@ -1,0 +1,4 @@
+interface:
+  display_name: "EduPlan Product Meaning"
+  short_description: "Frame every screen around a user decision"
+  default_prompt: "Use $eduplan-product-meaning to define the user question, action hierarchy, and decision for this EduPlan screen."

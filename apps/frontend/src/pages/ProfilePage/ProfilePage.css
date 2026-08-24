@@ -1,3 +1,88 @@
-.profile-page {
-  min-height: 60vh;
+.profile-guest {
+    overflow: hidden;
+    background: linear-gradient(110deg, var(--color-surface) 0%, var(--color-brand-soft) 100%);
+}
+
+.profile-guest .card-content,
+.profile-guest > div {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.profile-guest__icon,
+.profile-account__avatar {
+    display: grid;
+    width: 3.5rem;
+    height: 3.5rem;
+    place-items: center;
+    color: var(--color-brand-strong);
+    background: var(--color-brand-soft);
+    border-radius: 999px;
+}
+
+.profile-guest h2 {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.profile-guest p {
+    max-width: 40rem;
+    margin: 0.7rem 0 0;
+    color: var(--color-ink-soft);
+    line-height: 1.65;
+}
+
+.profile-account {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-account span,
+.profile-account strong,
+.profile-account small {
+    display: block;
+}
+
+.profile-account span {
+    color: var(--color-ink-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.profile-account strong {
+    margin-top: 0.25rem;
+    color: var(--color-ink);
+    font-size: 1.05rem;
+}
+
+.profile-account small {
+    margin-top: 0.15rem;
+    color: var(--color-ink-soft);
+}
+
+.profile-plan-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .profile-guest .card-content,
+    .profile-guest > div {
+        grid-template-columns: auto 1fr;
+        align-items: start;
+    }
+
+    .profile-plan-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1080px) {
+    .profile-plan-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }

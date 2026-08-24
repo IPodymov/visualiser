@@ -14,10 +14,51 @@ type BackendComparison = {
   firstCurriculum: BackendCurriculum;
   secondCurriculum: BackendCurriculum;
   summary: PlanComparison['summary'];
-  commonDisciplines: PlanComparison['commonDisciplines'];
-  onlyInFirst: Array<{ name: string; totalHours?: number; credits?: string | number }>;
-  onlyInSecond: Array<{ name: string; totalHours?: number; credits?: string | number }>;
+  commonDisciplines: Array<{
+    name: string;
+    first: BackendComparisonDiscipline;
+    second: BackendComparisonDiscipline;
+    differences: PlanComparison['commonDisciplines'][number]['differences'];
+  }>;
+  onlyInFirst: BackendComparisonDiscipline[];
+  onlyInSecond: BackendComparisonDiscipline[];
 };
+
+type BackendComparisonDiscipline = {
+  curriculumDisciplineId?: number;
+  disciplineId?: number;
+  name: string;
+  semesterNumber?: number | null;
+  totalHours?: number | null;
+  credits?: string | number | null;
+  controlForm?: string | null;
+  blockName?: string | null;
+  partName?: string | null;
+  moduleName?: string | null;
+  recordType?: string | null;
+  lectureHours?: number | null;
+  practiceHours?: number | null;
+  labHours?: number | null;
+  independentHours?: number | null;
+};
+
+const toComparisonDiscipline = (item: BackendComparisonDiscipline, index: number) => ({
+  id: item.curriculumDisciplineId ?? item.disciplineId ?? index,
+  name: item.name,
+  module: item.moduleName ?? item.partName ?? item.blockName ?? 'Без модуля',
+  semester: item.semesterNumber ?? null,
+  hours: item.totalHours ?? 0,
+  credits: asNumber(item.credits),
+  controlForm: item.controlForm,
+  blockName: item.blockName,
+  partName: item.partName,
+  moduleName: item.moduleName,
+  recordType: item.recordType,
+  lectureHours: item.lectureHours,
+  practiceHours: item.practiceHours,
+  labHours: item.labHours,
+  independentHours: item.independentHours,
+});
 
 const isNetworkProblem = (error: unknown) =>
   axios.isAxiosError(error) && (!error.response || error.code === 'ECONNABORTED');
@@ -37,7 +78,9 @@ const toApiError = (error: unknown, fallbackMessage: string) => {
         : null;
 
     return new Error(
-      backendMessage ? `${fallbackMessage}: ${backendMessage}` : `${fallbackMessage}. Повторите запрос позже.`,
+      backendMessage
+        ? `${fallbackMessage}: ${backendMessage}`
+        : `${fallbackMessage}. Повторите запрос позже.`,
     );
   }
   if (error instanceof Error) return error;
@@ -67,7 +110,10 @@ const buildListParams = (filters?: Partial<PlanFilters>) => {
 };
 
 const hasCurriculumMetrics = (curriculum: BackendCurriculum) =>
-  Boolean(curriculum.disciplines?.length || curriculum.semesters?.some((semester) => semester.disciplines.length));
+  Boolean(
+    curriculum.disciplines?.length ||
+    curriculum.semesters?.some((semester) => semester.disciplines.length),
+  );
 
 const enrichMissingMetrics = async (curricula: BackendCurriculum[]) => {
   const enriched = [...curricula];
@@ -82,7 +128,9 @@ const enrichMissingMetrics = async (curricula: BackendCurriculum[]) => {
     const details = await Promise.all(
       batch.map(async ({ curriculum, index }) => {
         try {
-          const response = await apiClient.get<BackendCurriculum>(`/api/curricula/${curriculum.id}`);
+          const response = await apiClient.get<BackendCurriculum>(
+            `/api/curricula/${curriculum.id}`,
+          );
           return { curriculum: response.data, index };
         } catch {
           return { curriculum, index };
@@ -121,24 +169,25 @@ export const plansApi = {
 
   async compare(firstId: number, secondId: number): Promise<PlanComparison> {
     try {
-      const response = await apiClient.get<BackendComparison>('/api/comparison', {
-        params: { firstCurriculumId: firstId, secondCurriculumId: secondId },
-      });
+      const [response, firstResponse, secondResponse] = await Promise.all([
+        apiClient.get<BackendComparison>('/api/comparison', {
+          params: { firstCurriculumId: firstId, secondCurriculumId: secondId },
+        }),
+        apiClient.get<BackendCurriculum>(`/api/curricula/${firstId}`),
+        apiClient.get<BackendCurriculum>(`/api/curricula/${secondId}`),
+      ]);
       return {
-        firstPlan: toPlan(response.data.firstCurriculum),
-        secondPlan: toPlan(response.data.secondCurriculum),
+        firstPlan: toPlan(firstResponse.data),
+        secondPlan: toPlan(secondResponse.data),
         summary: response.data.summary,
-        commonDisciplines: response.data.commonDisciplines,
-        onlyInFirst: response.data.onlyInFirst.map((item) => ({
+        commonDisciplines: response.data.commonDisciplines.map((item, index) => ({
           name: item.name,
-          hours: item.totalHours,
-          credits: asNumber(item.credits),
+          first: toComparisonDiscipline(item.first, index),
+          second: toComparisonDiscipline(item.second, index),
+          differences: item.differences,
         })),
-        onlyInSecond: response.data.onlyInSecond.map((item) => ({
-          name: item.name,
-          hours: item.totalHours,
-          credits: asNumber(item.credits),
-        })),
+        onlyInFirst: response.data.onlyInFirst.map(toComparisonDiscipline),
+        onlyInSecond: response.data.onlyInSecond.map(toComparisonDiscipline),
       };
     } catch (error) {
       throw toApiError(error, 'Не удалось сравнить учебные планы');
@@ -151,7 +200,10 @@ export const plansApi = {
     weights: Partial<Record<AdmissionCategory, number>>;
     limit?: number;
   }) {
-    const response = await apiClient.post<PlanRecommendation[]>('/api/curricula/recommendations', payload);
+    const response = await apiClient.post<PlanRecommendation[]>(
+      '/api/curricula/recommendations',
+      payload,
+    );
     return response.data;
   },
 };

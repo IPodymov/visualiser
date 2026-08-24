@@ -1,44 +1,80 @@
 .search-filters {
-  border: 1px solid var(--color-border-soft);
-  border-radius: var(--radius-lg);
-  background: var(--surface-glass);
-  box-shadow: var(--shadow-glass);
-  backdrop-filter: blur(var(--blur-panel));
-  padding: var(--space-4);
+    padding: 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
 }
 
-.search-filters__grid {
-  display: grid;
-  gap: var(--space-3);
-  align-items: end;
+.search-filters__search-row {
+    display: flex;
+    align-items: end;
+    gap: 0.75rem;
 }
 
-.search-filters__query,
-.search-filters__field {
-  display: grid;
-  gap: 0.45rem;
-  min-width: 0;
+.search-filters__search {
+    flex: 1;
 }
 
-.search-filters__label {
-  color: var(--color-muted);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0;
-  line-height: 1;
+.search-filters__search-control {
+    position: relative;
 }
 
-.search-filters__input {
-  border-color: rgba(255, 255, 255, 0.14);
-  padding-inline: 0.9rem;
+.search-filters__search-control > svg {
+    position: absolute;
+    top: 0.72rem;
+    left: 0.8rem;
+    z-index: 1;
+    color: var(--color-ink-muted);
+    pointer-events: none;
 }
 
-.search-filters__input:focus {
-  border-color: rgba(125, 211, 252, 0.45);
+.search-filters__search-control input {
+    padding-left: 2.5rem;
 }
 
-@media (min-width: 1024px) {
-  .search-filters__grid {
-    grid-template-columns: minmax(14rem, 1.2fr) repeat(4, minmax(8.5rem, 0.85fr)) auto;
-  }
+.search-filters__desktop {
+    display: none;
+}
+
+.search-filters__mobile-button {
+    flex: 0 0 auto;
+}
+
+.search-filters__fields {
+    display: grid;
+    gap: 1rem;
+}
+
+.search-filters__actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+@media (min-width: 900px) {
+    .search-filters {
+        padding: 1.25rem;
+    }
+
+    .search-filters__mobile-button {
+        display: none;
+    }
+
+    .search-filters__desktop {
+        display: block;
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--color-border);
+    }
+
+    .search-filters__fields {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1180px) {
+    .search-filters__fields {
+        grid-template-columns: repeat(6, 1fr);
+    }
 }

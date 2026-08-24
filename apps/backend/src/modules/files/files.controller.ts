@@ -4,6 +4,6 @@ import { filesService } from './files.service';
 
 export const filesController = {
   uploadFitFile: asyncHandler(async (req: Request, res: Response) => {
-    res.status(201).json(filesService.uploaded(req.file));
+    res.status(201).json(await filesService.uploaded(req.file));
   }),
 };

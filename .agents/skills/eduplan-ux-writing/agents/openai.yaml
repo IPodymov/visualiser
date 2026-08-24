@@ -1,0 +1,4 @@
+interface:
+  display_name: "EduPlan UX Writing"
+  short_description: "Write clear Russian educational product copy"
+  default_prompt: "Use $eduplan-ux-writing to rewrite this EduPlan interface copy in clear, precise Russian."

@@ -1,10 +1,12 @@
 import cors from 'cors';
 import type { CorsOptions } from 'cors';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import { errorMiddleware } from './middlewares/error.middleware';
+import { preventCaching, requireSupportedContentType } from './middlewares/security.middleware';
 import { authRoutes } from './modules/auth/auth.routes';
 import { comparisonRoutes } from './modules/comparison/comparison.routes';
 import { curriculaRoutes } from './modules/curricula/curricula.routes';
@@ -15,6 +17,7 @@ import { filesRoutes } from './modules/files/files.routes';
 import { profileRoutes } from './modules/profile/profile.routes';
 import { specialitiesRoutes } from './modules/specialities/specialities.routes';
 import { usersRoutes } from './modules/users/users.routes';
+import { AppError } from './shared/app-error';
 import { openApiDocument } from './shared/openapi';
 
 const defaultCorsOrigins = [
@@ -30,7 +33,7 @@ const resolveCorsOrigins = () => {
   return configuredOrigins
     .split(',')
     .map((origin) => normalizeOrigin(origin))
-    .filter(Boolean);
+    .filter((origin) => Boolean(origin) && origin !== '*');
 };
 
 const normalizeOrigin = (origin: string) => {
@@ -41,7 +44,7 @@ const normalizeOrigin = (origin: string) => {
     const url = new URL(trimmed);
     return url.origin;
   } catch {
-    return trimmed;
+    return '';
   }
 };
 
@@ -53,7 +56,6 @@ const wildcardOriginPattern = (origin: string) => {
 const isOriginAllowed = (origin: string, allowedOrigins: string[]) => {
   const normalizedOrigin = normalizeOrigin(origin);
   return allowedOrigins.some((allowedOrigin) => {
-    if (allowedOrigin === '*') return true;
     if (allowedOrigin.includes('*')) return wildcardOriginPattern(allowedOrigin).test(normalizedOrigin);
     return allowedOrigin === normalizedOrigin;
   });
@@ -61,11 +63,11 @@ const isOriginAllowed = (origin: string, allowedOrigins: string[]) => {
 
 export const createApp = () => {
   const app = express();
+  app.disable('x-powered-by');
   const allowedOrigins = resolveCorsOrigins();
-  const allowAnyOrigin = allowedOrigins.includes('*');
   const corsOptions: CorsOptions = {
     origin: (origin, callback) => {
-      if (!origin || allowAnyOrigin || isOriginAllowed(origin, allowedOrigins)) {
+      if (!origin || isOriginAllowed(origin, allowedOrigins)) {
         callback(null, true);
         return;
       }
@@ -77,14 +79,47 @@ export const createApp = () => {
     optionsSuccessStatus: 204,
   };
 
-  app.use(helmet());
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { message: 'Too many requests. Try again later.' },
+  });
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { message: 'Too many authentication attempts. Try again later.' },
+  });
+  const uploadLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { message: 'Too many upload attempts. Try again later.' },
+  });
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: { frameAncestors: ["'none'"] },
+      },
+      frameguard: { action: 'deny' },
+    }),
+  );
   app.use(cors(corsOptions));
   app.options('*', cors(corsOptions));
+  app.use(requireSupportedContentType);
   app.use(express.json({ limit: '2mb' }));
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
-  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
-  app.use('/api/auth', authRoutes);
+  app.use('/api', apiLimiter, preventCaching);
+  if (env.ENABLE_API_DOCS) {
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
+  }
+  app.use('/api/auth', authLimiter, authRoutes);
   app.use('/api/curricula', curriculaRoutes);
   app.use('/api/faculties', facultiesRoutes);
   app.use('/api/specialities', specialitiesRoutes);
@@ -92,8 +127,9 @@ export const createApp = () => {
   app.use('/api/comparison', comparisonRoutes);
   app.use('/api/profile', profileRoutes);
   app.use('/api/downloads', downloadsRoutes);
-  app.use('/api/files', filesRoutes);
+  app.use('/api/files', uploadLimiter, filesRoutes);
   app.use('/api/users', usersRoutes);
+  app.use((_req, _res, next) => next(new AppError(404, 'Not found')));
   app.use(errorMiddleware);
 
   return app;

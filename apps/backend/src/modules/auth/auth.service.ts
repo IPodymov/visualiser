@@ -12,6 +12,8 @@ const publicUserSelect = {
   updatedAt: true,
 };
 
+const DUMMY_PASSWORD_HASH = '$2b$10$6q1YrrByvKwjGgWxWqJ0Te6.k21qpVxxX88bJ7KSYNSKaursl96ZS';
+
 export class AuthService {
   async register(dto: RegisterDto) {
     const existing = await prisma.user.findUnique({ where: { email: dto.email } });
@@ -36,7 +38,11 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user || !(await verifyPassword(dto.password, user.passwordHash))) {
+    const passwordMatches = await verifyPassword(
+      dto.password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
+    if (!user || !passwordMatches) {
       throw new AppError(401, 'Invalid email or password');
     }
 

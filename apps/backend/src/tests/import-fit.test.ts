@@ -83,4 +83,182 @@ describe('FIT parser', () => {
       labHours: 72,
     });
   });
+
+  it('uses filename metadata fallbacks and handles a workbook without a discipline table', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fit-parser-fallback-'));
+    const filePath = path.join(tmpDir, '09.04.01-Data-Science-2026.xlsx');
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ['Уровень образования', 'Магистратура'],
+        ['Форма обучения', 'Заочная'],
+        ['Год поступления: 2026'],
+        ['Профиль'],
+      ]),
+      'Метаданные',
+    );
+    XLSX.writeFile(workbook, filePath);
+
+    const parsed = parseCurriculumWorkbook(filePath);
+
+    expect(parsed).toMatchObject({
+      specialityCode: '09.04.01',
+      specialityName: 'Data Science 2026',
+      admissionYear: 2026,
+      educationLevel: 'Магистратура',
+      educationForm: 'Заочная',
+      disciplines: [],
+    });
+  });
+
+  it('falls back to unknown metadata and filters invalid regular rows', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fit-parser-unknown-'));
+    const filePath = path.join(tmpDir, 'UNKNOWN.xlsx');
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ['Дисциплина', 'Часы'],
+        ['AI', 36],
+        ['Итого', 72],
+        ['Полезная дисциплина', 'нет данных'],
+      ]),
+      'План',
+    );
+    XLSX.writeFile(workbook, filePath);
+
+    const parsed = parseCurriculumWorkbook(filePath);
+
+    expect(parsed.specialityCode).toBe('UNKNOWN');
+    expect(parsed.specialityName).toBe('Unknown speciality');
+    expect(parsed.admissionYear).toBeUndefined();
+    expect(parsed.disciplines).toEqual([
+      expect.objectContaining({ name: 'Полезная дисциплина', totalHours: undefined }),
+    ]);
+  });
+
+  it('parses every supported regular workload column', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fit-parser-columns-'));
+    const filePath = path.join(tmpDir, '10.05.01-2025.xlsx');
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        [
+          'Индекс',
+          'Дисциплина',
+          'Семестр',
+          'Контроль',
+          'Всего часов',
+          'Кредиты',
+          'Лекции',
+          'Семинары',
+          'Лабораторные',
+        ],
+        ['Б1.2', 'Защита информации', '3 семестр', 'Экзамен', '144,5', '4,5', 36, 18, 18],
+        ['', 'Проектирование систем', 4, '', 72, 2, 18, 18, 0],
+      ]),
+      'План',
+    );
+    XLSX.writeFile(workbook, filePath);
+
+    expect(parseCurriculumWorkbook(filePath).disciplines[0]).toMatchObject({
+      externalDisciplineCode: 'Б1.2',
+      semesterNumber: 3,
+      controlForm: 'Экзамен',
+      totalHours: 144.5,
+      credits: 4.5,
+      lectureHours: 36,
+      practiceHours: 18,
+      labHours: 18,
+    });
+    expect(parseCurriculumWorkbook(filePath).disciplines[1]).toMatchObject({
+      externalDisciplineCode: undefined,
+      controlForm: undefined,
+      semesterNumber: 4,
+    });
+  });
+
+  it('skips malformed 1C rows and aggregates duplicate controls and other load types', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fit-parser-1c-branches-'));
+    const filePath = path.join(tmpDir, 'branch-cases.xlsx');
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ['Дисциплина', 'Период контроля', 'Нагрузка', 'Количество'],
+        ['', 'Первый семестр', 'Лекции', 10],
+        ['AI', 'Первый семестр', 'Лекции', 10],
+        ['Итого', 'Первый семестр', 'Лекции', 10],
+        ['Алгоритмы', 'неизвестно', 'Лекции', 10],
+        ['Алгоритмы', 'Первый семестр', 'Экзамен', null],
+        ['Алгоритмы', 'Первый семестр', 'Экзамен', null],
+        ['Алгоритмы', 'Первый семестр', 'Практические занятия', 18],
+        ['Алгоритмы', 'Первый семестр', 'Самостоятельная работа', 20],
+        ['Алгоритмы', 'Первый семестр', 'Иная нагрузка', 5],
+        ['Алгоритмы', 'Первый семестр', 'Лекции', null],
+      ]),
+      'План',
+    );
+    XLSX.writeFile(workbook, filePath);
+
+    expect(parseCurriculumWorkbook(filePath).disciplines).toEqual([
+      expect.objectContaining({
+        name: 'Алгоритмы',
+        semesterNumber: 1,
+        controlForm: 'Экзамен',
+        totalHours: 43,
+        practiceHours: 18,
+        independentHours: 20,
+      }),
+    ]);
+  });
+
+  it('parses a regular table whose evidence is credits rather than total hours', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fit-parser-credit-only-'));
+    const filePath = path.join(tmpDir, '09.03.02-credit-only.xlsx');
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ['Дисциплина', 'ЗЕТ'],
+        ['Теория информации', 3],
+      ]),
+      'План',
+    );
+    XLSX.writeFile(workbook, filePath);
+
+    expect(parseCurriculumWorkbook(filePath).disciplines[0]).toMatchObject({
+      name: 'Теория информации',
+      credits: 3,
+      totalHours: undefined,
+    });
+  });
+
+  it('maps blank optional 1C columns to undefined and keeps a workload without control forms', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fit-parser-1c-blank-'));
+    const filePath = path.join(tmpDir, '09.03.03-blank.xlsx');
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ['Блок', 'Шифр', 'Часть', 'Модуль', 'Тип записи', 'Дисциплина', 'Период контроля', 'Нагрузка', 'Количество'],
+        ['', '', '', '', '', 'Системный проект', 'Второй семестр', 'Иная нагрузка', 10],
+      ]),
+      'План',
+    );
+    XLSX.writeFile(workbook, filePath);
+
+    expect(parseCurriculumWorkbook(filePath).disciplines[0]).toMatchObject({
+      name: 'Системный проект',
+      externalDisciplineCode: undefined,
+      blockName: undefined,
+      partName: undefined,
+      moduleName: undefined,
+      recordType: undefined,
+      controlForm: undefined,
+      totalHours: 10,
+    });
+  });
 });

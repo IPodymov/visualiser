@@ -1,5 +1,7 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { prisma } from '../../config/prisma';
+import { env } from '../../config/env';
 import { AppError } from '../../shared/app-error';
 import { comparisonService } from '../comparison/comparison.service';
 import { curriculaService } from '../curricula/curricula.service';
@@ -9,9 +11,20 @@ export class DownloadsService {
     const curriculum = await prisma.curriculum.findUnique({ where: { id: curriculumId } });
     if (!curriculum) throw new AppError(404, 'Curriculum not found');
     if (!fs.existsSync(curriculum.sourceFilePath)) throw new AppError(404, 'Source file not found');
+    const realFilePath = fs.realpathSync(curriculum.sourceFilePath);
+    const isInsideAllowedDirectory = env.FIT_DIR.split(',')
+      .map((directory) => directory.trim())
+      .filter(Boolean)
+      .map((directory) => path.resolve(process.cwd(), directory))
+      .some((directory) => {
+        const realDirectory = fs.existsSync(directory) ? fs.realpathSync(directory) : directory;
+        const relativePath = path.relative(realDirectory, realFilePath);
+        return relativePath !== '' && !relativePath.startsWith('..');
+      });
+    if (!isInsideAllowedDirectory) throw new AppError(404, 'Source file not found');
 
     await this.log(userId, curriculumId, 'SOURCE_CURRICULUM');
-    return curriculum;
+    return { ...curriculum, sourceFilePath: realFilePath };
   }
 
   async disciplineMap(curriculumId: number, userId?: number) {

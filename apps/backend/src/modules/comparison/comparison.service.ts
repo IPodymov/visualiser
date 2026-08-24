@@ -3,6 +3,21 @@ import { AppError } from '../../shared/app-error';
 
 const normalizeName = (name: string) => name.trim().toLowerCase().replace(/\s+/g, ' ');
 
+const getEducationLevelKey = (level: string | null, specialityCode?: string) => {
+  const normalized = level?.trim().toLocaleLowerCase('ru-RU').replace(/ё/g, 'е') ?? '';
+
+  if (normalized.includes('бакалавр')) return 'bachelor';
+  if (normalized.includes('магистр')) return 'master';
+  if (normalized.includes('специал')) return 'specialist';
+  if (normalized.includes('аспиран')) return 'postgraduate';
+  if (specialityCode?.includes('.04.')) return 'master';
+  if (specialityCode?.includes('.05.')) return 'specialist';
+  if (specialityCode?.includes('.06.')) return 'postgraduate';
+  if (specialityCode?.includes('.03.')) return 'bachelor';
+
+  return normalized;
+};
+
 const mapItem = (item: Awaited<ReturnType<typeof loadDisciplines>>[number]) => ({
   curriculumDisciplineId: item.id,
   disciplineId: item.disciplineId,
@@ -52,6 +67,12 @@ export class ComparisonService {
 
     if (!first || !second) {
       throw new AppError(404, 'One of curricula was not found');
+    }
+
+    const firstLevel = getEducationLevelKey(first.educationLevel, first.speciality?.code);
+    const secondLevel = getEducationLevelKey(second.educationLevel, second.speciality?.code);
+    if (!firstLevel || !secondLevel || firstLevel !== secondLevel) {
+      throw new AppError(400, 'Для сравнения выберите программы одного уровня образования');
     }
 
     const firstMap = new Map<string, LoadedDiscipline>(

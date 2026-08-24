@@ -1,15 +1,23 @@
 import { create } from 'zustand';
+import { profileApi } from '../services/api/profile';
 import type { EducationPlan, UserProfile } from '../types/plan';
+import { areEducationLevelsCompatible } from '../utils/compareEligibility';
+
+type ComparePlanCandidate = Pick<EducationPlan, 'id' | 'level'>;
+export type CompareSelectionResult = 'added' | 'already-selected' | 'incompatible';
 
 type AppState = {
   user: UserProfile | null;
   favorites: number[];
-  compareIds: number[];
+  compareIds: [number | null, number | null];
+  compareLevels: [string | null, string | null];
   history: EducationPlan[];
   setUser: (user: UserProfile | null) => void;
   logout: () => void;
   toggleFavorite: (planId: number) => void;
-  addToCompare: (planId: number) => void;
+  setFavorites: (planIds: number[]) => void;
+  setComparePlan: (slot: 0 | 1, plan: ComparePlanCandidate | null) => CompareSelectionResult;
+  addToCompare: (plan: ComparePlanCandidate) => CompareSelectionResult;
   removeFromCompare: (planId: number) => void;
   addToHistory: (plan: EducationPlan) => void;
 };
@@ -37,10 +45,59 @@ const readUser = () => {
 
 const initialUser = readUser();
 
+const emptyCompareState = {
+  ids: [null, null] as [number | null, number | null],
+  levels: [null, null] as [string | null, string | null],
+};
+
+const readCompareState = () => {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem('eduplan-compare') ?? 'null');
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !('version' in value) ||
+      value.version !== 2 ||
+      !('ids' in value) ||
+      !('levels' in value)
+    ) {
+      return emptyCompareState;
+    }
+
+    const { ids, levels } = value as { ids?: unknown; levels?: unknown };
+    if (!Array.isArray(ids) || !Array.isArray(levels)) return emptyCompareState;
+
+    const compareIds: [number | null, number | null] = [
+      typeof ids[0] === 'number' ? ids[0] : null,
+      typeof ids[1] === 'number' ? ids[1] : null,
+    ];
+    const compareLevels: [string | null, string | null] = [
+      typeof levels[0] === 'string' ? levels[0] : null,
+      typeof levels[1] === 'string' ? levels[1] : null,
+    ];
+
+    if (compareIds.some((id, index) => id !== null && !compareLevels[index])) {
+      return emptyCompareState;
+    }
+
+    return { ids: compareIds, levels: compareLevels };
+  } catch {
+    return emptyCompareState;
+  }
+};
+
+const storedCompareState = readCompareState();
+
+const saveCompareState = (
+  ids: [number | null, number | null],
+  levels: [string | null, string | null],
+) => localStorage.setItem('eduplan-compare', JSON.stringify({ version: 2, ids, levels }));
+
 export const useAppStore = create<AppState>((set, get) => ({
   user: initialUser,
   favorites: initialUser ? readNumbers('eduplan-favorites') : [],
-  compareIds: readNumbers('eduplan-compare').slice(0, 3),
+  compareIds: storedCompareState.ids,
+  compareLevels: storedCompareState.levels,
   history: [],
   setUser: (user) => {
     if (user) {
@@ -60,22 +117,80 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleFavorite: (planId) => {
     if (!get().user) return;
 
-    const favorites = get().favorites.includes(planId)
-      ? get().favorites.filter((id) => id !== planId)
-      : [...get().favorites, planId];
+    const wasFavorite = get().favorites.includes(planId);
+    const previous = get().favorites;
+    const favorites = wasFavorite ? previous.filter((id) => id !== planId) : [...previous, planId];
     saveNumbers('eduplan-favorites', favorites);
     set({ favorites });
+    const request = wasFavorite
+      ? profileApi.removeFavorite(planId)
+      : profileApi.addFavorite(planId);
+    void request.catch(() => {
+      saveNumbers('eduplan-favorites', previous);
+      set({ favorites: previous });
+    });
   },
-  addToCompare: (planId) => {
-    const current = get().compareIds.filter((id) => id !== planId);
-    const compareIds = [planId, ...current].slice(0, 3);
-    saveNumbers('eduplan-compare', compareIds);
-    set({ compareIds });
+  setFavorites: (planIds) => {
+    saveNumbers('eduplan-favorites', planIds);
+    set({ favorites: planIds });
+  },
+  setComparePlan: (slot, plan) => {
+    const currentIds = get().compareIds;
+    const currentLevels = get().compareLevels;
+    const otherSlot = slot === 0 ? 1 : 0;
+    if (plan && currentIds[otherSlot] === plan.id) return 'already-selected';
+    if (
+      plan &&
+      currentLevels[otherSlot] &&
+      !areEducationLevelsCompatible(plan.level, currentLevels[otherSlot])
+    ) {
+      return 'incompatible';
+    }
+
+    const compareIds: [number | null, number | null] = [...currentIds];
+    const compareLevels: [string | null, string | null] = [...currentLevels];
+    compareIds[slot] = plan?.id ?? null;
+    compareLevels[slot] = plan?.level ?? null;
+    saveCompareState(compareIds, compareLevels);
+    set({ compareIds, compareLevels });
+    return 'added';
+  },
+  addToCompare: (plan) => {
+    const current = get().compareIds;
+    const currentLevels = get().compareLevels;
+    if (current.includes(plan.id)) return 'already-selected';
+
+    const requiredLevel = currentLevels.find((level) => level !== null);
+    if (requiredLevel && !areEducationLevelsCompatible(plan.level, requiredLevel)) {
+      return 'incompatible';
+    }
+
+    const compareIds: [number | null, number | null] =
+      current[0] === null
+        ? [plan.id, current[1]]
+        : current[1] === null
+          ? [current[0], plan.id]
+          : [current[0], plan.id];
+    const compareLevels: [string | null, string | null] =
+      current[0] === null
+        ? [plan.level, currentLevels[1]]
+        : current[1] === null
+          ? [currentLevels[0], plan.level]
+          : [currentLevels[0], plan.level];
+    saveCompareState(compareIds, compareLevels);
+    set({ compareIds, compareLevels });
+    return 'added';
   },
   removeFromCompare: (planId) => {
-    const compareIds = get().compareIds.filter((id) => id !== planId);
-    saveNumbers('eduplan-compare', compareIds);
-    set({ compareIds });
+    const compareIds = get().compareIds.map((id) => (id === planId ? null : id)) as [
+      number | null,
+      number | null,
+    ];
+    const compareLevels = get().compareLevels.map((level, index) =>
+      get().compareIds[index] === planId ? null : level,
+    ) as [string | null, string | null];
+    saveCompareState(compareIds, compareLevels);
+    set({ compareIds, compareLevels });
   },
   addToHistory: (plan) => {
     const history = [plan, ...get().history.filter((item) => item.id !== plan.id)].slice(0, 8);

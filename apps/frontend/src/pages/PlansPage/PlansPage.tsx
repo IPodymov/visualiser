@@ -1,92 +1,153 @@
-import { AnimatePresence } from 'framer-motion';
+import { useEffect, useMemo, useState } from 'react';
+import { GitCompareArrows, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import './PlansPage.css';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
+import { ErrorState, LoadingState } from '../../components/InterfaceState/InterfaceState';
+import { NextAction, PageHeader, PageSection } from '../../components/PageLayout/PageLayout';
 import { PlanCard } from '../../components/PlanCard/PlanCard';
 import { SearchFilters } from '../../components/SearchFilters/SearchFilters';
 import { Button } from '../../components/ui/button';
-import { Skeleton } from '../../components/ui/skeleton';
+import { Pagination } from '../../components/ui/pagination';
 import { usePlans } from '../../hooks/usePlans';
+import { useAppStore } from '../../store/useAppStore';
+import type { PlanFilters } from '../../types/plan';
+
+const defaultFilters: PlanFilters = {
+  query: '',
+  faculty: 'all',
+  direction: 'all',
+  profile: 'all',
+  level: 'all',
+  studyForm: 'all',
+  year: 'all',
+};
 
 export const PlansPage = () => {
-  const { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload } = usePlans();
-  const hasActiveFilters = Object.values(filters).some((value) => value !== '' && value !== 'all');
+  const { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload } =
+    usePlans();
+  const [visibleCount, setVisibleCount] = useState(9);
+  const compareCount = useAppStore((state) => state.compareIds.filter(Boolean).length);
+
+  const activeFilters = useMemo(() => {
+    const items: Array<{ key: keyof PlanFilters; label: string }> = [];
+    if (filters.query) items.push({ key: 'query', label: `Поиск: ${filters.query}` });
+    filterConfig.forEach((filter) => {
+      const value = filters[filter.key];
+      if (value !== 'all')
+        items.push({
+          key: filter.key,
+          label: `${filter.label}: ${filter.options.find((option) => option.value === value)?.label ?? value}`,
+        });
+    });
+    return items;
+  }, [filterConfig, filters]);
+
+  useEffect(() => setVisibleCount(9), [filters]);
+
+  const reset = () => setFilters(defaultFilters);
+  const removeFilter = (key: keyof PlanFilters) =>
+    setFilters({ ...filters, [key]: key === 'query' ? '' : 'all' });
+  const visiblePlans = filteredPlans.slice(0, visibleCount);
 
   return (
-    <main className="container py-10">
-      <div className="mb-8 max-w-3xl">
-        <span className="text-sm font-semibold uppercase text-sky-200">Каталог учебных планов</span>
-        <h1 className="mt-3 text-4xl font-black tracking-normal text-white md:text-5xl">
-          Все направления в одной сетке
-        </h1>
-        <p className="mt-4 text-slate-300">
-          Ищите по названию, фильтруйте по факультету, уровню, форме обучения и году.
-        </p>
+    <main className="page-main">
+      <div className="container page-stack">
+        <PageHeader
+          eyebrow="Каталог учебных планов"
+          title="Найдите образовательную программу"
+          description="Ищите по названию, направлению или коду и уточняйте результаты по факультету, профилю, уровню, году и форме обучения."
+        />
+
+        <PageSection>
+          <SearchFilters
+            config={filterConfig}
+            filters={filters}
+            onChange={setFilters}
+            onReset={reset}
+            activeCount={activeFilters.length}
+          />
+
+          <div className="plans-results-bar">
+            <div aria-live="polite">
+              <strong>
+                {loading
+                  ? 'Ищем программы…'
+                  : `${filteredPlans.length} ${filteredPlans.length === 1 ? 'программа' : 'программ'}`}
+              </strong>
+              <span>по выбранным параметрам</span>
+            </div>
+            {activeFilters.length > 0 && (
+              <div className="plans-active-filters" aria-label="Активные фильтры">
+                {activeFilters.map((filter) => (
+                  <button key={filter.key} type="button" onClick={() => removeFilter(filter.key)}>
+                    {filter.label}
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span className="visually-hidden">Сбросить фильтр</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {loading ? (
+            <LoadingState label="Загружаем учебные планы" rows={6} />
+          ) : error && !plans.length ? (
+            <ErrorState
+              title="Не удалось загрузить учебные планы"
+              text="Сервис данных временно недоступен. Повторите загрузку — выбранные параметры сохранятся."
+              onRetry={() => void reload(filters)}
+            />
+          ) : visiblePlans.length ? (
+            <>
+              <div className="plans-grid">
+                {visiblePlans.map((plan) => (
+                  <PlanCard key={plan.id} plan={plan} />
+                ))}
+              </div>
+              <Pagination
+                shown={visiblePlans.length}
+                total={filteredPlans.length}
+                onLoadMore={() => setVisibleCount((count) => count + 9)}
+              />
+            </>
+          ) : !plans.length ? (
+            <EmptyState
+              title="Учебные планы пока не загружены"
+              text="Когда образовательная организация добавит планы, они появятся в этом каталоге."
+            />
+          ) : (
+            <EmptyState
+              title="По выбранным параметрам учебные планы не найдены"
+              text="Измените запрос или сбросьте фильтры, чтобы увидеть больше программ."
+              action={
+                <Button type="button" variant="outline" onClick={reset}>
+                  Сбросить фильтры
+                </Button>
+              }
+            />
+          )}
+        </PageSection>
+
+        {compareCount > 0 && (
+          <NextAction className="plans-compare-next">
+            <div>
+              <p className="text-sm text-blue-200">Выбрано для сравнения: {compareCount} из 2</p>
+              <h2 className="mt-2 text-2xl font-bold">
+                {compareCount === 2
+                  ? 'Программы готовы к сравнению'
+                  : 'Добавьте ещё одну программу'}
+              </h2>
+            </div>
+            <Button asChild variant="secondary">
+              <Link to="/compare">
+                <GitCompareArrows className="h-4 w-4" />
+                Перейти к сравнению
+              </Link>
+            </Button>
+          </NextAction>
+        )}
       </div>
-
-      <SearchFilters
-        config={filterConfig}
-        filters={filters}
-        onChange={setFilters}
-        onSubmit={() => void reload(filters)}
-      />
-
-      <section className="plans-credits-note" aria-label="Пояснение ЗЕТ">
-        <h2>Что такое ЗЕТ</h2>
-        <p>
-          ЗЕТ - зачетная единица трудоемкости. Она показывает, сколько учебной работы заложено в
-          дисциплины: лекции, практики, лабораторные, проекты, контроль и самостоятельную подготовку.
-          Обычно 1 ЗЕТ соответствует 36 академическим часам, а общий ЗЕТ программы складывается из
-          ЗЕТ всех дисциплин и практик учебного плана.
-        </p>
-      </section>
-
-      {error && (
-        <div className="mt-5 rounded-md border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-100">
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="plans-grid">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-80" />
-          ))}
-        </div>
-      ) : error && !plans.length ? (
-        <div className="mt-8">
-          <EmptyState
-            title="Не удалось загрузить учебные планы"
-            text="Проверьте доступность backend и настройки API URL, затем повторите запрос."
-            action={
-              <Button type="button" onClick={() => void reload(filters)}>
-                Повторить
-              </Button>
-            }
-          />
-        </div>
-      ) : filteredPlans.length ? (
-        <div className="plans-grid">
-          <AnimatePresence>
-            {filteredPlans.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} />
-            ))}
-          </AnimatePresence>
-        </div>
-      ) : !plans.length && !hasActiveFilters ? (
-        <div className="mt-8">
-          <EmptyState
-            title="Учебные планы пока не загружены"
-            text="База данных пуста. Выполните seed или импорт FIT на backend, затем обновите страницу."
-          />
-        </div>
-      ) : (
-        <div className="mt-8">
-          <EmptyState
-            title="Ничего не найдено"
-            text="Попробуйте сбросить фильтры или выполнить поиск по другому названию направления."
-          />
-        </div>
-      )}
     </main>
   );
 };

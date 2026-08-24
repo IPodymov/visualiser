@@ -17,7 +17,11 @@ const productionUrl = (name: string) =>
   z
     .string()
     .min(1, `${name} is required in production`)
-    .refine((value) => !localhostPattern.test(value), `${name} cannot use localhost in production`);
+    .refine((value) => !localhostPattern.test(value), `${name} cannot use localhost in production`)
+    .refine(
+      (value) => name === 'DATABASE_URL' || value.startsWith('https://'),
+      `${name} must use HTTPS in production`,
+    );
 
 const productionCommaSeparatedOrigins = z
   .string()
@@ -25,6 +29,21 @@ const productionCommaSeparatedOrigins = z
   .refine(
     (value) => !value || value.split(',').every((origin) => !localhostPattern.test(origin.trim())),
     'CORS_ORIGIN cannot use localhost in production',
+  )
+  .refine(
+    (value) =>
+      !value ||
+      value.split(',').every((origin) => {
+        const trimmed = origin.trim();
+        if (!trimmed.startsWith('https://') || trimmed === 'https://*') return false;
+        try {
+          const hostname = new URL(trimmed.replace('*.', 'preview.')).hostname;
+          return hostname.includes('.') && !hostname.startsWith('.');
+        } catch {
+          return false;
+        }
+      }),
+    'CORS_ORIGIN must contain valid HTTPS origins',
   );
 
 const envSchema = z.object({
@@ -38,22 +57,28 @@ const envSchema = z.object({
         ),
   PORT: z.coerce.number().default(4000),
   JWT_SECRET: isProduction
-    ? z.string().min(1, 'JWT_SECRET is required in production')
-    : z.string().default('development-only-jwt-secret'),
+    ? z.string().min(32, 'JWT_SECRET must contain at least 32 characters in production')
+    : z.string().default('development-only-jwt-secret-change-me'),
   JWT_EXPIRES_IN: z.string().default('1d'),
+  JWT_ISSUER: z.string().default('eduplan-api'),
+  JWT_AUDIENCE: z.string().default('eduplan-web'),
   FIT_DIR: z.string().default('../../FIT'),
   FIT_IMPORT_ADMISSION_YEAR: z.string().optional(),
   FRONTEND_URL: isProduction
     ? productionUrl('FRONTEND_URL')
     : z.string().default('http://localhost:5173'),
   CORS_ORIGIN: isProduction ? productionCommaSeparatedOrigins : z.string().optional(),
+  ENABLE_API_DOCS: z
+    .enum(['true', 'false'])
+    .default(isProduction ? 'false' : 'true')
+    .transform((value) => value === 'true'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {
   const details = parsedEnv.error.issues
-    .map((issue) => `${issue.path.join('.') || 'env'}: ${issue.message}`)
+    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
     .join('; ');
   throw new Error(`Invalid backend environment: ${details}`);
 }

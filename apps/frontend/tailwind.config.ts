@@ -7,9 +7,13 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: '1rem',
+      padding: {
+        DEFAULT: '1rem',
+        sm: '1.25rem',
+        lg: '1.5rem',
+      },
       screens: {
-        '2xl': '1280px',
+        '2xl': '1240px',
       },
     },
     extend: {
@@ -50,8 +54,8 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       boxShadow: {
-        glow: '0 24px 90px rgba(91, 141, 255, 0.28)',
-        glass: '0 18px 80px rgba(2, 8, 23, 0.38)',
+        soft: 'var(--shadow-sm)',
+        overlay: 'var(--shadow-md)',
       },
       keyframes: {
         'float-slow': {

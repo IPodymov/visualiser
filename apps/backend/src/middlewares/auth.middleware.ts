@@ -18,7 +18,7 @@ declare global {
 export const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
 
-  if (!header?.startsWith('Bearer ')) {
+  if (!header?.startsWith('Bearer ') || header.length > 4096) {
     return next(new AppError(401, 'Authorization token is required'));
   }
 

@@ -100,27 +100,6 @@ const flattenDisciplines = (curriculum: BackendCurriculum) => {
 const getDisciplineName = (discipline: BackendDiscipline) =>
   discipline.name ?? discipline.discipline?.name ?? 'Дисциплина';
 
-const buildCompetencies = (disciplines: BackendDiscipline[]) => {
-  const total = Math.max(disciplines.reduce((sum, item) => sum + (item.totalHours ?? 0), 0), 1);
-  const byName = (tokens: string[]) =>
-    disciplines
-      .filter((item) => tokens.some((token) => getDisciplineName(item).toLowerCase().includes(token)))
-      .reduce((sum, item) => sum + (item.totalHours ?? 0), 0);
-
-  const scores = [
-    { name: 'Математика' as const, raw: byName(['математ', 'алгебр', 'статист']) },
-    { name: 'Программирование' as const, raw: byName(['программ', 'разработ', 'алгоритм', 'web', 'веб']) },
-    { name: 'Аналитика' as const, raw: byName(['аналит', 'данн', 'модел']) },
-    { name: 'Soft Skills' as const, raw: byName(['команд', 'проект', 'коммуникац', 'менедж']) },
-    { name: 'Практика' as const, raw: byName(['практик', 'проект', 'исследователь']) },
-  ];
-
-  return scores.map((score, index) => ({
-    name: score.name,
-    value: Math.min(100, Math.max(35, Math.round((score.raw / total) * 280 + 44 + index * 3))),
-  }));
-};
-
 export const toPlan = (curriculum: BackendCurriculum): EducationPlan => {
   const backendDisciplines = flattenDisciplines(curriculum);
   const disciplines = backendDisciplines.map((item, index) => ({
@@ -154,8 +133,12 @@ export const toPlan = (curriculum: BackendCurriculum): EducationPlan => {
   return {
     id: curriculum.id,
     title,
+    direction: curriculum.speciality.name,
+    profile: curriculum.profileName ?? undefined,
     facultyId: curriculum.faculty?.id,
-    faculty: curriculum.faculty?.name ?? facultyFromSource(curriculum.sourceFilePath ?? curriculum.sourceFileName),
+    faculty:
+      curriculum.faculty?.name ??
+      facultyFromSource(curriculum.sourceFilePath ?? curriculum.sourceFileName),
     level: levelByCode(curriculum.speciality.code, curriculum.educationLevel),
     studyForm: curriculum.educationForm ?? defaultStudyForm,
     year: curriculum.admissionYear ?? new Date(curriculum.uploadedAt).getFullYear(),
@@ -164,7 +147,7 @@ export const toPlan = (curriculum: BackendCurriculum): EducationPlan => {
     totalHours,
     credits,
     semesters,
-    competencies: buildCompetencies(backendDisciplines),
+    competencies: [],
     disciplines,
     visualization: curriculum.visualization,
     sourceFileName: curriculum.sourceFileName,

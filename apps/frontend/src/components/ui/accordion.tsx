@@ -9,7 +9,7 @@ export const AccordionItem = ({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>) => (
-  <AccordionPrimitive.Item className={cn('border-b border-white/10', className)} {...props} />
+  <AccordionPrimitive.Item className={cn('border-b border-border', className)} {...props} />
 );
 
 export const AccordionTrigger = ({
@@ -20,7 +20,7 @@ export const AccordionTrigger = ({
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       className={cn(
-        'flex flex-1 items-center justify-between py-4 text-left text-sm font-semibold text-white transition-all hover:text-sky-200 [&[data-state=open]>svg]:rotate-180',
+        'flex flex-1 items-center justify-between py-4 text-left text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180',
         className,
       )}
       {...props}

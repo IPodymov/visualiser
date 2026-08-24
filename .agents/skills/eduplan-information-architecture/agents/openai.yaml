@@ -1,0 +1,4 @@
+interface:
+  display_name: "EduPlan Information Architecture"
+  short_description: "Order curriculum information from context to action"
+  default_prompt: "Use $eduplan-information-architecture to structure this EduPlan page from context and evidence to interpretation and next action."

@@ -1,3 +1,91 @@
 .auth-page {
-  min-height: calc(100vh - 9rem);
+    min-height: calc(100vh - 4.5rem);
+    padding-block: clamp(3rem, 8vw, 6rem);
+}
+
+.auth-page__layout {
+    display: grid;
+    align-items: center;
+    gap: 3rem;
+}
+
+.auth-page__value h1 {
+    max-width: 14ch;
+    margin: 1.25rem 0 0;
+    color: var(--color-ink);
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+}
+
+.auth-page__value > p {
+    max-width: 38rem;
+    margin: 1.25rem 0 0;
+    color: var(--color-ink-soft);
+    font-size: 1.05rem;
+    line-height: 1.7;
+}
+
+.auth-page__benefits {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.auth-page__benefits > div {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+}
+
+.auth-page__benefits svg {
+    color: var(--color-shared);
+}
+
+.auth-page__benefits strong,
+.auth-page__benefits span {
+    display: block;
+}
+
+.auth-page__benefits strong {
+    color: var(--color-ink);
+    font-size: 0.9rem;
+}
+
+.auth-page__benefits span {
+    margin-top: 0.25rem;
+    color: var(--color-ink-soft);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.auth-page__card {
+    width: 100%;
+    max-width: 30rem;
+    justify-self: center;
+}
+
+.auth-page__card h2 {
+    margin: 0.55rem 0 0;
+    color: var(--color-ink);
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.auth-page__card .mb-6 > p:last-child {
+    margin: 0.55rem 0 0;
+    color: var(--color-ink-soft);
+    font-size: 0.85rem;
+}
+
+@media (min-width: 900px) {
+    .auth-page__layout {
+        grid-template-columns: minmax(0, 1.05fr) minmax(24rem, 0.75fr);
+        gap: clamp(4rem, 9vw, 8rem);
+    }
+
+    .auth-page__card {
+        justify-self: end;
+    }
 }

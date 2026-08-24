@@ -11,15 +11,39 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/tests/setup.ts'],
+      include: ['src/tests/**/*.test.{ts,tsx}'],
+      clearMocks: true,
+      restoreMocks: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'json-summary', 'html'],
+        reportsDirectory: 'coverage',
+        include: ['src/**/*.{ts,tsx}'],
+        exclude: ['src/tests/**', 'src/vite-env.d.ts'],
+        thresholds: {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
+      },
+    },
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            react: ['react', 'react-dom', 'react-router-dom'],
-            charts: ['recharts'],
-            animation: ['framer-motion'],
-            icons: ['lucide-react'],
-            api: ['axios', 'zustand'],
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined;
+            if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)) {
+              return 'react';
+            }
+            if (id.includes('/recharts/')) return 'charts';
+            if (id.includes('/framer-motion/')) return 'animation';
+            if (id.includes('/lucide-react/')) return 'icons';
+            if (/[\\/]node_modules[\\/](axios|zustand)[\\/]/.test(id)) return 'api';
+            return undefined;
           },
         },
       },

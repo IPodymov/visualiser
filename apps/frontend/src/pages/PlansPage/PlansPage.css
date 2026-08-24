@@ -1,40 +1,75 @@
-.plans-credits-note {
-  margin-top: var(--space-4);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: var(--radius-md);
-  background: rgba(14, 165, 233, 0.08);
-  color: #dbeafe;
-  padding: var(--space-4);
+.plans-results-bar {
+    display: grid;
+    gap: 1rem;
+    padding-block: 0.5rem;
 }
 
-.plans-credits-note h2 {
-  color: var(--color-text);
-  font-size: 1rem;
-  font-weight: 850;
+.plans-results-bar > div:first-child {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    color: var(--color-ink);
 }
 
-.plans-credits-note p {
-  margin-top: var(--space-2);
-  max-width: 68rem;
-  color: var(--color-text-soft);
-  font-size: 0.9rem;
-  line-height: 1.65;
+.plans-results-bar > div:first-child span {
+    color: var(--color-ink-muted);
+    font-size: 0.85rem;
+}
+
+.plans-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.plans-active-filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.65rem;
+    color: var(--color-brand-strong);
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--color-brand-soft);
+    border: 1px solid #cbdafe;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.plans-active-filters button:hover {
+    background: #dce7ff;
 }
 
 .plans-grid {
-  display: grid;
-  gap: var(--space-5);
-  margin-top: var(--space-8);
+    display: grid;
+    gap: 1rem;
 }
 
-@media (min-width: 768px) {
-  .plans-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.plans-compare-next {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
 }
 
-@media (min-width: 1280px) {
-  .plans-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+@media (min-width: 720px) {
+    .plans-results-bar {
+        grid-template-columns: auto 1fr;
+        align-items: center;
+    }
+
+    .plans-active-filters {
+        justify-content: flex-end;
+    }
+
+    .plans-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1120px) {
+    .plans-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }

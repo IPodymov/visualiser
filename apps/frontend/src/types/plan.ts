@@ -54,6 +54,8 @@ export type CompetencyScore = {
 export type EducationPlan = {
   id: number;
   title: string;
+  direction: string;
+  profile?: string;
   facultyId?: number;
   faculty: string;
   level: string;
@@ -112,6 +114,8 @@ export type PlanRecommendation = {
 export type PlanFilters = {
   query: string;
   faculty: string;
+  direction: string;
+  profile: string;
   level: string;
   studyForm: string;
   year: string;
@@ -126,19 +130,21 @@ export type CompareSummary = {
 };
 
 export type PlanComparison = {
-  firstPlan: Pick<EducationPlan, 'id' | 'title' | 'faculty' | 'year'>;
-  secondPlan: Pick<EducationPlan, 'id' | 'title' | 'faculty' | 'year'>;
+  firstPlan: EducationPlan;
+  secondPlan: EducationPlan;
   summary: CompareSummary;
   commonDisciplines: Array<{
     name: string;
+    first: Discipline;
+    second: Discipline;
     differences: Array<{
       field: string;
       firstValue: unknown;
       secondValue: unknown;
     }>;
   }>;
-  onlyInFirst: Array<{ name: string; hours?: number; credits?: number }>;
-  onlyInSecond: Array<{ name: string; hours?: number; credits?: number }>;
+  onlyInFirst: Discipline[];
+  onlyInSecond: Discipline[];
 };
 
 export type UserProfile = {

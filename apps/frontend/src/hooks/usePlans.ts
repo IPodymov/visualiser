@@ -7,6 +7,8 @@ import { buildPlanFilterConfig } from '../utils/planFilters';
 const defaultFilters: PlanFilters = {
   query: '',
   faculty: 'all',
+  direction: 'all',
+  profile: 'all',
   level: 'all',
   studyForm: 'all',
   year: 'all',
@@ -51,13 +53,27 @@ export const usePlans = () => {
         const matchesQuery =
           !query ||
           plan.title.toLowerCase().includes(query) ||
+          plan.direction.toLowerCase().includes(query) ||
+          plan.profile?.toLowerCase().includes(query) ||
           plan.faculty.toLowerCase().includes(query) ||
           plan.code?.toLowerCase().includes(query);
-        const matchesFaculty = filters.faculty === 'all' || String(plan.facultyId) === filters.faculty;
+        const matchesFaculty =
+          filters.faculty === 'all' || String(plan.facultyId) === filters.faculty;
+        const matchesDirection =
+          filters.direction === 'all' || plan.direction === filters.direction;
+        const matchesProfile = filters.profile === 'all' || plan.profile === filters.profile;
         const matchesLevel = filters.level === 'all' || plan.level === filters.level;
         const matchesForm = filters.studyForm === 'all' || plan.studyForm === filters.studyForm;
         const matchesYear = filters.year === 'all' || String(plan.year) === filters.year;
-        return matchesQuery && matchesFaculty && matchesLevel && matchesForm && matchesYear;
+        return (
+          matchesQuery &&
+          matchesFaculty &&
+          matchesDirection &&
+          matchesProfile &&
+          matchesLevel &&
+          matchesForm &&
+          matchesYear
+        );
       }),
     [filters, plans],
   );

@@ -5,7 +5,28 @@ export class ProfileService {
   async favorites(userId: number) {
     return prisma.favoriteCurriculum.findMany({
       where: { userId },
-      include: { curriculum: { include: { speciality: true } } },
+      include: {
+        curriculum: {
+          include: {
+            faculty: true,
+            speciality: true,
+            disciplines: {
+              select: {
+                id: true,
+                disciplineId: true,
+                semesterNumber: true,
+                totalHours: true,
+                credits: true,
+                lectureHours: true,
+                practiceHours: true,
+                labHours: true,
+                independentHours: true,
+                discipline: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
       orderBy: { addedAt: 'desc' },
     });
   }
@@ -29,7 +50,28 @@ export class ProfileService {
   history(userId: number) {
     return prisma.viewHistory.findMany({
       where: { userId },
-      include: { curriculum: { include: { speciality: true } } },
+      include: {
+        curriculum: {
+          include: {
+            faculty: true,
+            speciality: true,
+            disciplines: {
+              select: {
+                id: true,
+                disciplineId: true,
+                semesterNumber: true,
+                totalHours: true,
+                credits: true,
+                lectureHours: true,
+                practiceHours: true,
+                labHours: true,
+                independentHours: true,
+                discipline: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
       orderBy: { viewedAt: 'desc' },
       take: 100,
     });

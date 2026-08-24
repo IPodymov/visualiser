@@ -270,7 +270,7 @@ export class CurriculaService {
               const hours = Math.max(item.totalHours ?? 0, 36);
               const classificationBoost = item.discipline.classifications.length ? 1.35 : 1;
               return hasMatch
-                ? sum + (request.weights[category] ?? 0) * classificationBoost * Math.log2(hours)
+                ? sum + request.weights[category]! * classificationBoost * Math.log2(hours)
                 : sum;
             }, 0);
 
@@ -296,7 +296,7 @@ export class CurriculaService {
           const hasMatch = recommendationCategoryTokens[category].some((token) =>
             titleSearchText.includes(normalize(token)),
           );
-          return hasMatch ? sum + (request.weights[category] ?? 0) * 5 : sum;
+          return hasMatch ? sum + request.weights[category]! * 5 : sum;
         }, 0);
         const workloadScore =
           Math.min(curriculum.disciplines.length, 12) +

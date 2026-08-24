@@ -9,6 +9,8 @@
     "start": "prisma generate --schema prisma/schema.prisma && node dist/src/main.js",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:security": "vitest run src/tests/security.test.ts",
     "prisma:generate": "dotenv -e ../../.env -- prisma generate --schema prisma/schema.prisma",
     "prisma:migrate": "dotenv -e ../../.env -- prisma migrate deploy --schema prisma/schema.prisma",
     "prisma:migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
@@ -18,15 +20,16 @@
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "express-rate-limit": "^7.5.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "swagger-ui-express": "^5.0.1",
-    "xlsx": "^0.18.5",
+    "xlsx": "file:../../vendor/xlsx-0.20.3.tgz",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -36,16 +39,18 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.7.4",
+    "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.6",
     "@typescript-eslint/eslint-plugin": "^8.8.0",
     "@typescript-eslint/parser": "^8.8.0",
-    "eslint": "^9.11.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "dotenv-cli": "^7.4.2",
+    "eslint": "^9.11.1",
     "prisma": "^5.20.0",
     "supertest": "^7.0.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.1"
+    "vitest": "^4.1.11"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

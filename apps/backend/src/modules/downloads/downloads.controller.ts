@@ -5,7 +5,9 @@ import { downloadsService } from './downloads.service';
 export const downloadsController = {
   sourceFile: asyncHandler(async (req: Request, res: Response) => {
     const curriculum = await downloadsService.sourceFile(Number(req.params.id), req.user?.id);
-    res.download(curriculum.sourceFilePath, curriculum.sourceFileName);
+    const safeFileName =
+      curriculum.sourceFileName.replace(/[\r\n]/g, '').split(/[\\/]/).pop() || 'curriculum.xlsx';
+    res.download(curriculum.sourceFilePath, safeFileName);
   }),
 
   disciplineMap: asyncHandler(async (req: Request, res: Response) => {

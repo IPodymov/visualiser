@@ -1,18 +1,48 @@
 @layer components {
-  .text-gradient {
-    @apply bg-gradient-to-r from-sky-200 via-blue-300 to-violet-300 bg-clip-text text-transparent;
-  }
+    .display-title {
+        max-width: 16ch;
+        color: var(--color-ink);
+        font-size: clamp(2.75rem, 6vw, 4.75rem);
+        font-weight: 700;
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+    }
 
-  .panel-title {
-    color: var(--color-text);
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: 0;
-  }
+    .page-title {
+        max-width: 20ch;
+        color: var(--color-ink);
+        font-size: clamp(2.25rem, 4vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+    }
 
-  .muted-copy {
-    color: var(--color-text-soft);
-    font-size: 0.875rem;
-    line-height: 1.5rem;
-  }
+    .section-title {
+        color: var(--color-ink);
+        font-size: clamp(1.75rem, 3vw, 2.5rem);
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: -0.025em;
+    }
+
+    .eyebrow {
+        color: var(--color-brand-strong);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+
+    .lead-copy {
+        max-width: 46rem;
+        color: var(--color-ink-soft);
+        font-size: clamp(1.05rem, 2vw, 1.2rem);
+        line-height: 1.7;
+    }
+
+    .muted-copy {
+        color: var(--color-ink-soft);
+        font-size: 0.925rem;
+        line-height: 1.65;
+    }
 }

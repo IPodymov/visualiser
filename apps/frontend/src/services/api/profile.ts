@@ -9,12 +9,14 @@ type ProfileItem = {
 
 const extractPlans = (data: unknown): EducationPlan[] => {
   if (!Array.isArray(data)) return [];
-  return data
+  const plans = data
     .map((item) => {
+      if (!item || typeof item !== 'object') return null;
       const profileItem = item as ProfileItem;
       return profileItem.curriculum ? toPlan(profileItem.curriculum) : null;
     })
     .filter((item): item is EducationPlan => Boolean(item));
+  return [...new Map(plans.map((plan) => [plan.id, plan])).values()];
 };
 
 export const profileApi = {

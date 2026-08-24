@@ -1,15 +1,34 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
-import { useEffect } from 'react';
+import { lazy, useEffect } from 'react';
 import { AppLayout } from './layouts/AppLayout';
-import { AdmissionSurveyPage } from './pages/AdmissionSurveyPage/AdmissionSurveyPage';
-import { AuthPage } from './pages/AuthPage/AuthPage';
-import { ComparePage } from './pages/ComparePage/ComparePage';
-import { HomePage } from './pages/HomePage/HomePage';
-import { PlanDetailsPage } from './pages/PlanDetailsPage/PlanDetailsPage';
-import { PlansPage } from './pages/PlansPage/PlansPage';
-import { ProfilePage } from './pages/ProfilePage/ProfilePage';
 import { authApi } from './services/api/auth';
 import { useAppStore } from './store/useAppStore';
+
+const HomePage = lazy(() =>
+  import('./pages/HomePage/HomePage').then((module) => ({ default: module.HomePage })),
+);
+const AdmissionSurveyPage = lazy(() =>
+  import('./pages/AdmissionSurveyPage/AdmissionSurveyPage').then((module) => ({
+    default: module.AdmissionSurveyPage,
+  })),
+);
+const AuthPage = lazy(() =>
+  import('./pages/AuthPage/AuthPage').then((module) => ({ default: module.AuthPage })),
+);
+const ComparePage = lazy(() =>
+  import('./pages/ComparePage/ComparePage').then((module) => ({ default: module.ComparePage })),
+);
+const PlanDetailsPage = lazy(() =>
+  import('./pages/PlanDetailsPage/PlanDetailsPage').then((module) => ({
+    default: module.PlanDetailsPage,
+  })),
+);
+const PlansPage = lazy(() =>
+  import('./pages/PlansPage/PlansPage').then((module) => ({ default: module.PlansPage })),
+);
+const ProfilePage = lazy(() =>
+  import('./pages/ProfilePage/ProfilePage').then((module) => ({ default: module.ProfilePage })),
+);
 
 const router = createBrowserRouter([
   {

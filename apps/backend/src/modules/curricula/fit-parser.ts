@@ -1,5 +1,8 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as XLSX from 'xlsx';
+
+XLSX.set_fs(fs);
 
 export type ParsedCurriculumDiscipline = {
   name: string;
@@ -37,7 +40,6 @@ const normalizeHeader = (value: unknown) =>
     .replace(/\s+/g, ' ');
 
 const toNumber = (value: unknown): number | undefined => {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
   const normalized = normalize(value).replace(',', '.').match(/\d+(\.\d+)?/);
   return normalized ? Number(normalized[0]) : undefined;
 };
@@ -72,8 +74,7 @@ const inferMetadata = (rows: unknown[][], filePath: string) => {
     findValueNear(rows, [/^направление \(специальность\)$/, /^специальность$/, /^направление подготовки$/], {
       exact: true,
     }) ??
-    fileBaseName.replace(code, '').replace(/[_-]+/g, ' ').trim() ??
-    'Unknown speciality';
+    fileBaseName.replace(code, '').replace(/[_-]+/g, ' ').trim();
 
   return {
     specialityCode: code,
@@ -145,8 +146,7 @@ const addUnique = (values: string[], value?: string) => {
   if (value && !values.includes(value)) values.push(value);
 };
 
-const sum = (left?: number, right?: number) => {
-  if (right === undefined) return left;
+const sum = (left: number | undefined, right: number) => {
   return Math.round(((left ?? 0) + right) * 100) / 100;
 };
 
@@ -185,8 +185,8 @@ const parseOneCRows = (rows: unknown[][]): ParsedCurriculumDiscipline[] | undefi
   for (const row of rows.slice(headerRowIndex + 1)) {
     const name = normalize(row[indexes.name]);
     const semesterNumber = toSemesterNumber(row[indexes.semester]);
-    const load = indexes.load >= 0 ? normalize(row[indexes.load]) : '';
-    const amount = indexes.amount >= 0 ? toNumber(row[indexes.amount]) : undefined;
+    const load = normalize(row[indexes.load]);
+    const amount = toNumber(row[indexes.amount]);
     const credits = indexes.credits >= 0 ? toNumber(row[indexes.credits]) : undefined;
 
     if (!name || name.length <= 2 || /итого|всего/i.test(name) || !semesterNumber) continue;
@@ -210,7 +210,7 @@ const parseOneCRows = (rows: unknown[][]): ParsedCurriculumDiscipline[] | undefi
       addUnique(current.controlForms, load);
     } else if (amount !== undefined) {
       current.totalHours = sum(current.totalHours, amount);
-      current.credits = sum(current.credits, credits);
+      if (credits !== undefined) current.credits = sum(current.credits, credits);
 
       if (/лекц/i.test(load)) current.lectureHours = sum(current.lectureHours, amount);
       else if (/лаб/i.test(load)) current.labHours = sum(current.labHours, amount);

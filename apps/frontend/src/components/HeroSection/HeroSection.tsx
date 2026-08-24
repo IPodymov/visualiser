@@ -1,83 +1,108 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3, Database, Sparkles, WandSparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowRight, BookOpen, Check, GitCompareArrows, Search } from 'lucide-react';
 import './HeroSection.css';
-import { GradientButton } from '../GradientButton/GradientButton';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+
+const metrics = [
+  { label: 'Общие дисциплины', value: '42', tone: 'shared' as const },
+  { label: 'Только в программе A', value: '11', tone: 'programA' as const },
+  { label: 'Только в программе B', value: '8', tone: 'programB' as const },
+];
 
 export const HeroSection = () => (
-  <section className="container grid min-h-[calc(100vh-4rem)] items-center gap-12 py-14 lg:grid-cols-[1fr_0.9fr]">
-    <motion.div
-      initial={{ opacity: 0, y: 22 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55 }}
-    >
-      <div className="mb-5 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/10 px-3 py-2 text-sm font-semibold text-sky-100">
-        <Sparkles className="h-4 w-4" />
-        Аналитика образовательных траекторий
-      </div>
-      <h1 className="max-w-4xl text-5xl font-black leading-[0.98] tracking-normal text-white md:text-7xl">
-        EduPlan Compare для умного выбора учебного плана
-      </h1>
-      <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-        Визуализируйте дисциплины, семестры, часы, ЗЕТ и компетенции. Сравнивайте направления на
-        актуальных данных учебных планов.
+  <section className="home-hero container">
+    <div className="home-hero__copy">
+      <Badge variant="brand" className="mb-6">
+        Анализ образовательных программ
+      </Badge>
+      <h1 className="display-title">Сравните содержание образовательных программ</h1>
+      <p className="lead-copy mt-6">
+        Изучайте учебные планы по дисциплинам, нагрузке, семестрам и форматам занятий — от краткого
+        обзора до точных различий.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
-        <GradientButton asChild size="lg">
-          <Link to="/survey">
-            Пройти подбор
-            <ArrowRight className="h-5 w-5" />
-          </Link>
-        </GradientButton>
-        <Button asChild size="lg" variant="secondary">
+        <Button asChild size="lg">
           <Link to="/plans">
-            <WandSparkles className="h-5 w-5" />
-            Открыть каталог
+            <Search className="h-5 w-5" />
+            Найти учебный план
+            <ArrowRight className="h-5 w-5" />
           </Link>
         </Button>
         <Button asChild size="lg" variant="outline">
           <Link to="/compare">
-            <BarChart3 className="h-5 w-5" />
-            Сравнить планы
+            <GitCompareArrows className="h-5 w-5" />
+            Сравнить программы
           </Link>
         </Button>
       </div>
-    </motion.div>
+      <ul className="home-hero__proof" aria-label="Что доступно в сервисе">
+        <li>
+          <Check className="h-4 w-4" />
+          Реальные данные учебных планов
+        </li>
+        <li>
+          <Check className="h-4 w-4" />
+          Сравнение по дисциплинам и нагрузке
+        </li>
+      </ul>
+    </div>
 
-    <motion.div
-      className="relative"
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, delay: 0.1 }}
+    <div
+      className="comparison-demo"
+      role="group"
+      aria-label="Демонстрационный пример сравнения программ"
     >
-      <div className="hero-section__visual-card relative overflow-hidden p-5">
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <div className="text-sm text-slate-400">Карта учебного плана</div>
-            <div className="text-2xl font-bold text-white">Все программы</div>
+      <div className="comparison-demo__topline">
+        <span>Пример сравнения</span>
+        <Badge variant="neutral">Демонстрация</Badge>
+      </div>
+      <div className="comparison-demo__programs">
+        <div className="comparison-demo__program comparison-demo__program--a">
+          <span>A</span>
+          <div className="comparison-demo__program-copy">
+            <strong>Веб-технологии</strong>
+            <small>Бакалавриат · 2025</small>
           </div>
-          <Database className="h-8 w-8 text-sky-200" />
         </div>
-        <div className="grid gap-3">
-          {['Программирование', 'Математика', 'Аналитика', 'Soft Skills', 'Практика'].map(
-            (name, index) => (
-              <div key={name} className="rounded-md bg-white/[0.07] p-4">
-                <div className="mb-2 flex justify-between text-sm">
-                  <span className="text-slate-200">{name}</span>
-                  <span className="text-sky-200">{86 - index * 7}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-sky-400 to-violet-500"
-                    style={{ width: `${86 - index * 7}%` }}
-                  />
-                </div>
-              </div>
-            ),
-          )}
+        <div className="comparison-demo__connector" aria-hidden="true">
+          <GitCompareArrows className="h-4 w-4" />
+        </div>
+        <div className="comparison-demo__program comparison-demo__program--b">
+          <span>B</span>
+          <div className="comparison-demo__program-copy">
+            <strong>Интеллектуальные системы</strong>
+            <small>Бакалавриат · 2025</small>
+          </div>
         </div>
       </div>
-    </motion.div>
+      <div className="comparison-demo__metrics">
+        {metrics.map((metric) => (
+          <div
+            key={metric.label}
+            className={`comparison-demo__metric comparison-demo__metric--${metric.tone}`}
+          >
+            <strong>{metric.value}</strong>
+            <span>{metric.label}</span>
+          </div>
+        ))}
+      </div>
+      <div
+        className="comparison-demo__overlap"
+        role="img"
+        aria-label="42 общих, 11 только в программе A, 8 только в программе B"
+      >
+        <span className="comparison-demo__bar-a" style={{ flex: 11 }} />
+        <span className="comparison-demo__bar-shared" style={{ flex: 42 }} />
+        <span className="comparison-demo__bar-b" style={{ flex: 8 }} />
+      </div>
+      <div className="comparison-demo__difference">
+        <BookOpen className="h-5 w-5" />
+        <div>
+          <span>Разница общей нагрузки</span>
+          <strong>240 часов</strong>
+        </div>
+      </div>
+    </div>
   </section>
 );

@@ -8,12 +8,12 @@ datasource db {
 }
 
 model User {
-  id                Int                @id @default(autoincrement())
-  email             String             @unique
-  passwordHash      String             @map("password_hash")
-  fullName          String?            @map("full_name")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
+  id                Int                  @id @default(autoincrement())
+  email             String               @unique
+  passwordHash      String               @map("password_hash")
+  fullName          String?              @map("full_name")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
   viewHistory       ViewHistory[]
   favoriteCurricula FavoriteCurriculum[]
   downloadHistory   DownloadHistory[]
@@ -69,8 +69,8 @@ model Curriculum {
 }
 
 model Discipline {
-  id              Int                         @id @default(autoincrement())
-  name            String                      @unique
+  id              Int                        @id @default(autoincrement())
+  name            String                     @unique
   curricula       CurriculumDiscipline[]
   classifications DisciplineClassification[]
 
@@ -78,24 +78,24 @@ model Discipline {
 }
 
 model CurriculumDiscipline {
-  id                     Int         @id @default(autoincrement())
-  curriculumId           Int         @map("curriculum_id")
-  disciplineId           Int         @map("discipline_id")
-  externalDisciplineCode String?     @map("external_discipline_code")
-  semesterNumber         Int?        @map("semester_number")
-  controlForm            String?     @map("control_form")
-  blockName              String?     @map("block_name")
-  partName               String?     @map("part_name")
-  moduleName             String?     @map("module_name")
-  recordType             String?     @map("record_type")
-  totalHours             Int?        @map("total_hours")
-  credits                Decimal?    @db.Decimal(6, 2)
-  lectureHours           Int?        @map("lecture_hours")
-  practiceHours          Int?        @map("practice_hours")
-  labHours               Int?        @map("lab_hours")
-  independentHours       Int?        @map("independent_hours")
-  curriculum             Curriculum  @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
-  discipline             Discipline  @relation(fields: [disciplineId], references: [id], onDelete: Restrict)
+  id                     Int        @id @default(autoincrement())
+  curriculumId           Int        @map("curriculum_id")
+  disciplineId           Int        @map("discipline_id")
+  externalDisciplineCode String?    @map("external_discipline_code")
+  semesterNumber         Int?       @map("semester_number")
+  controlForm            String?    @map("control_form")
+  blockName              String?    @map("block_name")
+  partName               String?    @map("part_name")
+  moduleName             String?    @map("module_name")
+  recordType             String?    @map("record_type")
+  totalHours             Int?       @map("total_hours")
+  credits                Decimal?   @db.Decimal(6, 2)
+  lectureHours           Int?       @map("lecture_hours")
+  practiceHours          Int?       @map("practice_hours")
+  labHours               Int?       @map("lab_hours")
+  independentHours       Int?       @map("independent_hours")
+  curriculum             Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  discipline             Discipline @relation(fields: [disciplineId], references: [id], onDelete: Restrict)
 
   @@index([curriculumId])
   @@index([disciplineId])
@@ -113,11 +113,11 @@ model ClassificationGroup {
 }
 
 model ClassificationValue {
-  id              Int                         @id @default(autoincrement())
-  groupId         Int                         @map("group_id")
+  id              Int                        @id @default(autoincrement())
+  groupId         Int                        @map("group_id")
   code            String
   name            String
-  group           ClassificationGroup         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group           ClassificationGroup        @relation(fields: [groupId], references: [id], onDelete: Cascade)
   classifications DisciplineClassification[]
 
   @@unique([groupId, code])
@@ -159,12 +159,12 @@ model FavoriteCurriculum {
 }
 
 model DownloadHistory {
-  id           Int        @id @default(autoincrement())
-  userId       Int?       @map("user_id")
-  curriculumId Int?       @map("curriculum_id")
-  downloadType String     @map("download_type")
-  downloadedAt DateTime   @default(now()) @map("downloaded_at")
-  user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id           Int         @id @default(autoincrement())
+  userId       Int?        @map("user_id")
+  curriculumId Int?        @map("curriculum_id")
+  downloadType String      @map("download_type")
+  downloadedAt DateTime    @default(now()) @map("downloaded_at")
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   curriculum   Curriculum? @relation(fields: [curriculumId], references: [id], onDelete: SetNull)
 
   @@index([userId, downloadedAt])

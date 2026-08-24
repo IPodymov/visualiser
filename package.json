@@ -20,15 +20,19 @@
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "npm run lint -w apps/backend",
     "lint:frontend": "npm run lint -w apps/frontend",
-    "test": "npm run test -w apps/backend",
+    "test": "npm run test -w apps/backend && npm run test -w apps/frontend",
+    "test:coverage": "npm run test:coverage -w apps/backend && npm run test:coverage -w apps/frontend",
+    "test:security": "npm run test:security -w apps/backend && npm run test:security -w apps/frontend && npm audit --audit-level=low",
     "prisma:generate": "npm run prisma:generate -w apps/backend",
     "prisma:migrate": "npm run prisma:migrate -w apps/backend",
     "seed": "npm run seed -w apps/backend",
     "import:fit": "npm run import:fit -w apps/backend"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.11",
     "concurrently": "^9.1.0",
     "kill-port": "^2.0.1",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "vitest": "^4.1.11"
   }
 }

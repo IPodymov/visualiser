@@ -1,0 +1,4 @@
+interface:
+  display_name: "EduPlan Data Visualization"
+  short_description: "Turn curriculum facts into honest readable charts"
+  default_prompt: "Use $eduplan-data-visualization to choose and implement an evidence-backed visualization for this curriculum question."

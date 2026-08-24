@@ -1,0 +1,4 @@
+interface:
+  display_name: "EduPlan Comparison UX"
+  short_description: "Make curriculum differences clear at a glance"
+  default_prompt: "Use $eduplan-comparison-ux to implement a stable, interpretable A/B curriculum comparison."

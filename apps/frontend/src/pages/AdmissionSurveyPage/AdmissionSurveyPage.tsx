@@ -444,7 +444,7 @@ const getCategoryWeights = (answers: SurveyAnswer[]) => {
     const question = questions.find((item) => item.id === answer.questionId);
     const option = question?.options.find((item) => item.id === answer.optionId);
     Object.entries(option?.weights ?? {}).forEach(([category, value]) => {
-      weights[category as Category] += value ?? 0;
+      weights[category as Category] += value;
     });
   });
 
@@ -467,8 +467,7 @@ const getSelectedStudyForm = (answers: SurveyAnswer[]) => {
   return option?.studyForm;
 };
 
-const formatCompletedAt = (value?: string) => {
-  if (!value) return 'результат сохранен';
+const formatCompletedAt = (value: string) => {
   return new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit',
     month: 'long',
@@ -487,7 +486,9 @@ export const AdmissionSurveyPage = () => {
   const currentBlock = questionBlocks[currentQuestion.block];
   const isTestFinished = Boolean(state.completedAt);
   const isConfirmed = Boolean(state.confirmedAt && state.planRecommendations?.length);
-  const progress = isTestFinished ? 100 : Math.round((state.answers.length / questions.length) * 100);
+  const progress = isTestFinished
+    ? 100
+    : Math.round((state.answers.length / questions.length) * 100);
   const recommendations = state.planRecommendations ?? [];
 
   useEffect(() => {
@@ -547,7 +548,9 @@ export const AdmissionSurveyPage = () => {
         planRecommendations,
       }));
     } catch {
-      setRecommendationError('Не удалось получить рекомендации с сервера. Проверьте подключение и попробуйте еще раз.');
+      setRecommendationError(
+        'Не удалось получить рекомендации с сервера. Проверьте подключение и попробуйте еще раз.',
+      );
     } finally {
       setRecommendationLoading(false);
     }
@@ -573,8 +576,8 @@ export const AdmissionSurveyPage = () => {
           </span>
           <h1>Найдите дисциплины, с которых стоит начать выбор программы</h1>
           <p>
-            Опрос разделен на два блока: сначала контекст поступления, затем интересы и проекты. Результат
-            сохраняется в браузере без регистрации.
+            Опрос разделен на два блока: сначала контекст поступления, затем интересы и проекты.
+            Результат сохраняется в браузере без регистрации.
           </p>
         </div>
         <div className="admission-survey__summary" aria-label="Параметры опроса">
@@ -614,10 +617,10 @@ export const AdmissionSurveyPage = () => {
           <div className="admission-survey__saved">
             <Check className="h-4 w-4" />
             {isConfirmed
-              ? `Подтверждено: ${formatCompletedAt(state.confirmedAt)}`
+              ? `Подтверждено: ${formatCompletedAt(state.confirmedAt!)}`
               : isTestFinished
-                ? `Тест пройден: ${formatCompletedAt(state.completedAt)}`
-              : 'Ответы сохраняются автоматически'}
+                ? `Тест пройден: ${formatCompletedAt(state.completedAt!)}`
+                : 'Ответы сохраняются автоматически'}
           </div>
         </div>
 
@@ -635,10 +638,9 @@ export const AdmissionSurveyPage = () => {
                   даже если пользователь не зарегистрирован.
                 </p>
                 <div className="admission-survey__credits-help">
-                  ЗЕТ - зачетная единица трудоемкости. Она показывает объем учебной работы:
-                  занятия, практику, проекты и самостоятельную подготовку. В карточках 100% означает
-                  полный нормативный объем программы: 240 ЗЕТ для бакалавриата и 300 ЗЕТ для
-                  специалитета.
+                  ЗЕТ - зачетная единица трудоемкости. Она показывает объем учебной работы: занятия,
+                  практику, проекты и самостоятельную подготовку. В карточках 100% означает полный
+                  нормативный объем программы: 240 ЗЕТ для бакалавриата и 300 ЗЕТ для специалитета.
                 </div>
               </div>
               <Button type="button" variant="secondary" onClick={resetSurvey}>
@@ -666,8 +668,8 @@ export const AdmissionSurveyPage = () => {
                       <span>{item.disciplinesCount} дисциплин</span>
                       <span>{item.totalHours} ч.</span>
                       <span>
-                        {getCreditsPercent(item.credits, item.level)}% нагрузки ({item.credits} ЗЕТ из{' '}
-                        {getCreditsNorm(item.level)})
+                        {getCreditsPercent(item.credits, item.level)}% нагрузки ({item.credits} ЗЕТ
+                        из {getCreditsNorm(item.level)})
                       </span>
                     </div>
                     {item.matchedDisciplines.length ? (
@@ -728,15 +730,15 @@ export const AdmissionSurveyPage = () => {
           </div>
         ) : (
           <div className="admission-survey__card">
-          <div className="admission-survey__question-head">
-            <div>
-              <span className="admission-survey__block-label">{currentBlock.title}</span>
-              <h2>{currentQuestion.title}</h2>
-              <p>{currentQuestion.hint}</p>
-              <small>{currentBlock.description}</small>
+            <div className="admission-survey__question-head">
+              <div>
+                <span className="admission-survey__block-label">{currentBlock.title}</span>
+                <h2>{currentQuestion.title}</h2>
+                <p>{currentQuestion.hint}</p>
+                <small>{currentBlock.description}</small>
+              </div>
+              <BrainCircuit className="h-8 w-8 text-cyan-200" />
             </div>
-            <BrainCircuit className="h-8 w-8 text-cyan-200" />
-          </div>
 
             <div className="admission-survey__options">
               {currentQuestion.options.map((option) => {
