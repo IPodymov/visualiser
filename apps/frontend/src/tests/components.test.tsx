@@ -377,7 +377,10 @@ describe('forms, navigation and filters', () => {
     await user.click(screen.getByRole('button', { name: /Очистить/ }));
     expect(onChange).toHaveBeenCalledWith(null);
     await user.click(screen.getByRole('combobox'));
-    expect(await screen.findByRole('option', { name: /другой уровень/ })).toHaveAttribute('data-disabled');
+    expect(screen.queryByRole('option', { name: /Магистратура/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: /Вторая программа/ })).toHaveAttribute(
+      'data-disabled',
+    );
     rerender(<PlanSelector side="B" value={null} plans={plans} excludedId={null} requiredLevel="Бакалавриат" onChange={onChange} />);
     expect(screen.getByText('Доступны только программы уровня «Бакалавриат».')).toBeInTheDocument();
   });

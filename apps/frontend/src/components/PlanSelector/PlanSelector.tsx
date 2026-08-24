@@ -23,6 +23,9 @@ export const PlanSelector = ({
   onChange: (value: number | null) => void;
 }) => {
   const selected = plans.find((plan) => plan.id === value);
+  const availablePlans = requiredLevel
+    ? plans.filter((plan) => areEducationLevelsCompatible(plan.level, requiredLevel))
+    : plans;
   const id = `compare-plan-${side.toLowerCase()}`;
 
   return (
@@ -44,21 +47,15 @@ export const PlanSelector = ({
           <SelectValue placeholder={`Выберите программу ${side}`} />
         </SelectTrigger>
         <SelectContent>
-          {plans.map((plan) => {
-            const hasDifferentLevel = Boolean(
-              requiredLevel && !areEducationLevelsCompatible(plan.level, requiredLevel),
-            );
-            return (
-              <SelectItem
-                key={plan.id}
-                value={String(plan.id)}
-                disabled={plan.id === excludedId || hasDifferentLevel}
-              >
-                {plan.title} · {plan.year} · {plan.code}
-                {hasDifferentLevel ? ' · другой уровень' : ''}
-              </SelectItem>
-            );
-          })}
+          {availablePlans.map((plan) => (
+            <SelectItem
+              key={plan.id}
+              value={String(plan.id)}
+              disabled={plan.id === excludedId}
+            >
+              {plan.title} · {plan.year} · {plan.code}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
       <div className="plan-selector__summary">
