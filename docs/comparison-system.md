@@ -1,79 +1,95 @@
-# Comparison System
+# Система сравнения
 
-The comparison system finds overlaps and differences between two curricula.
+Сравнение отвечает на вопрос: чем отличаются два конкретных учебных плана одного уровня образования. Оно не ранжирует программы по качеству и не подменяет официальный учебный план.
 
-![Сравнение](./assets/screenshots/compare-page.png)
+## Инварианты выбора
 
-## Backend Algorithm
+- есть ровно два фиксированных слота: программа A и программа B;
+- один и тот же план нельзя поставить в оба слота;
+- планы должны принадлежать одному уровню: бакалавриат с бакалавриатом, магистратура с магистратурой, специалитет со специалитетом, аспирантура с аспирантурой;
+- правило действует независимо от точки входа: карточка каталога, детальный просмотр или selector страницы сравнения;
+- при замене одного слота второй сохраняется, если новый план совместим;
+- selection хранится в `eduplan-compare` версии 2 вместе с ID и уровнями.
 
-`ComparisonService.compare`:
+Frontend блокирует несовместимый выбор и показывает объяснение. Backend повторяет проверку и возвращает `400`, поэтому ручная подмена Local Storage или query не обходит правило.
 
-1. Loads both curricula.
-2. Loads disciplines for each curriculum.
-3. Normalizes discipline names with trimming, lowercase, and whitespace collapsing.
-4. Builds maps by normalized name.
-5. Finds common disciplines.
-6. Finds disciplines only in first and only in second.
-7. Compares field values for common disciplines.
+## Нормализация уровня
 
-Compared fields:
+Текст приводится к lowercase, `ё` заменяется на `е`, пробелы нормализуются. Ключи:
 
-- `semesterNumber`;
-- `controlForm`;
-- `totalHours`;
-- `credits`;
-- `lectureHours`;
-- `practiceHours`;
-- `labHours`.
+| Фрагмент   | Ключ           |
+| ---------- | -------------- |
+| `бакалавр` | `bachelor`     |
+| `магистр`  | `master`       |
+| `специал`  | `specialist`   |
+| `аспиран`  | `postgraduate` |
 
-## Response Shape
+Backend при отсутствии ясного текста использует сегмент кода направления: `.03.`, `.04.`, `.05.`, `.06.` соответственно.
 
-```ts
-type PlanComparison = {
-  summary: {
-    firstDisciplinesCount: number;
-    secondDisciplinesCount: number;
-    commonCount: number;
-    onlyFirstCount: number;
-    onlySecondCount: number;
-  };
-  commonDisciplines: Array<{
-    name: string;
-    differences: Array<{
-      field: string;
-      firstValue: unknown;
-      secondValue: unknown;
-    }>;
-  }>;
-  onlyInFirst: Array<{ name: string }>;
-  onlyInSecond: Array<{ name: string }>;
-};
+## Сопоставление дисциплин
+
+Для каждого плана backend загружает `CurriculumDiscipline` с данными дисциплины. Ключ совпадения строится из имени после trim, lower-case и схлопывания повторных пробелов.
+
+Результат разделяется на:
+
+- `commonDisciplines` — имя есть в обоих планах;
+- `onlyInFirst` — только в A;
+- `onlyInSecond` — только в B.
+
+Для общей дисциплины сравниваются:
+
+- семестр;
+- форма контроля;
+- общие часы;
+- зачётные единицы;
+- лекции;
+- практические занятия;
+- лабораторные;
+- самостоятельная работа.
+
+Разница возвращается только для полей с неодинаковым строковым представлением. Текущий алгоритм не выполняет fuzzy matching и не объединяет синонимы: «Математический анализ» и «Мат. анализ» считаются разными именами.
+
+## Процент сходства
+
+Frontend вычисляет коэффициент Сёренсена — Дайса по множествам нормализованных названий:
+
+```text
+similarity = round(2 × commonCount / (countA + countB) × 100)
 ```
 
-## Frontend Visualization
+Если в обоих планах нет дисциплин, значение не рассчитывается. Процент измеряет только совпадение названий и не учитывает качество, содержание курса, часы или порядок семестров.
 
-The compare page renders:
+## Аналитика экрана
 
-- select controls for two plans;
-- summary statistic cards;
-- Recharts `BarChart`;
-- differences table through `CompareTable`.
+Экран идёт от краткого ответа к деталям:
 
-## Radar Chart
+1. selectors A/B;
+2. процент сходства и количество общих/уникальных дисциплин;
+3. суммарные часы и ЗЕТ с текстовой дельтой;
+4. сравнение состава нагрузки;
+5. динамика часов по семестрам;
+6. уникальные дисциплины A и B;
+7. таблица отличающихся полей общих дисциплин;
+8. следующий шаг — открыть каталог или детальный план.
 
-Radar chart is used on the details page to visualize five curriculum characteristics:
+Цвета постоянны: A — синий, B — янтарный, общее — бирюзовый. Подписи A/B обязательны, потому что цвет не должен быть единственным носителем смысла.
 
-- Математика;
-- Программирование;
-- Аналитика;
-- Soft Skills;
-- Практика.
+## Состояния
 
-![Детали плана](./assets/screenshots/plan-details-page.png)
+- ни один/один план выбран — инструкция и переход в каталог;
+- список программ загружается — skeleton/loading state;
+- оба плана выбраны — отдельный loading сравнения;
+- несовместимое сохранённое состояние — понятная ошибка без API-запроса;
+- backend error — retry;
+- нет workload или semester data — текстовое empty state вместо пустого графика.
 
-## Extension Ideas
+## Тестовые сценарии
 
-- Add weighted discipline matching.
-- Add module-level comparison.
-- Export visual diff to PDF.
-- Allow comparing more than two curricula side-by-side.
+- добавление A и B одинакового уровня из каждой точки входа;
+- блокировка разных уровней;
+- запрет одинакового ID;
+- замена заполненного слота;
+- восстановление и отбрасывание старой версии Local Storage;
+- backend validation для одинаковых ID, отсутствующего плана и разных уровней;
+- формула сходства, нулевой denominator, уникальные списки и field deltas;
+- loading, empty, error и retry.

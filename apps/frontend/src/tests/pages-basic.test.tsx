@@ -32,12 +32,29 @@ const filters: PlanFilters = {
   profile: 'all',
   level: 'all',
   studyForm: 'all',
-  year: 'all',
 };
 
 const setFilters = vi.fn();
 const reload = vi.fn();
 const filterConfig = [
+  {
+    key: 'faculty' as const,
+    label: 'Факультет',
+    placeholder: 'Факультет',
+    options: [{ value: '1', label: 'ФИТ' }],
+  },
+  {
+    key: 'direction' as const,
+    label: 'Направление',
+    placeholder: 'Направление',
+    options: [{ value: 'Информатика', label: 'Информатика' }],
+  },
+  {
+    key: 'profile' as const,
+    label: 'Профиль',
+    placeholder: 'Профиль',
+    options: [{ value: 'Веб-технологии', label: 'Веб-технологии' }],
+  },
   {
     key: 'level' as const,
     label: 'Уровень',
@@ -45,10 +62,10 @@ const filterConfig = [
     options: [{ value: 'Бакалавриат', label: 'Бакалавриат' }],
   },
   {
-    key: 'year' as const,
-    label: 'Год',
-    placeholder: 'Все годы',
-    options: [],
+    key: 'studyForm' as const,
+    label: 'Форма',
+    placeholder: 'Форма',
+    options: [{ value: 'Очная', label: 'Очная' }],
   },
 ];
 
@@ -116,6 +133,16 @@ describe('static product pages', () => {
 });
 
 describe('plans catalog scenarios', () => {
+  it('groups program filters and omits the redundant year selector', () => {
+    renderRoute(<PlansPage />);
+
+    const programGroup = screen.getByRole('group', { name: 'Программа' });
+    expect(within(programGroup).getByRole('combobox', { name: 'Факультет' })).toBeInTheDocument();
+    expect(within(programGroup).getByRole('combobox', { name: 'Направление' })).toBeInTheDocument();
+    expect(within(programGroup).getByRole('combobox', { name: 'Профиль' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Год' })).not.toBeInTheDocument();
+  });
+
   it('shows loading and reloads after a blocking error', async () => {
     setPlansHook({ plans: [], filteredPlans: [], loading: true });
     const { rerender } = renderRoute(<PlansPage />);
@@ -142,7 +169,7 @@ describe('plans catalog scenarios', () => {
 
   it('builds active filter chips, removes each kind and paginates results', async () => {
     const manyPlans = Array.from({ length: 11 }, (_, index) => plan({ id: index + 1, title: `Программа ${index + 1}` }));
-    const activeFilters = { ...filters, query: 'web', level: 'Бакалавриат', year: '2099' };
+    const activeFilters = { ...filters, query: 'web', level: 'Бакалавриат' };
     setPlansHook({ plans: manyPlans, filteredPlans: manyPlans, filters: activeFilters });
     renderRoute(<PlansPage />);
 
@@ -151,7 +178,6 @@ describe('plans catalog scenarios', () => {
     expect(setFilters).toHaveBeenCalledWith({ ...activeFilters, query: '' });
     await userEvent.click(within(chips).getByRole('button', { name: /Уровень: Бакалавриат/ }));
     expect(setFilters).toHaveBeenCalledWith({ ...activeFilters, level: 'all' });
-    expect(within(chips).getByText(/Год: 2099/)).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(9);
     await userEvent.click(screen.getByRole('button', { name: /Показать ещё/ }));
     expect(screen.getAllByRole('article')).toHaveLength(11);

@@ -17,6 +17,8 @@ type Props = {
   activeCount: number;
 };
 
+const programFilterKeys = new Set<SelectFilterConfig['key']>(['faculty', 'direction', 'profile']);
+
 const FilterFields = ({
   config,
   filters,
@@ -51,6 +53,39 @@ const FilterFields = ({
   </div>
 );
 
+const FilterGroups = ({
+  config,
+  filters,
+  onChange,
+  idPrefix,
+}: Pick<Props, 'config' | 'filters' | 'onChange'> & { idPrefix: string }) => {
+  const programFilters = config.filter((filter) => programFilterKeys.has(filter.key));
+  const formatFilters = config.filter((filter) => !programFilterKeys.has(filter.key));
+
+  return (
+    <div className="search-filters__groups">
+      <fieldset className="search-filters__group search-filters__group--program">
+        <legend>Программа</legend>
+        <FilterFields
+          config={programFilters}
+          filters={filters}
+          onChange={onChange}
+          idPrefix={`${idPrefix}-program`}
+        />
+      </fieldset>
+      <fieldset className="search-filters__group search-filters__group--format">
+        <legend>Формат обучения</legend>
+        <FilterFields
+          config={formatFilters}
+          filters={filters}
+          onChange={onChange}
+          idPrefix={`${idPrefix}-format`}
+        />
+      </fieldset>
+    </div>
+  );
+};
+
 export const SearchFilters = ({ config, filters, onChange, onReset, activeCount }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -81,7 +116,7 @@ export const SearchFilters = ({ config, filters, onChange, onReset, activeCount 
       </div>
 
       <div className="search-filters__desktop">
-        <FilterFields
+        <FilterGroups
           config={config}
           filters={filters}
           onChange={onChange}
@@ -103,7 +138,7 @@ export const SearchFilters = ({ config, filters, onChange, onReset, activeCount 
         title="Фильтры программ"
         description="Сузьте каталог по параметрам учебного плана."
       >
-        <FilterFields
+        <FilterGroups
           config={config}
           filters={filters}
           onChange={onChange}

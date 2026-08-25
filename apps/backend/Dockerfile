@@ -8,6 +8,7 @@ COPY package.json package-lock.json ./
 COPY apps/backend/package.json apps/backend/package.json
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY packages/shared/package.json packages/shared/package.json
+COPY vendor/xlsx-0.20.3.tgz vendor/xlsx-0.20.3.tgz
 
 RUN npm ci
 

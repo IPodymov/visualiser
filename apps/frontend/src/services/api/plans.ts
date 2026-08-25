@@ -89,20 +89,12 @@ const toApiError = (error: unknown, fallbackMessage: string) => {
 
 const buildListParams = (filters?: Partial<PlanFilters>) => {
   const params: Record<string, string | number> = {};
-  const year = filters?.year;
   const faculty = filters?.faculty;
 
   if (faculty && faculty !== 'all') {
     const facultyId = Number(faculty);
     if (Number.isInteger(facultyId)) {
       params.facultyId = facultyId;
-    }
-  }
-
-  if (year && year !== 'all') {
-    const admissionYear = Number(year);
-    if (Number.isInteger(admissionYear)) {
-      params.admissionYear = admissionYear;
     }
   }
 

@@ -1,71 +1,67 @@
-# Authentication
+# Авторизация и профиль
 
-The app supports registration, login, token-based API authentication, persisted auth state, and logout.
+EduPlan Compare использует email/password регистрацию, bcrypt для хеширования пароля и подписанный JWT для API-запросов. Каталог, детали, рекомендации и сравнение доступны без входа; избранное, серверная история, upload и импорт требуют авторизацию.
 
-![Авторизация](./assets/screenshots/login-page.png)
+## Жизненный цикл сессии
 
-## Login Flow
+1. Пользователь отправляет форму на `/api/auth/register` или `/api/auth/login`.
+2. Backend валидирует данные и возвращает `user` и `accessToken`.
+3. Frontend сохраняет токен в `eduplan-token`, профиль — в `eduplan-user`.
+4. Axios interceptor добавляет Bearer token.
+5. При следующем старте приложение вызывает `/api/auth/me`.
+6. Если token истёк или отклонён, `logout()` удаляет token, user и локальное избранное.
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant F as Frontend
-  participant B as Backend
+## Правила регистрации
 
-  U->>F: Submit email/password
-  F->>B: POST /api/auth/login
-  B-->>F: user + accessToken
-  F->>F: Store eduplan-token and eduplan-user
-  F-->>U: Navigate to /profile
+- email проходит trim, lowercase, проверку формата и лимит 254 символа;
+- password должен содержать 12–128 символов;
+- `fullName` необязателен, 1–120 символов после trim;
+- дополнительные поля запрещены;
+- повторный email возвращает `409`;
+- пароль никогда не возвращается API и не сохраняется в открытом виде.
+
+Не используйте пример пароля из документации в production. Требования длины — минимальная техническая защита, а не гарантия стойкости.
+
+## JWT
+
+Backend подписывает token с настроенными `JWT_SECRET`, `JWT_EXPIRES_IN`, `JWT_ISSUER` и `JWT_AUDIENCE`. В production `JWT_SECRET` должен содержать минимум 32 символа.
+
+```http
+Authorization: Bearer <accessToken>
 ```
 
-## Register Flow
+`authMiddleware` требует валидный token. `optionalAuthMiddleware` продолжает запрос без пользователя, но при корректном token позволяет записать просмотр или скачивание.
 
-Registration calls `POST /api/auth/register` and receives the same response shape as login.
+## Данные браузера
 
-![Регистрация](./assets/screenshots/register-page.png)
+Local Storage доступен JavaScript-коду страницы, поэтому защита от XSS критична. Не храните там пароли, refresh tokens или дополнительные персональные данные. Текущие ключи описаны в [frontend.md](./frontend.md#состояние).
 
-## Local Storage
+Сравнение доступно гостям и хранится независимо от сессии. Избранное очищается при logout; сервер остаётся источником истины для авторизованного пользователя.
 
-| Key | Value |
-| --- | --- |
-| `eduplan-token` | JWT access token |
-| `eduplan-user` | Public user profile |
+## Профиль
 
-On app startup, `App.tsx` checks for `eduplan-token` and calls `/api/auth/me`. If validation fails, logout clears stored state.
+После входа пользователь может:
 
-## Axios Auth Header
+- получать список избранного;
+- добавлять и удалять план;
+- видеть историю детальных просмотров;
+- скачивать файлы с фиксацией download history.
 
-`services/api/client.ts` attaches the token:
+Frontend применяет optimistic update избранного. При сетевой ошибке локальное значение откатывается.
 
-```ts
-config.headers.Authorization = `Bearer ${token}`;
+## Ограничения текущей реализации
+
+- refresh token и ротация сессии не реализованы;
+- сброс пароля и подтверждение email не реализованы;
+- нет ролей администратора: любой валидный пользователь технически может вызвать защищённые upload/import endpoints;
+- token хранится в Local Storage, а не в HttpOnly cookie.
+
+Если приложение становится публичным, до выдачи административных функций необходимо добавить роли/permissions, аудит действий, подтверждение email, восстановление доступа и стратегию короткоживущих access tokens.
+
+## Проверки безопасности
+
+```bash
+npm run test:security
 ```
 
-## Header Behavior
-
-| State | Header Shows |
-| --- | --- |
-| Guest | Login button |
-| Authenticated | Profile icon with dropdown |
-
-Profile dropdown contains only:
-
-- `Профиль`;
-- `Выйти`.
-
-## Logout
-
-Logout:
-
-1. removes `eduplan-token`;
-2. removes `eduplan-user`;
-3. clears Zustand `user`;
-4. redirects to home.
-
-## Security Considerations
-
-- Tokens are currently stored in `localStorage`, which is simple but exposed to XSS.
-- Production deployments should enforce HTTPS.
-- Backend protected endpoints must always validate JWT server-side.
-- Avoid storing sensitive user fields in `eduplan-user`.
+Набор проверяет защитные заголовки, CORS, валидацию, ограничения тела, auth/upload rate limits, безопасные ошибки, frontend API client и dependency audit.

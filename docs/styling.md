@@ -1,92 +1,90 @@
-# Styling
+# Стили и дизайн-система
 
-The frontend uses a hybrid styling approach:
+Текущий интерфейс — светлый аналитический продукт: спокойный фон, белые surfaces, тёмно-синий текст, синий основной action и отдельные цвета программ A/B. Стили состоят из Tailwind utilities, глобальных CSS-токенов и component-level CSS.
 
-- Tailwind CSS for simple layout utilities;
-- CSS variables for design tokens;
-- colocated component CSS for maintainable visual styling;
-- shadcn-style UI primitives for base controls.
-
-## Global Styles
+## Файлы
 
 ```text
-styles/
-├── variables.css
-├── globals.css
-├── typography.css
-├── layout.css
-└── index.css
+apps/frontend/src/styles/
+├── variables.css    # семантические CSS custom properties
+├── globals.css      # reset, base и общие patterns
+├── typography.css   # display/page/section typography
+├── layout.css       # shell и вертикальный rhythm
+└── index.css        # порядок импортов и Tailwind layers
 ```
 
-## CSS Variables
+Доменные компоненты могут иметь соседний `.css`, но обязаны использовать семантические переменные, а не повторять hex-значения.
 
-`variables.css` defines:
+## Основные токены
 
-- colors;
-- radius values;
-- spacing values;
-- shadows;
-- transitions;
-- blur values.
+| Роль            | Переменная          | Значение  |
+| --------------- | ------------------- | --------- |
+| фон страницы    | `--color-page`      | `#f6f8f7` |
+| поверхность     | `--color-surface`   | `#ffffff` |
+| основной текст  | `--color-ink`       | `#14243b` |
+| вторичный текст | `--color-ink-soft`  | `#526174` |
+| граница         | `--color-border`    | `#d8e0e7` |
+| бренд           | `--color-brand`     | `#2563eb` |
+| программа A     | `--color-program-a` | `#2563eb` |
+| программа B     | `--color-program-b` | `#c46a08` |
+| общее           | `--color-shared`    | `#0f766e` |
+| ошибка          | `--color-error`     | `#b42318` |
 
-Example:
+Также определены soft-surfaces, spacing `--space-1`…`--space-24`, radius `0.75rem`, тени и transition `160ms ease`. HSL-переменные совместимы с Tailwind/shadcn-style primitives.
 
-```css
-:root {
-  --surface-glass: rgba(255, 255, 255, 0.065);
-  --shadow-glass: 0 18px 80px rgba(2, 8, 23, 0.38);
-  --radius-md: 0.5rem;
-}
-```
+## Типографика
 
-## Component CSS
+Основной stack: `Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`.
 
-Large components have colocated CSS:
+- `.display-title` — hero, до `4.75rem`, не более 16 символов ширины;
+- `.page-title` — H1 route-level страницы;
+- `.section-title` — заголовок аналитического раздела;
+- `.eyebrow` — короткий uppercase-контекст;
+- `.lead-copy` — вводное объяснение;
+- `.muted-copy` — вторичная подпись.
 
-```text
-components/Header/Header.css
-components/PlanCard/PlanCard.css
-components/SearchFilters/SearchFilters.css
-pages/PlansPage/PlansPage.css
-```
+Не уменьшайте основной текст ради плотности. Компактность достигается иерархией, удалением повторов и управляемым spacing.
 
-## Naming Convention
+## Layout
 
-Component styles use BEM-like class names:
+- минимальная поддерживаемая ширина — 320 px;
+- `.page-main` задаёт вертикальные поля страницы;
+- `.page-stack` разделяет крупные смысловые блоки;
+- `.section-grid` управляет внутренней сеткой;
+- `.container` ограничивает строку и выравнивает header, main и footer;
+- desktop-сетки схлопываются в одну колонку на mobile.
 
-```css
-.site-header {}
-.site-header__inner {}
-.site-header__profile-menu {}
-```
+Фон `app-shell` содержит очень мягкие brand/shared radial accents. Это не dark theme и не glassmorphism: читаемость данных важнее декоративного эффекта.
 
-## Tailwind Strategy
+## Компонентные правила
 
-Tailwind remains useful for:
+- сначала ищите primitive или доменный эквивалент в `src/components`;
+- используйте `PageHeader`, `PageSection`, `SectionHeader`, `NextAction` для композиции страницы;
+- для метрики используйте `MetricCard`, для графика — `ChartCard`;
+- loading/error/empty собирайте через `InterfaceState`;
+- варианты button/badge/card добавляйте централизованно;
+- A/B цвета не меняются между selector, chart, badge, delta и таблицей;
+- error/success/warning не смешиваются с цветами программ.
 
-- one-off flex/grid utilities;
-- text sizes;
-- responsive utility classes;
-- icon sizing.
+## Motion
 
-Core visual styling should live in CSS files when it is repeated or important for future design editing.
+Анимация короткая и функциональная: появление, feedback выбора, drawer/dialog. `prefers-reduced-motion: reduce` почти полностью отключает animation и smooth scroll. Не добавляйте motion, который задерживает чтение результата.
 
-## Breakpoints
+## Доступность
 
-The app uses standard Tailwind breakpoints and plain CSS media queries:
+- контраст текста и controls должен соответствовать WCAG AA;
+- focus ring видим на ссылках, кнопках и полях;
+- icon-only control получает `aria-label`;
+- tooltip доступен через hover и focus;
+- dialog/drawer управляет focus и закрывается ожидаемым способом;
+- status не передаётся только цветом;
+- график сопровождается заголовком, единицей и числовой интерпретацией.
 
-| Breakpoint | Typical Use |
-| --- | --- |
-| `768px` | Tablet layout |
-| `1024px` | Desktop grids |
-| `1280px` | Wide catalog grids |
+## Добавление нового визуального паттерна
 
-## Visual Theme
-
-The interface uses:
-
-- dark premium background;
-- blue/violet gradients;
-- glassmorphism cards;
-- soft shadows;
-- compact SaaS-style information grids.
+1. Найдите существующий компонент и проверьте дизайн-спецификацию.
+2. Определите семантическую роль, состояния и mobile-вариант.
+3. Переиспользуйте токены; новый token добавляйте только при повторяемой системной роли.
+4. Добавьте interaction/accessibility tests.
+5. Проверьте desktop, 390 px и reduced motion.
+6. Обновите документацию, если изменился общий паттерн.

@@ -1,35 +1,54 @@
-# Screenshots
+# Скриншоты интерфейса
 
-Screenshots in this page were generated from the running frontend and saved under `docs/assets/screenshots/`.
+Галерея соответствует текущему светлому интерфейсу и локальному набору из 30 учебных планов 2025 года. Файлы пересняты 24 августа 2026 года. Query `v=20260824-2` нужен для сброса кеша GitHub после замены PNG.
 
-## Главная страница
+## Desktop
 
-![Главная страница](./assets/screenshots/homepage.png)
+### Главная
 
-## Авторизация
+![Главная страница](./assets/screenshots/homepage.png?v=20260824-2)
 
-![Авторизация](./assets/screenshots/login-page.png)
+### Вход
 
-## Регистрация
+![Страница входа](./assets/screenshots/login-page.png?v=20260824-2)
 
-![Регистрация](./assets/screenshots/register-page.png)
+### Регистрация
 
-## Каталог учебных планов
+![Страница регистрации](./assets/screenshots/register-page.png?v=20260824-2)
 
-![Каталог учебных планов](./assets/screenshots/plans-page.png)
+### Каталог — 30 программ 2025 года
 
-## Детальная страница учебного плана
+![Каталог учебных планов](./assets/screenshots/plans-page.png?v=20260824-2)
 
-![Детальная страница учебного плана](./assets/screenshots/plan-details-page.png)
+### Компактный детальный просмотр
 
-## Страница сравнения
+![Детальная страница учебного плана](./assets/screenshots/plan-details-page.png?v=20260824-2)
 
-![Страница сравнения](./assets/screenshots/compare-page.png)
+### Сравнение бакалавриат — бакалавриат
 
-## Профиль пользователя
+![Сравнение двух программ бакалавриата](./assets/screenshots/compare-page.png?v=20260824-2)
 
-![Профиль пользователя](./assets/screenshots/profile-page.png)
+### Профиль
 
-## Mobile версия
+![Профиль пользователя](./assets/screenshots/profile-page.png?v=20260824-2)
 
-![Mobile версия каталога](./assets/screenshots/mobile-plans-page.png)
+## Mobile
+
+### Каталог, 390 px
+
+![Мобильный каталог учебных планов](./assets/screenshots/mobile-plans-page.png?v=20260824-2)
+
+## Параметры съёмки
+
+| Файл                    | Viewport                                  |
+| ----------------------- | ----------------------------------------- |
+| `homepage.png`          | 1440 × 1000                               |
+| `login-page.png`        | 1440 × 1000                               |
+| `register-page.png`     | 1440 × 1000                               |
+| `plans-page.png`        | 1440 × 1100                               |
+| `plan-details-page.png` | 1440 × 1300                               |
+| `compare-page.png`      | 1440 × 1100, аналитическая часть страницы |
+| `profile-page.png`      | 1440 × 1000                               |
+| `mobile-plans-page.png` | 390 × 1200                                |
+
+Перед следующей съёмкой примените миграции и ожидаемый импорт, проверьте число программ, очистите browser state и измените query-версию во всех Markdown-ссылках.

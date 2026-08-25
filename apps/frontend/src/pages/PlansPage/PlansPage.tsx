@@ -20,7 +20,6 @@ const defaultFilters: PlanFilters = {
   profile: 'all',
   level: 'all',
   studyForm: 'all',
-  year: 'all',
 };
 
 export const PlansPage = () => {
@@ -56,7 +55,7 @@ export const PlansPage = () => {
         <PageHeader
           eyebrow="Каталог учебных планов"
           title="Найдите образовательную программу"
-          description="Ищите по названию, направлению или коду и уточняйте результаты по факультету, профилю, уровню, году и форме обучения."
+          description="Ищите среди учебных планов 2025 года по названию или коду. Уточните факультет, направление, профиль и формат обучения."
         />
 
         <PageSection>

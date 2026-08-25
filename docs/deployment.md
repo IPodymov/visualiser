@@ -1,213 +1,110 @@
-# Deployment
+# Развёртывание
 
-This project is a monorepo with `apps/frontend` and `apps/backend`.
-
-The recommended deployment strategy is:
-
-- deploy the Vite frontend to Vercel;
-- deploy the Express/Prisma backend as a separate long-running Node service on Railway;
-- connect the Vercel frontend to the backend through `VITE_API_BASE_URL`.
-
-## Why Backend Is External
-
-The backend uses Express, Prisma, PostgreSQL, Excel file import, `multer`, `fs/path`, and local FIT source files. It can be adapted to serverless later, but the safest production deployment is a persistent Node runtime with managed PostgreSQL.
-
-## Frontend on Vercel
-
-Use these Vercel Dashboard settings:
-
-| Setting | Value |
-| --- | --- |
-| Framework Preset | Vite |
-| Root Directory | `apps/frontend` |
-| Install Command | `npm install` |
-| Build Command | `npm run build` |
-| Output Directory | `dist` |
-
-`apps/frontend/vercel.json` contains the SPA rewrite:
-
-```json
-{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
-}
-```
-
-This prevents 404 errors when refreshing nested React Router pages such as `/plans`, `/plans/99`, `/compare`, `/profile`, `/login`, and `/register`.
-
-## Frontend Environment Variables
-
-Set this in Vercel:
-
-| Variable | Example |
-| --- | --- |
-| `VITE_API_BASE_URL` | `https://your-railway-backend-domain.com` |
-
-The frontend API client appends endpoint paths such as `/api/curricula`, so the value must be the Railway backend origin without `/api`.
-
-Correct:
-
-```env
-VITE_API_BASE_URL=https://your-backend.up.railway.app
-```
-
-Incorrect:
-
-```env
-VITE_API_BASE_URL=https://your-backend.up.railway.app/api
-```
-
-Vercel builds now fail when `VITE_API_BASE_URL` is missing, so a broken frontend is not deployed silently.
-
-Local examples live in:
+Рекомендуемая схема:
 
 ```text
-apps/frontend/.env.example
-apps/frontend/.env.local.example
+Browser ──HTTPS──► Vercel (Vite SPA)
+                       │
+                       └──HTTPS──► Railway (Express API) ──► Railway PostgreSQL
 ```
 
-For local development you can leave the base URL empty and use Vite proxy, or set:
+Frontend и backend разворачиваются отдельно. Production frontend не использует Vite proxy и обязан знать публичный API URL.
+
+## Frontend на Vercel
+
+| Setting          | Value           |
+| ---------------- | --------------- |
+| Root Directory   | `apps/frontend` |
+| Framework Preset | Vite            |
+| Install Command  | `npm install`   |
+| Build Command    | `npm run build` |
+| Output Directory | `dist`          |
+
+Обязательная переменная:
 
 ```env
-VITE_API_BASE_URL=http://localhost:4000
+VITE_API_BASE_URL=https://your-api.up.railway.app
 ```
 
-Do not upload local `.env` files to Vercel. The frontend reads `VITE_*` values from Vercel Environment Variables during the build. `apps/frontend/.vercelignore` excludes `.env*` files from Vercel uploads so local examples cannot affect the deployed frontend.
+`vite.config.ts` завершает Vercel build с ошибкой, если переменная отсутствует. `vercel.json` перенаправляет client-side routes на `index.html`.
 
-## Backend Deployment
+После изменения `VITE_API_BASE_URL` нужен новый build: Vite встраивает значение в bundle.
 
-Deploy `apps/backend` to a Node hosting provider.
+## Backend и PostgreSQL на Railway
 
-### Railway
-
-The repository includes `railway.json` for the backend service. Railway will build the backend with `apps/backend/Dockerfile`, run `npm run prisma:migrate:deploy` before starting the service, and use `/health` as the healthcheck path.
-
-Railway does not provide a post-deploy command in config-as-code. The migration command is configured as `preDeployCommand`, which means it runs after the image is built and before the new backend container is started. If migrations fail, Railway will not promote that deployment.
-
-Required Railway variables:
-
-| Variable | Example |
-| --- | --- |
-| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
-| `JWT_SECRET` | Long random secret |
-| `JWT_EXPIRES_IN` | `1d` |
-| `FRONTEND_URL` | `https://your-vercel-domain.vercel.app` |
-| `CORS_ORIGIN` | `https://your-vercel-domain.vercel.app` |
-| `PORT` | `4000` |
-
-Railway usually injects `PORT` automatically. If you set it manually, keep it aligned with the exposed service port.
-
-Do not deploy `.env`, `.env.example`, or `.env.docker.example` to Railway. The backend ignores local `.env` loading in production and reads only Railway service variables. The root `.dockerignore` excludes `.env*` files from the Docker build context.
-
-Required backend environment variables:
-
-| Variable | Description |
-| --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Long random secret |
-| `JWT_EXPIRES_IN` | Example: `1d` |
-| `PORT` | Provider-defined or `4000` locally |
-| `FIT_DIR` | Directory for FIT Excel files, if import is used |
-| `FIT_IMPORT_ADMISSION_YEAR` | Optional year filter for import, for example `2025` |
-| `FRONTEND_URL` | Vercel frontend URL |
-| `CORS_ORIGIN` | Comma-separated allowed origins |
-
-Example production CORS:
+Backend собирается из корня репозитория по `railway.json`/`apps/backend/Dockerfile`. Подключите PostgreSQL service и настройте:
 
 ```env
-FRONTEND_URL=https://your-vercel-app.vercel.app
-CORS_ORIGIN=https://your-vercel-app.vercel.app
-```
-
-For preview deployments, add additional exact origins separated by commas, or keep the `https://*.vercel.app` wildcard:
-
-```env
-CORS_ORIGIN=https://your-vercel-app.vercel.app,https://your-git-branch.vercel.app
-```
-
-The current production frontend origin should be included in Railway `CORS_ORIGIN`:
-
-```env
-CORS_ORIGIN=https://visualiser-frontend-7n3std6dr-ipodymovs-projects.vercel.app
-```
-
-## Backend Build and Start
-
-```bash
-npm install
-npm run prisma:generate
-npm run build -w apps/backend
-npm run start -w apps/backend
-```
-
-Run Prisma migrations before start:
-
-```bash
-npm run prisma:migrate -w apps/backend
-```
-
-Importing FIT Excel files is a manual data operation, not part of backend startup:
-
-```bash
-npm run seed -w apps/backend
-npm run import:fit -w apps/backend
-```
-
-Only run `import:fit` in an environment where the `FIT_DIR` folder exists.
-
-`FIT_DIR` can contain several directories separated by commas. The importer scans nested folders and
-supports `.xlsx`, `.xls`, and `.xlsm` workbooks. To import only the admission year used by the
-frontend selection, set:
-
-```env
+NODE_ENV=production
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+JWT_SECRET=<случайная строка длиной не менее 32 символов>
+JWT_EXPIRES_IN=1d
+FRONTEND_URL=https://your-frontend.vercel.app
+CORS_ORIGIN=https://your-frontend.vercel.app,https://*.your-preview-domain.vercel.app
+PORT=4000
+ENABLE_API_DOCS=false
+FIT_DIR=/app/FIT
 FIT_IMPORT_ADMISSION_YEAR=2025
 ```
 
-## Local Production Check
+Origins разделяются запятыми без path. В production разрешены только валидные HTTPS origins; `*` и localhost отклоняются. Wildcard допускается только в позиции одного поддомена.
 
-From repository root:
+Перед запуском новой версии примените:
 
 ```bash
-npm install
+npx prisma migrate deploy --schema apps/backend/prisma/schema.prisma
+```
+
+Не запускайте seed при каждом production restart, если он перестал быть строго идемпотентным.
+
+## FIT-файлы в production
+
+Текущий backend Docker image копирует каталог `FIT`, а Docker Compose монтирует его read-only. Railway filesystem не следует считать постоянным хранилищем пользовательских uploads. Для production-процесса выберите один контролируемый вариант:
+
+- включать утверждённые workbooks в release image;
+- импортировать их одноразовой release job;
+- перенести uploads в object storage и добавить управляемый import job.
+
+Не запускайте каталоговый импорт конкурентно в нескольких replicas. SHA-256 предотвращает дубли файлов, но операционный процесс должен оставаться одиночным и наблюдаемым.
+
+## Docker Compose
+
+Корневая команда `npm run dev` использует Compose только для PostgreSQL и является поддерживаемым локальным путём.
+
+Полный frontend-образ получает `VITE_API_BASE_URL` через Docker build argument. Для сборки с production-настройками используйте `docker compose --env-file .env.prod up --build`.
+
+## Наблюдаемость и backup
+
+- healthcheck: `GET /health`;
+- логируйте request failures без токенов и паролей;
+- настройте Railway restart policy и alerts на 5xx/недоступность;
+- включите регулярные PostgreSQL backups и проверьте восстановление;
+- храните импортные отчёты с количеством imported/skipped/ignored/failed;
+- перед массовым удалением планов делайте отдельный backup.
+
+## Чек-лист перед релизом
+
+```bash
+npm ci
 npm run lint
 npm run build
-npm run preview
+npm run test:coverage
+npm run test:security
 ```
 
-The root `preview` command serves the Vite frontend preview from `apps/frontend`.
+Затем проверьте:
 
-## Verifying a Vercel Deployment
+- миграции применены;
+- `/health` отвечает `200`;
+- frontend открывается по прямому route `/plans`;
+- API URL использует HTTPS и не заканчивается лишним `/api`;
+- login, catalog, details, same-level comparison и download проходят end-to-end;
+- разные уровни сравнения блокируются и клиентом, и API;
+- CORS разрешает production и preview domains, но отклоняет посторонний origin;
+- Swagger выключен, если публичный доступ не нужен;
+- dataset содержит ожидаемые годы и количество планов;
+- скриншоты и документация соответствуют release.
 
-After deploy:
+## Откат
 
-1. Open `/`.
-2. Refresh `/plans`.
-3. Refresh `/plans/:id`.
-4. Refresh `/compare`.
-5. Confirm network requests go to `VITE_API_BASE_URL`.
-6. Confirm backend CORS allows the Vercel domain.
-7. Confirm login/register requests reach backend.
-
-Useful backend checks:
-
-```bash
-curl https://your-railway-backend-domain.com/health
-curl https://your-railway-backend-domain.com/api/docs
-curl https://your-railway-backend-domain.com/api/curricula
-curl -i -H "Origin: https://your-vercel-domain.vercel.app" https://your-railway-backend-domain.com/api/curricula
-```
-
-## Typical Issues
-
-| Problem | Fix |
-| --- | --- |
-| React Router page returns 404 on refresh | Ensure `apps/frontend/vercel.json` is included and Root Directory is `apps/frontend` |
-| API calls go to Vercel frontend domain | Set `VITE_API_BASE_URL` in Vercel |
-| Browser blocks API with CORS | Add Vercel URL to backend `CORS_ORIGIN` |
-| Build cannot find scripts | Check Vercel Root Directory is `apps/frontend` |
-| Backend cannot connect to DB | Set `DATABASE_URL` and run Prisma migrations |
-| Production uses localhost | Do not set `VITE_API_BASE_URL` to localhost in Vercel |
+Frontend откатывается на предыдущий Vercel deployment, backend — на предыдущий Railway image. Схемная миграция должна быть backward-compatible с предыдущей версией или иметь заранее проверенный план восстановления из backup. Не используйте `prisma migrate reset` в production.

@@ -2,8 +2,6 @@ import type { SelectFilterConfig } from '../types/filter';
 import type { EducationPlan } from '../types/plan';
 import type { FacultyOption } from '../services/api/faculties';
 
-const compareNumbersDesc = (left: string, right: string) => Number(right) - Number(left);
-
 const uniqueSortedOptions = (
   values: Array<string | number | null | undefined>,
   sort?: (left: string, right: string) => number,
@@ -71,14 +69,5 @@ export const buildPlanFilterConfig = (
     label: 'Форма',
     placeholder: 'Форма',
     options: uniqueSortedOptions(plans.map((plan) => plan.studyForm)),
-  },
-  {
-    key: 'year',
-    label: 'Год',
-    placeholder: 'Год',
-    options: uniqueSortedOptions(
-      plans.map((plan) => plan.year),
-      compareNumbersDesc,
-    ),
   },
 ];

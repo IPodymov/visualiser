@@ -11,7 +11,6 @@ const defaultFilters: PlanFilters = {
   profile: 'all',
   level: 'all',
   studyForm: 'all',
-  year: 'all',
 };
 
 export const usePlans = () => {
@@ -64,15 +63,13 @@ export const usePlans = () => {
         const matchesProfile = filters.profile === 'all' || plan.profile === filters.profile;
         const matchesLevel = filters.level === 'all' || plan.level === filters.level;
         const matchesForm = filters.studyForm === 'all' || plan.studyForm === filters.studyForm;
-        const matchesYear = filters.year === 'all' || String(plan.year) === filters.year;
         return (
           matchesQuery &&
           matchesFaculty &&
           matchesDirection &&
           matchesProfile &&
           matchesLevel &&
-          matchesForm &&
-          matchesYear
+          matchesForm
         );
       }),
     [filters, plans],

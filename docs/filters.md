@@ -1,68 +1,75 @@
-# Filters
+# Поиск и фильтры каталога
 
-Filters are generated from the loaded curriculum list so the UI stays aligned with real database values.
+Каталог сочетает серверное сужение набора и мгновенную клиентскую фильтрацию. Опции формируются из фактических планов и ответа `/api/faculties`, поэтому интерфейс не предлагает вымышленные значения.
 
-## Config Shape
-
-`usePlans` builds select filter config with `buildPlanFilterConfig(plans)` from:
-
-```text
-apps/frontend/src/utils/planFilters.ts
-```
-
-The generated config describes visible select filters:
+## Модель состояния
 
 ```ts
-export type SelectFilterConfig = {
-  key: 'faculty' | 'level' | 'studyForm' | 'year';
-  label: string;
-  placeholder: string;
-  options: Array<{ label: string; value: string }>;
+type PlanFilters = {
+  query: string;
+  faculty: string;
+  direction: string;
+  profile: string;
+  level: string;
+  studyForm: string;
 };
 ```
 
-## Component API
+Значение `all` означает отсутствие фильтра. Начальное состояние: пустой `query`, остальные поля — `all`.
 
-`SearchFilters` receives config and state via props:
+## Серверная часть
 
-```tsx
-const { filterConfig, filters, setFilters, reload } = usePlans();
+`plansApi.list()` отправляет на `/api/curricula` только параметры, которые backend поддерживает напрямую:
 
-<SearchFilters
-  config={filterConfig}
-  filters={filters}
-  onChange={setFilters}
-  onSubmit={() => reload(filters)}
-/>
-```
+- `facultyId`, если faculty — валидное целое.
 
-## Search
+API также поддерживает `specialityName`, `specialityCode` и `admissionYear`, хотя текущий UI использует единый клиентский поиск. Production-набор ограничен 2025 годом, поэтому отдельный фильтр года в каталоге не нужен.
 
-The search input is a clean text field without an icon. It filters locally by:
+## Клиентская часть
 
-- plan title;
-- faculty;
-- speciality code.
+После получения данных `usePlans` последовательно проверяет:
 
-## Backend Query Parameters
+- `query` по `title`, `direction`, `profile`, `faculty` и `code` без учёта регистра;
+- точное совпадение `facultyId`;
+- точное совпадение направления;
+- точное совпадение профиля;
+- точное совпадение уровня;
+- точное совпадение формы обучения.
 
-The backend accepts:
+Все активные условия объединяются логическим AND.
 
-| Frontend State | Backend Parameter |
-| --- | --- |
-| `query` | `specialityName` |
-| `year` | `admissionYear` |
+## Источники опций
 
-The frontend does not send:
+`buildPlanFilterConfig`:
 
-- `undefined`;
-- `null`;
-- empty strings;
-- `all`;
-- non-numeric year values.
+- берёт факультеты из API, а при их отсутствии — из планов;
+- удаляет дубли направлений, профилей, уровней и форм;
+- сортирует текст по русской locale;
+- исключает `null` и `undefined`.
 
-This prevents backend validation errors such as `admissionYear=all`.
+Опция «Все» добавляется самим select-компонентом и не должна дублироваться в config.
 
-## Local and Server Filtering
+## UX-правила
 
-The frontend fetches a list from backend, then applies local UI filters for faculty, level, study form, and year. The server still supports `specialityName`, `specialityCode`, and `admissionYear` for efficient filtering.
+- число результатов обновляется после каждого изменения;
+- сброс возвращает все поля в начальное состояние;
+- нулевой результат показывает empty state и действие очистки фильтров;
+- выбранные значения сохраняются, пока пользователь остаётся на странице;
+- факультет, направление и профиль показаны в единой группе «Программа»;
+- уровень и форма показаны в отдельной группе «Формат обучения»;
+- мобильные фильтры доступны в drawer и используют ту же модель состояния;
+- label связан с control, управление доступно с клавиатуры.
+
+## Ограничения
+
+Текущая реализация получает подробности планов без метрик дополнительными запросами партиями по четыре. При существенном росте набора стоит перенести поиск, все фильтры и пагинацию на backend и вернуть summary DTO одним запросом.
+
+## Тестовые сценарии
+
+- поиск по каждому из пяти полей;
+- комбинация нескольких фильтров;
+- профили с `null`;
+- fallback факультетов из планов;
+- невалидный faculty не попадает в query;
+- loading, network error, retry, empty result и reset;
+- одинаковое поведение desktop и mobile controls.

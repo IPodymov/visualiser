@@ -1,174 +1,112 @@
-# API Documentation
+# HTTP API
 
-Base URL in development:
+Development base URL: `http://localhost:4000`. Все прикладные endpoints, кроме `/health`, находятся под `/api`. Swagger UI доступен по `/api/docs`, только если `ENABLE_API_DOCS=true`.
 
-```text
-http://localhost:4000
-```
+## Общие правила
 
-When called from the Vite frontend, `/api` is proxied to the backend.
+- JSON-запросы отправляются с `Content-Type: application/json`.
+- Защищённые маршруты требуют `Authorization: Bearer <token>`.
+- ID — положительные целые числа.
+- Неизвестные поля strict-body контрактов отклоняются.
+- Ошибки возвращаются в JSON с полем `message`; validation response может содержать дополнительные безопасные детали.
+- `/api/*` получает `Cache-Control: no-store` и ограничивается rate limit.
 
-## Health
+## Служебные endpoints
 
-| Method | URL       | Auth |
-| ------ | --------- | ---- |
-| GET    | `/health` | No   |
+| Метод | URL         | Auth | Назначение                             |
+| ----- | ----------- | ---- | -------------------------------------- |
+| GET   | `/health`   | нет  | `{ "status": "ok" }`                   |
+| GET   | `/api/docs` | нет  | Swagger UI, если включён конфигурацией |
 
-Response:
+## Авторизация
 
-```json
-{ "status": "ok" }
-```
+| Метод | URL                  | Auth | Назначение                  |
+| ----- | -------------------- | ---- | --------------------------- |
+| POST  | `/api/auth/register` | нет  | регистрация и выдача токена |
+| POST  | `/api/auth/login`    | нет  | вход и выдача токена        |
+| GET   | `/api/auth/me`       | JWT  | текущий пользователь        |
 
-## Auth
-
-### Register
-
-| Method | URL                  | Auth |
-| ------ | -------------------- | ---- |
-| POST   | `/api/auth/register` | No   |
-
-Request:
+Регистрация:
 
 ```json
 {
   "email": "student@example.com",
-  "password": "password123",
-  "fullName": "Student Name"
+  "password": "strong-pass-2026",
+  "fullName": "Анна Смирнова"
 }
 ```
 
-Response:
+Ограничения: email до 254 символов, пароль 12–128 символов, `fullName` необязателен и после trim должен содержать 1–120 символов. Email нормализуется в lowercase. Успешные register/login возвращают:
 
 ```json
 {
   "user": {
     "id": 1,
     "email": "student@example.com",
-    "fullName": "Student Name",
-    "createdAt": "2026-05-11T10:00:00.000Z",
-    "updatedAt": "2026-05-11T10:00:00.000Z"
+    "fullName": "Анна Смирнова",
+    "createdAt": "2026-08-24T10:00:00.000Z",
+    "updatedAt": "2026-08-24T10:00:00.000Z"
   },
-  "accessToken": "jwt-token"
+  "accessToken": "<jwt>"
 }
 ```
 
-### Login
+## Учебные планы
 
-| Method | URL               | Auth |
-| ------ | ----------------- | ---- |
-| POST   | `/api/auth/login` | No   |
+| Метод | URL                              | Auth     | Назначение                                    |
+| ----- | -------------------------------- | -------- | --------------------------------------------- |
+| GET   | `/api/curricula`                 | нет      | список планов                                 |
+| POST  | `/api/curricula/recommendations` | нет      | рекомендации по весам интересов               |
+| GET   | `/api/curricula/:id`             | optional | план с дисциплинами; с JWT фиксирует просмотр |
+| GET   | `/api/curricula/:id/disciplines` | нет      | строки дисциплин плана                        |
+| GET   | `/api/curricula/:id/validation`  | нет      | результат проверки плана                      |
+| POST  | `/api/curricula/import-fit`      | JWT      | запустить импорт каталогов из `FIT_DIR`       |
 
-Request:
+Параметры списка:
 
-```json
-{
-  "email": "student@example.com",
-  "password": "password123"
-}
-```
-
-Errors:
-
-| Status | Reason                    |
-| ------ | ------------------------- |
-| 401    | Invalid email or password |
-| 400    | Validation error          |
-
-### Current User
-
-| Method | URL            | Auth         |
-| ------ | -------------- | ------------ |
-| GET    | `/api/auth/me` | Bearer token |
-
-## Curricula
-
-### List Curricula
-
-| Method | URL              | Auth |
-| ------ | ---------------- | ---- |
-| GET    | `/api/curricula` | No   |
-
-Query parameters:
-
-| Parameter        | Type    | Required | Example          |
-| ---------------- | ------- | -------- | ---------------- |
-| `specialityName` | string  | No       | `Веб-технологии` |
-| `specialityCode` | string  | No       | `09.03`          |
-| `admissionYear`  | integer | No       | `2025`           |
-
-Example:
+| Query            | Тип              | Описание                       |
+| ---------------- | ---------------- | ------------------------------ |
+| `specialityName` | string           | фильтр по названию направления |
+| `specialityCode` | string           | фильтр по коду направления     |
+| `facultyId`      | positive integer | фильтр по факультету           |
+| `admissionYear`  | integer          | год приёма                     |
 
 ```bash
-curl "http://localhost:4000/api/curricula?admissionYear=2025"
+curl "http://localhost:4000/api/curricula?facultyId=1&admissionYear=2025"
 ```
 
-Response item:
+Frontend-фильтры уровня, формы, профиля и поисковой строки применяются на клиенте после получения списка. Это описано в [filters.md](./filters.md).
+
+Запрос рекомендаций:
 
 ```json
 {
-  "id": 99,
-  "specialityId": 64,
-  "admissionYear": 2025,
-  "educationLevel": "Аспирантура",
-  "educationForm": "Очная",
-  "profileName": null,
-  "sourceFileName": "2. - 000021698 - 2025.xlsx",
-  "uploadedAt": "2026-05-10T20:40:54.212Z",
-  "speciality": {
-    "id": 64,
-    "code": "2.",
-    "name": "..."
+  "educationLevel": "bachelor",
+  "studyForm": "fullTime",
+  "limit": 6,
+  "weights": {
+    "software": 80,
+    "web": 60,
+    "data": 30
   }
 }
 ```
 
-### Curriculum Details
+`educationLevel`: `bachelor`, `specialist`, `master`, `postgraduate`. `studyForm`: `fullTime`, `partTime`, `evening`. `limit`: 1–12. Веса категорий находятся в диапазоне 0–100, хотя бы один должен быть больше нуля.
 
-| Method | URL                  | Auth     |
-| ------ | -------------------- | -------- |
-| GET    | `/api/curricula/:id` | Optional |
+## Сравнение
 
-Returns curriculum metadata and disciplines grouped by semester.
+| Метод | URL               | Auth |
+| ----- | ----------------- | ---- |
+| GET   | `/api/comparison` | нет  |
 
-### Curriculum Disciplines
-
-| Method | URL                              | Auth |
-| ------ | -------------------------------- | ---- |
-| GET    | `/api/curricula/:id/disciplines` | No   |
-
-### Curriculum Validation
-
-| Method | URL                             | Auth |
-| ------ | ------------------------------- | ---- |
-| GET    | `/api/curricula/:id/validation` | No   |
-
-### Import FIT Files
-
-| Method | URL                         | Auth         |
-| ------ | --------------------------- | ------------ |
-| POST   | `/api/curricula/import-fit` | Bearer token |
-
-## Comparison
-
-| Method | URL               | Auth |
-| ------ | ----------------- | ---- |
-| GET    | `/api/comparison` | No   |
-
-Query:
-
-| Parameter            | Type    | Required |
-| -------------------- | ------- | -------- |
-| `firstCurriculumId`  | integer | Yes      |
-| `secondCurriculumId` | integer | Yes      |
-
-Example:
+Обязательные query-параметры: `firstCurriculumId` и `secondCurriculumId`.
 
 ```bash
-curl "http://localhost:4000/api/comparison?firstCurriculumId=1&secondCurriculumId=2"
+curl "http://localhost:4000/api/comparison?firstCurriculumId=99&secondCurriculumId=97"
 ```
 
-Response:
+Планы должны существовать, иметь разные ID и одинаковый уровень образования. Ответ содержит `firstCurriculum`, `secondCurriculum`, `summary`, `commonDisciplines`, `onlyInFirst`, `onlyInSecond`.
 
 ```json
 {
@@ -181,13 +119,12 @@ Response:
   },
   "commonDisciplines": [
     {
-      "name": "Алгоритмы",
+      "name": "Алгоритмы и структуры данных",
+      "first": { "semesterNumber": 3, "totalHours": 144, "credits": "4" },
+      "second": { "semesterNumber": 4, "totalHours": 108, "credits": "3" },
       "differences": [
-        {
-          "field": "totalHours",
-          "firstValue": 144,
-          "secondValue": 108
-        }
+        { "field": "semesterNumber", "firstValue": 3, "secondValue": 4 },
+        { "field": "totalHours", "firstValue": 144, "secondValue": 108 }
       ]
     }
   ],
@@ -196,32 +133,48 @@ Response:
 }
 ```
 
-## Profile
+## Справочники
 
-All profile endpoints require a Bearer token.
+| Метод | URL                     | Auth | Назначение                                          |
+| ----- | ----------------------- | ---- | --------------------------------------------------- |
+| GET   | `/api/faculties`        | нет  | факультеты; поддерживается optional `admissionYear` |
+| GET   | `/api/specialities`     | нет  | направления подготовки                              |
+| GET   | `/api/specialities/:id` | нет  | направление по ID                                   |
+| GET   | `/api/disciplines`      | нет  | дисциплины                                          |
+| GET   | `/api/disciplines/:id`  | нет  | дисциплина по ID                                    |
+| GET   | `/api/users/:id`        | JWT  | пользователь по ID                                  |
 
-| Method | URL                                    | Description             |
+## Профиль
+
+Все endpoints требуют JWT.
+
+| Метод  | URL                                    | Назначение              |
 | ------ | -------------------------------------- | ----------------------- |
-| GET    | `/api/profile/favorites`               | List favorite curricula |
-| POST   | `/api/profile/favorites/:curriculumId` | Add favorite            |
-| DELETE | `/api/profile/favorites/:curriculumId` | Remove favorite         |
-| GET    | `/api/profile/history`                 | View history            |
+| GET    | `/api/profile/favorites`               | список избранных планов |
+| POST   | `/api/profile/favorites/:curriculumId` | добавить в избранное    |
+| DELETE | `/api/profile/favorites/:curriculumId` | удалить из избранного   |
+| GET    | `/api/profile/history`                 | история просмотров      |
 
-## Files and Downloads
+## Файлы и скачивания
 
-| Method | URL                                           | Auth     | Description                |
-| ------ | --------------------------------------------- | -------- | -------------------------- |
-| POST   | `/api/files/fit`                              | Bearer   | Upload `.xlsx` FIT file    |
-| GET    | `/api/downloads/curricula/:id`                | Optional | Download source file       |
-| GET    | `/api/downloads/curricula/:id/discipline-map` | Optional | Download discipline map    |
-| GET    | `/api/downloads/comparison`                   | Optional | Download comparison export |
+| Метод | URL                                           | Auth     | Назначение                                      |
+| ----- | --------------------------------------------- | -------- | ----------------------------------------------- |
+| POST  | `/api/files/fit`                              | JWT      | загрузить один `.xlsx` в multipart field `file` |
+| GET   | `/api/downloads/curricula/:id`                | optional | скачать исходный workbook                       |
+| GET   | `/api/downloads/curricula/:id/discipline-map` | optional | выгрузить карту дисциплин                       |
+| GET   | `/api/downloads/comparison`                   | optional | выгрузить сравнение                             |
 
-## Common Errors
+Для выгрузки сравнения используются те же query-параметры `firstCurriculumId` и `secondCurriculumId`. Upload ограничен 10 MiB и одним файлом.
 
-| Status | Meaning                                |
-| ------ | -------------------------------------- |
-| 400    | Validation error                       |
-| 401    | Missing or invalid authentication      |
-| 404    | Entity not found                       |
-| 409    | Conflict, such as duplicate user email |
-| 500    | Unexpected server error                |
+## Статусы ошибок
+
+| Статус | Значение                                                      |
+| ------ | ------------------------------------------------------------- |
+| `400`  | некорректный запрос, одинаковые ID или несовместимые уровни   |
+| `401`  | отсутствует или невалиден JWT                                 |
+| `404`  | сущность или endpoint не найден                               |
+| `409`  | конфликт, например уже зарегистрированный email               |
+| `413`  | превышен лимит тела или файла                                 |
+| `415`  | неподдерживаемый content type                                 |
+| `429`  | превышен rate limit                                           |
+| `500`  | неожиданная серверная ошибка без раскрытия внутренних деталей |

@@ -5,13 +5,11 @@ import { z } from 'zod';
 const isProduction = process.env.NODE_ENV === 'production';
 const localhostPattern = /(^|\/\/)(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i;
 
-if (!isProduction) {
-  dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
-  dotenv.config({
-    path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
-    override: process.env.NODE_ENV === 'test',
-  });
-}
+const environmentFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env';
+
+dotenv.config({
+  path: path.resolve(process.cwd(), `../../${environmentFile}`),
+});
 
 const productionUrl = (name: string) =>
   z

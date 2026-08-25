@@ -5,13 +5,14 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/frontend/package.json apps/frontend/package.json
 COPY packages/shared/package.json packages/shared/package.json
+COPY vendor/xlsx-0.20.3.tgz vendor/xlsx-0.20.3.tgz
 
 RUN npm ci
 
 COPY . .
 
-ARG VITE_API_URL=http://localhost:4000
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_API_BASE_URL=http://localhost:4000
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 RUN npm run build:frontend
 

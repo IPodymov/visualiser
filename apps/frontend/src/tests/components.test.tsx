@@ -387,7 +387,7 @@ describe('forms, navigation and filters', () => {
 
   it('searches, filters and resets on desktop and mobile', async () => {
     const user = userEvent.setup();
-    const filters: PlanFilters = { query: '', faculty: 'all', direction: 'all', profile: 'all', level: 'all', studyForm: 'all', year: 'all' };
+    const filters: PlanFilters = { query: '', faculty: 'all', direction: 'all', profile: 'all', level: 'all', studyForm: 'all' };
     const config = [{ key: 'level' as const, label: 'Уровень', placeholder: 'Любой', options: [{ value: 'Бакалавриат', label: 'Бакалавриат' }] }];
     const onChange = vi.fn();
     const onReset = vi.fn();

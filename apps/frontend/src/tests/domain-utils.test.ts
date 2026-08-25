@@ -207,7 +207,7 @@ describe('filters, comparisons and formatting', () => {
 
     expect(fallback[0].options.map((item) => item.label)).toEqual(['АФ', 'ЯФ']);
     expect(fallback[1].options.map((item) => item.label)).toEqual(['А', 'Б']);
-    expect(fallback[5].options.map((item) => item.value)).toEqual(['2025', '2024']);
+    expect(fallback.map((filter) => filter.key)).toEqual(['faculty', 'direction', 'profile', 'level', 'studyForm']);
     expect(authoritative[0].options).toEqual([{ label: 'Факультет 9', value: '9' }]);
     expect(buildPlanFilterConfig(plans, [])[0].options).toEqual(fallback[0].options);
   });

@@ -74,7 +74,6 @@ describe('usePlans', () => {
         profile: 'all',
         level: 'Магистратура',
         studyForm: 'Заочная',
-        year: '2024',
       }),
     );
     expect(result.current.filteredPlans.map((item) => item.id)).toEqual([2]);
@@ -85,7 +84,6 @@ describe('usePlans', () => {
       ['profile', 'Другое'],
       ['level', 'Специалитет'],
       ['studyForm', 'Очно-заочная'],
-      ['year', '2030'],
     ] as const) {
       act(() =>
         result.current.setFilters({
@@ -95,7 +93,6 @@ describe('usePlans', () => {
           profile: 'all',
           level: 'all',
           studyForm: 'all',
-          year: 'all',
           [key]: value,
         }),
       );
@@ -106,7 +103,7 @@ describe('usePlans', () => {
   it('reloads with explicit filters', async () => {
     const { result } = renderHook(() => usePlans());
     await waitFor(() => expect(result.current.loading).toBe(false));
-    const nextFilters = { ...result.current.filters, year: '2024' };
+    const nextFilters = { ...result.current.filters, faculty: '2' };
 
     await act(async () => result.current.reload(nextFilters));
 

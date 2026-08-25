@@ -33,7 +33,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
       FIT_DIR: /app/FIT
+      FIT_IMPORT_ADMISSION_YEAR: ${FIT_IMPORT_ADMISSION_YEAR:-2025}
+      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      ENABLE_API_DOCS: ${ENABLE_API_DOCS:-false}
     ports:
       - "4000:4000"
     volumes:
@@ -48,7 +51,7 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:4000}
     container_name: curricula_visualiser_frontend
     restart: unless-stopped
     depends_on:

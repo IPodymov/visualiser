@@ -118,7 +118,6 @@ export type PlanFilters = {
   profile: string;
   level: string;
   studyForm: string;
-  year: string;
 };
 
 export type CompareSummary = {

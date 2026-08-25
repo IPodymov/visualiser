@@ -1,121 +1,99 @@
-# Architecture
+# Архитектура
 
-EduPlan Compare uses a workspace-based monorepo with a clear split between UI, API, and shared infrastructure.
+EduPlan Compare — npm-workspaces монорепозиторий из двух приложений и одной PostgreSQL-базы. Frontend отвечает за пользовательские сценарии и визуализацию, backend — за безопасность, бизнес-инварианты, импорт, нормализацию и доступ к данным.
 
-## High-Level Diagram
-
-```mermaid
-flowchart TB
-  subgraph Client["apps/frontend"]
-    Router[React Router]
-    Pages[Pages]
-    Components[Components]
-    Store[Zustand Store]
-    Services[services/api]
-  end
-
-  subgraph Server["apps/backend"]
-    Express[Express App]
-    Modules[Feature Modules]
-    Middleware[Auth / Validation / Errors]
-    Prisma[Prisma Client]
-  end
-
-  DB[(PostgreSQL)]
-  Files[(FIT Excel files)]
-
-  Router --> Pages
-  Pages --> Components
-  Pages --> Store
-  Pages --> Services
-  Services --> Express
-  Express --> Middleware
-  Express --> Modules
-  Modules --> Prisma
-  Prisma --> DB
-  Modules --> Files
-```
-
-## Monorepo Layout
-
-| Path | Responsibility |
-| --- | --- |
-| `apps/frontend` | React application, UI state, routes, charts, API client |
-| `apps/backend` | REST API, auth, validation, Prisma data access |
-| `packages/shared` | Shared package placeholder for future cross-app contracts |
-| `docs` | Developer and user documentation |
-
-## Frontend and Backend Interaction
-
-The frontend uses `services/api/client.ts` to create a single Axios instance. During development, Vite proxies `/api` and `/health` to `http://localhost:4000`. In production, `VITE_API_BASE_URL` must point to the deployed backend origin without `/api`.
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant F as React Page
-  participant S as services/api
-  participant B as Express API
-  participant D as PostgreSQL
-
-  U->>F: Opens /plans
-  F->>S: plansApi.list(filters)
-  S->>B: GET /api/curricula
-  B->>D: Prisma findMany
-  D-->>B: Curriculum records
-  B-->>S: JSON response
-  S-->>F: EducationPlan[]
-  F-->>U: Catalog UI
-```
-
-## Data Flow
-
-1. Route renders a page component.
-2. Page calls a hook or service.
-3. API service sanitizes query params and calls backend.
-4. Backend validates request with Zod.
-5. Backend module uses Prisma to read or write data.
-6. Frontend maps backend DTOs to UI types.
-7. Components render cards, tables, accordions, and charts.
-
-## State Management
-
-| State | Location | Persistence |
-| --- | --- | --- |
-| Auth user | `store/useAppStore.ts` | `localStorage` as `eduplan-user` |
-| JWT token | `localStorage` | `eduplan-token` |
-| Favorites | Zustand | `localStorage` |
-| Compare IDs | Zustand | `localStorage` |
-| View history | Zustand | In-memory for current frontend session |
-| Filters | `usePlans` hook | Component state |
-
-## Routing
-
-React Router defines routes in `src/App.tsx`. The app currently does not block unauthenticated users from viewing profile, but backend profile endpoints require authentication.
-
-## Backend Structure
-
-Backend modules follow a conventional Express feature layout:
+## Контекст системы
 
 ```text
-modules/
-  auth/
-  curricula/
-  comparison/
-  profile/
-  files/
-  downloads/
-  disciplines/
-  specialities/
-  users/
+FIT .xlsx files
+      │
+      ▼
+Importer / upload ──► Express API ──► Prisma ──► PostgreSQL
+                          ▲                         │
+                          │ JSON / files            │
+                          └──── React/Vite SPA ◄────┘
 ```
 
-Each module generally contains routes, controller, service, and DTO validation files.
+Frontend не читает Excel и не подключается к базе напрямую. Метрики каталога, деталей и рабочего сравнения строятся из API-ответов. Иллюстративный пример на главной явно помечен как демонстрационный и не считается фактом конкретного учебного плана. Backend повторно проверяет критические правила, даже если клиент уже ограничил действие.
 
-## Scaling Principles
+## Слои
 
-- Keep backend modules isolated by domain.
-- Keep frontend components colocated with component CSS.
-- Keep API request logic in `services/api`.
-- Keep UI filter options in frontend config, not derived from backend payload shape.
-- Add shared types to `packages/shared` only when both apps need the same contract.
-- Introduce route-level code splitting if bundle size becomes a deployment concern.
+### Frontend
+
+`apps/frontend` — SPA на React 18 и TypeScript:
+
+- `pages` собирают пользовательские экраны;
+- `components` содержат доменные и переиспользуемые UI-компоненты;
+- `services/api` инкапсулирует Axios-запросы и преобразование DTO;
+- `hooks` управляют загрузкой, фильтрами и состояниями запросов;
+- `store/useAppStore.ts` хранит пользователя, избранное, историю текущей сессии и два слота сравнения;
+- `utils` содержит нормализацию уровней, фильтрацию и расчёты представления;
+- `styles` определяет токены, типографику и layout.
+
+### Backend
+
+`apps/backend` — Express API на TypeScript:
+
+- `modules/*` разделены по предметным областям;
+- `middlewares` отвечают за JWT, optional auth, security headers, content type и ошибки;
+- `shared` содержит общую валидацию, OpenAPI и ошибки приложения;
+- `prisma/schema.prisma` описывает модель хранения;
+- `scripts/import-fit.ts` запускает пакетный импорт файлов.
+
+### Хранилище
+
+Основные сущности:
+
+- `User` — учётная запись;
+- `Faculty` и `Speciality` — справочники;
+- `Curriculum` — версия учебного плана, привязанная к файлу и году приёма;
+- `Discipline` — нормализованное имя дисциплины;
+- `CurriculumDiscipline` — дисциплина в конкретном плане с семестром, формой контроля, часами и зачётными единицами;
+- `FavoriteCurriculum`, `ViewHistory`, `DownloadHistory` — пользовательские действия;
+- классификационные таблицы — расширяемая модель тематик дисциплин.
+
+Удаление учебного плана каскадно удаляет его связи с дисциплинами, историей и избранным. Уникальный `sourceFileHash` защищает от повторного импорта одного файла.
+
+## Основные потоки
+
+### Каталог и детальный просмотр
+
+1. Клиент параллельно запрашивает планы и факультеты.
+2. API применяет поддерживаемые серверные параметры.
+3. Клиент выполняет полнотекстовый поиск и остальные фильтры по полученному набору.
+4. На странице `/plans/:id` API возвращает метаданные и строки дисциплин.
+5. Если передан валидный JWT, просмотр фиксируется в истории.
+
+### Сравнение
+
+1. Пользователь заполняет A/B-слоты из каталога, детальной страницы или `/compare`.
+2. Zustand не позволяет выбрать один план дважды и блокирует несовместимый уровень.
+3. API независимо проверяет разные ID и одинаковый уровень образования.
+4. Дисциплины сопоставляются по нормализованному имени.
+5. Клиент показывает сводку, сходство, нагрузку, уникальные дисциплины и различия полей.
+
+### Импорт
+
+1. Импортёр рекурсивно находит Excel-файлы в `FIT_DIR`.
+2. Временные файлы и годы вне `FIT_IMPORT_ADMISSION_YEAR` пропускаются.
+3. Для файла считается SHA-256 и проверяется дубль.
+4. Парсер извлекает метаданные и дисциплины, валидатор формирует ошибки и предупреждения.
+5. Корректный файл записывается транзакционно.
+
+## Границы доверия
+
+- браузерное состояние не считается доверенным;
+- JWT проверяется backend middleware;
+- все params/query/body проходят Zod-валидацию;
+- CORS разрешает только настроенные origins;
+- production URL должны использовать HTTPS, а `JWT_SECRET` — не менее 32 символов;
+- загрузка принимает один `.xlsx` до 10 MiB с разрешённым MIME type;
+- неизвестные внутренние ошибки не раскрывают stack trace клиенту.
+
+## Принципы изменения архитектуры
+
+- сохранять текущие DTO, если пользовательский сценарий не требует контрактного изменения;
+- держать бизнес-инварианты на backend и дублировать удобную раннюю проверку на frontend;
+- не выдавать эвристику или синтетическое значение за факт учебного плана;
+- добавлять Prisma-миграцию при изменении схемы;
+- обновлять документацию и тесты одновременно с контрактом.

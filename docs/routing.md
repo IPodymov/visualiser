@@ -1,56 +1,43 @@
-# Routing
+# Маршрутизация
 
-Routing is defined in `apps/frontend/src/App.tsx` with React Router.
+Приложение использует `createBrowserRouter`. Все route-level страницы lazy-loaded и рендерятся внутри `AppLayout`.
 
-## Route Table
+| URL          | Страница                   | Основной сценарий                                |
+| ------------ | -------------------------- | ------------------------------------------------ |
+| `/`          | `HomePage`                 | понять продукт, увидеть пример, перейти к выбору |
+| `/survey`    | `AdmissionSurveyPage`      | ответить на вопросы и получить рекомендации      |
+| `/login`     | `AuthPage mode="login"`    | войти                                            |
+| `/register`  | `AuthPage mode="register"` | создать аккаунт                                  |
+| `/plans`     | `PlansPage`                | найти и отфильтровать программы                  |
+| `/plans/:id` | `PlanDetailsPage`          | изучить один учебный план                        |
+| `/compare`   | `ComparePage`              | выбрать A/B и изучить различия                   |
+| `/profile`   | `ProfilePage`              | посмотреть учётную запись, избранное и историю   |
+| `*`          | redirect `/`               | безопасный fallback неизвестного URL             |
 
-| Route | Page | Purpose |
-| --- | --- | --- |
-| `/` | `HomePage` | Main product page |
-| `/login` | `AuthPage` | Login form |
-| `/register` | `AuthPage` | Registration form |
-| `/plans` | `PlansPage` | Curriculum catalog |
-| `/plans/:id` | `PlanDetailsPage` | Curriculum details |
-| `/compare` | `ComparePage` | Compare curricula |
-| `/profile` | `ProfilePage` | User profile, favorites, history |
-| `*` | `Navigate` | Redirect to home |
+## Публичность маршрутов
 
-## Navigation
+Frontend не использует route guard: все URL могут быть открыты. Профиль без сессии показывает приглашение войти, а реальные защищённые данные всё равно закрыты JWT middleware на backend. Нельзя полагаться на скрытие кнопки или client-side redirect как на контроль доступа.
 
-The header keeps the visible top bar minimal:
+## Основные переходы
 
-- project logo/name;
-- burger menu;
-- profile icon for authenticated users;
-- login button for guests.
+- главная → каталог или опрос;
+- опрос → рекомендованная детальная страница;
+- каталог → детали или добавление в A/B;
+- детали → сравнение, скачивание или возврат к каталогу;
+- compare → детали выбранной программы или каталог;
+- header → профиль/вход;
+- профиль → избранный или недавно просмотренный план.
 
-Main navigation lives in the burger menu:
+Выбор сравнения хранится вне URL и переживает навигацию через Local Storage. На `/compare` программа A и B разрешаются по сохранённым ID.
 
-- Главная;
-- Учебные планы;
-- Сравнение.
+## Production hosting
 
-## Auth Routes
+Так как это SPA, hosting должен возвращать `index.html` для неизвестного клиентского пути. В `apps/frontend/vercel.json` настроен catch-all rewrite. API находится на отдельном origin и не должен попадать под этот rewrite.
 
-`/login` and `/register` use the same `AuthPage` wrapper with different `mode` props.
+## Добавление маршрута
 
-```tsx
-<AuthPage mode="login" />
-<AuthPage mode="register" />
-```
-
-## Profile Route
-
-The profile page is visible in the frontend route table, but backend profile data requires a token. The UI encourages guests to sign in.
-
-## Navigation Flow
-
-```mermaid
-flowchart LR
-  Home["/"] --> Plans["/plans"]
-  Plans --> Details["/plans/:id"]
-  Details --> Compare["/compare"]
-  Home --> Login["/login"]
-  Login --> Profile["/profile"]
-  Register["/register"] --> Profile
-```
+1. Создайте page component и состояния loading/error/empty, если экран data-driven.
+2. Добавьте lazy import и route в `App.tsx`.
+3. При необходимости добавьте навигацию в существующий layout.
+4. Проверьте прямое открытие URL, back/forward и unknown path.
+5. Добавьте route-level тест и обновите этот документ.

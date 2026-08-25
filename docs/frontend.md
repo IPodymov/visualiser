@@ -1,124 +1,128 @@
 # Frontend
 
-The frontend is a React + TypeScript + Vite application located in `apps/frontend`.
+Frontend расположен в `apps/frontend` и реализован как React/Vite SPA с TypeScript. Интерфейс адаптивный, светлый и ориентирован на последовательность «контекст → действие → доказательства → интерпретация → детали → следующий шаг».
 
-![Каталог](./assets/screenshots/plans-page.png)
-
-## Structure
+## Структура
 
 ```text
 apps/frontend/src/
-├── App.tsx
-├── components/
-│   ├── Header/
-│   ├── PlanCard/
-│   ├── SearchFilters/
-│   ├── CompareTable/
-│   └── ui/
-├── constants/
-├── hooks/
-├── layouts/
-├── pages/
-├── services/
-│   └── api/
-├── store/
-├── styles/
-├── types/
-└── utils/
+├── components/        # доменные блоки и UI-примитивы
+├── hooks/             # загрузка и пользовательское состояние
+├── layouts/           # общий каркас приложения
+├── pages/             # route-level экраны
+├── services/api/      # Axios-клиенты и DTO mapping
+├── store/             # Zustand store
+├── styles/            # токены и глобальные стили
+├── tests/             # интеграционные и security-focused тесты
+├── types/             # frontend-модели
+├── utils/             # фильтры, сравнение, форматирование
+├── App.tsx             # browser router и восстановление сессии
+└── main.tsx
 ```
 
-## Pages
+Все страницы загружаются через `React.lazy`. `AppLayout` содержит общую шапку, навигацию, основной контейнер и mobile-поведение.
 
-| Page | File | Route |
-| --- | --- | --- |
-| Home | `pages/HomePage/HomePage.tsx` | `/` |
-| Auth | `pages/AuthPage/AuthPage.tsx` | `/login`, `/register` |
-| Plans | `pages/PlansPage/PlansPage.tsx` | `/plans` |
-| Details | `pages/PlanDetailsPage/PlanDetailsPage.tsx` | `/plans/:id` |
-| Compare | `pages/ComparePage/ComparePage.tsx` | `/compare` |
-| Profile | `pages/ProfilePage/ProfilePage.tsx` | `/profile` |
+## Страницы
 
-## Component Model
+| Страница              | Ответственность                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `HomePage`            | ценность продукта, входы в каталог/опрос и явно помеченный демонстрационный пример |
+| `AdmissionSurveyPage` | сбор интересов и запрос рекомендаций                                               |
+| `AuthPage`            | вход или регистрация в зависимости от `mode`                                       |
+| `PlansPage`           | поиск, фильтры, пагинация и карточки программ                                      |
+| `PlanDetailsPage`     | компактная сводка, нагрузка, состав часов и дисциплины                             |
+| `ComparePage`         | выбор A/B и аналитика двух совместимых планов                                      |
+| `ProfilePage`         | данные пользователя, избранное и история просмотров                                |
 
-Large components are colocated with CSS:
+Список URL приведён в [routing.md](./routing.md).
 
-```text
-components/
-  PlanCard/
-    PlanCard.tsx
-    PlanCard.css
-  SearchFilters/
-    SearchFilters.tsx
-    SearchFilters.css
+## Состояние
+
+Zustand store хранит:
+
+- `user` — текущий профиль;
+- `favorites` — ID избранных планов;
+- `compareIds` — два фиксированных A/B-слота;
+- `compareLevels` — уровни выбранных планов;
+- `history` — последние восемь просмотренных в текущей сессии планов.
+
+Local Storage keys:
+
+| Ключ                | Содержимое                    |
+| ------------------- | ----------------------------- |
+| `eduplan-token`     | JWT access token              |
+| `eduplan-user`      | сериализованный профиль       |
+| `eduplan-favorites` | массив ID избранного          |
+| `eduplan-compare`   | `{ version: 2, ids, levels }` |
+
+При старте с токеном `App` вызывает `/api/auth/me`. Ошибка проверки очищает локальную сессию. Избранное обновляется оптимистично и откатывается при ошибке API.
+
+## API-слой
+
+Общий Axios client:
+
+- берёт базовый URL из `VITE_API_BASE_URL`;
+- удаляет конечный `/` и ошибочно добавленный `/api`;
+- требует URL в production;
+- добавляет `Authorization: Bearer ...` при наличии токена;
+- использует timeout 12 секунд;
+- логирует безопасную диагностическую выжимку ошибки, ограничивая тело 2000 символами.
+
+В development пустой base URL допустим: Vite проксирует `/api` и `/health` на `http://localhost:4000`.
+
+## Загрузка и состояния интерфейса
+
+`usePlans` параллельно загружает программы и факультеты, затем возвращает:
+
+- исходный и отфильтрованный список;
+- конфигурацию опций на основе реальных данных;
+- текущие фильтры;
+- `loading`, `error` и `reload`.
+
+Каждый data-driven экран должен явно обрабатывать loading, error, empty и success. Для повторяющихся состояний используется `InterfaceState`. Не скрывайте ошибку пустым экраном.
+
+## Компоненты
+
+Перед добавлением компонента ищите эквивалент в `src/components`. Базовые переиспользуемые элементы включают:
+
+- `PageLayout` и `Breadcrumbs`;
+- `MetricCard` и `ChartCard`;
+- `PlanSelector` и `ComparisonIndicator`;
+- `InterfaceState`;
+- primitives `dialog`, `drawer`, `label`, `pagination`, `tooltip`.
+
+Компонент страницы не должен дублировать токены или алгоритм сравнения. Общую логику переносите в `utils`, запросы — в `services/api`, визуальный паттерн — в существующий composed component.
+
+## Визуализация
+
+Recharts используется только для source-backed данных: часов по семестрам, состава нагрузки и сопоставимых метрик двух планов. Диаграмма должна иметь:
+
+- понятный заголовок и единицу измерения;
+- легенду с постоянным соответствием цветов A/B/shared;
+- текстовую альтернативу или соседние числовые метрики;
+- корректное состояние при отсутствии данных.
+
+Эвристическая radar-диаграмма компетенций удалена и не является частью текущего продукта.
+
+## Доступность и адаптивность
+
+- интерактивные элементы доступны с клавиатуры;
+- у icon-only кнопок есть доступное имя;
+- фокус не скрывается;
+- цвет не является единственным носителем смысла;
+- таблицы на узком экране получают горизонтальный scroll или карточное представление;
+- mobile layout проверяется минимум на ширине 390 px.
+
+Подробные токены и правила: [styling.md](./styling.md).
+
+## Проверки
+
+```bash
+npm run lint:frontend
+npm run build:frontend
+npm run test -w apps/frontend
+npm run test:coverage -w apps/frontend
+npm run test:security -w apps/frontend
 ```
 
-Small reusable UI primitives live in `components/ui`. They follow shadcn-style composition and wrap Radix primitives where useful.
-
-## API Services
-
-All backend calls live in `services/api`.
-
-| File | Responsibility |
-| --- | --- |
-| `client.ts` | Axios instance, auth header interceptor |
-| `plans.ts` | Curricula listing, details, compare, recommendations |
-| `planMapper.ts` | Backend curriculum DTO to frontend plan mapping |
-| `auth.ts` | Login, register, current user, logout storage cleanup |
-| `profile.ts` | Favorites and history endpoints |
-
-## State
-
-Zustand store: `store/useAppStore.ts`.
-
-```ts
-type AppState = {
-  user: UserProfile | null;
-  favorites: number[];
-  compareIds: number[];
-  history: EducationPlan[];
-};
-```
-
-The store persists user, token-adjacent profile data, favorites, and compare IDs in `localStorage`.
-
-## Filters
-
-Filters are generated from loaded plans in `utils/planFilters.ts`. `SearchFilters` still receives config through props, but options now reflect real API data instead of a static list.
-
-```tsx
-const { filterConfig, filters, setFilters, reload } = usePlans();
-
-<SearchFilters
-  config={filterConfig}
-  filters={filters}
-  onChange={setFilters}
-  onSubmit={() => reload(filters)}
-/>
-```
-
-## Charts
-
-The app uses Recharts:
-
-- `RadarStatsCard` renders `RadarChart` for program competencies.
-- `ComparePage` renders `BarChart` for summary comparison.
-
-## Layout Tree
-
-```mermaid
-flowchart TB
-  App --> RouterProvider
-  RouterProvider --> AppLayout
-  AppLayout --> Header
-  AppLayout --> Outlet
-  AppLayout --> Footer
-  Outlet --> HomePage
-  Outlet --> PlansPage
-  Outlet --> PlanDetailsPage
-  Outlet --> ComparePage
-  Outlet --> ProfilePage
-```
-
-## Responsive Layout
-
-The design uses CSS media queries and Tailwind utilities. Header navigation is intentionally placed in the burger menu on both desktop and mobile to avoid duplicated navigation.
+Frontend-тесты используют Vitest, jsdom, Testing Library и user-event. Тестируйте поведение и доступные роли, а не внутреннюю структуру компонента.

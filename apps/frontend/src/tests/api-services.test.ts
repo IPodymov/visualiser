@@ -40,15 +40,15 @@ describe('plans API', () => {
   it('builds only valid backend list filters', async () => {
     api.get.mockResolvedValue({ data: [backendCurriculum()] });
 
-    await plansApi.list({ faculty: '2', year: '2025' });
+    await plansApi.list({ faculty: '2' });
     expect(api.get).toHaveBeenLastCalledWith('/api/curricula', {
-      params: { facultyId: 2, admissionYear: 2025 },
+      params: { facultyId: 2 },
     });
 
-    await plansApi.list({ faculty: 'all', year: 'all' });
+    await plansApi.list({ faculty: 'all' });
     expect(api.get).toHaveBeenLastCalledWith('/api/curricula', { params: {} });
 
-    await plansApi.list({ faculty: 'not-a-number', year: '2025.5' });
+    await plansApi.list({ faculty: 'not-a-number' });
     expect(api.get).toHaveBeenLastCalledWith('/api/curricula', { params: {} });
 
     await plansApi.list();
