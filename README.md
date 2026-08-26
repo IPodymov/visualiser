@@ -25,17 +25,20 @@ EduPlan Compare — веб-приложение для поиска, изуче�
 | Frontend       | React 18, TypeScript, Vite, React Router, Zustand, Axios, Tailwind CSS, Radix UI, Recharts, Framer Motion |
 | Backend        | Node.js, Express, TypeScript, Prisma, PostgreSQL, Zod, JWT, Swagger UI                                    |
 | Инфраструктура | npm workspaces, Docker Compose, Vercel, Railway                                                           |
-| Качество       | Vitest, Testing Library, Supertest, ESLint, Prettier, npm audit                                           |
+| Качество       | Vitest, Testing Library, Supertest, ESLint, Prettier, npm audit, GitHub CodeQL                            |
 
 ## Структура репозитория
 
 ```text
 .
+├── .agents/skills/             # discovery symlinks для project skills
+├── .codex/skills/              # canonical project skills
+├── .github/workflows/          # автоматический CodeQL-анализ
 ├── apps/
 │   ├── frontend/              # React/Vite SPA
 │   └── backend/               # Express API, Prisma, импорт FIT
 ├── docs/                      # проектная и эксплуатационная документация
-├── FIT/                       # исходные Excel-выгрузки по годам и факультетам
+├── FIT/                       # утверждённые Excel-выгрузки по годам и факультетам
 ├── packages/shared/           # место для общих пакетов
 ├── docker-compose.yml
 ├── package.json
@@ -62,6 +65,8 @@ npm run dev
 ```
 
 Перед импортом проверьте `FIT_DIR` и `FIT_IMPORT_ADMISSION_YEAR`. Значение `2025` импортирует только файлы, чей путь или метаданные соответствуют 2025 году. Импорт не удаляет уже существующие планы других лет автоматически.
+
+Версионируемые исходники размещаются в годовых подкаталогах `FIT/<год>/...`. Файлы `FIT/*.xlsx` в корне каталога считаются runtime uploads и игнорируются Git.
 
 После запуска доступны:
 

@@ -5,7 +5,7 @@
 ## Файлы
 
 ```text
-apps/frontend/src/styles/
+apps/frontend/src/app/styles/
 ├── variables.css    # семантические CSS custom properties
 ├── globals.css      # reset, base и общие patterns
 ├── typography.css   # display/page/section typography
@@ -58,7 +58,7 @@ apps/frontend/src/styles/
 
 ## Компонентные правила
 
-- сначала ищите primitive или доменный эквивалент в `src/shared/ui`, `entities/*/ui`, `features/*/ui` и `widgets`;
+- сначала ищите primitive или доменный эквивалент в `apps/frontend/src/shared/ui`, `apps/frontend/src/entities/*/ui`, `apps/frontend/src/features/*/ui` и `apps/frontend/src/widgets`;
 - используйте `PageHeader`, `PageSection`, `SectionHeader`, `NextAction` для композиции страницы;
 - для метрики используйте `MetricCard`, для графика — `ChartCard`;
 - loading/error/empty собирайте через `InterfaceState`;

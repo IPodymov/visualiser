@@ -37,7 +37,7 @@ Frontend не использует route guard: все URL могут быть �
 ## Добавление маршрута
 
 1. Создайте page component и состояния loading/error/empty, если экран data-driven.
-2. Добавьте lazy import и route в `App.tsx`.
+2. Добавьте lazy import и route в `app/App.tsx`.
 3. При необходимости добавьте навигацию в существующий layout.
 4. Проверьте прямое открытие URL, back/forward и unknown path.
 5. Добавьте route-level тест и обновите этот документ.

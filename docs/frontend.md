@@ -7,7 +7,7 @@ Frontend расположен в `apps/frontend` и реализован как 
 ```text
 apps/frontend/src/
 ├── app/                # router, layout и глобальные стили
-├── entities/           # plan, faculty и user: модели, API, lib, UI
+├── entities/           # предметные модели/API; plan также содержит lib и UI
 ├── features/           # вертикальные пользовательские сценарии
 ├── shared/             # общий API client, lib и UI-примитивы
 ├── widgets/            # Header и Footer

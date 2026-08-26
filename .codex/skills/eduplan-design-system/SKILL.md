@@ -9,8 +9,8 @@ Keep the interface a calm academic analytical product. Extend the existing compo
 
 ## Before adding UI
 
-1. Search `apps/frontend/src/components/ui` for a primitive.
-2. Search domain and shared components for the same entity or state.
+1. Search `apps/frontend/src/shared/ui` for a primitive.
+2. Search `apps/frontend/src/entities/*/ui`, `apps/frontend/src/features/*/ui`, and `apps/frontend/src/widgets` for the same entity, responsibility, or state.
 3. Extend variants or composition when semantics match; create a component only for a distinct reusable responsibility.
 4. Use semantic CSS variables instead of hard-coded slate/sky/violet values in page code.
 

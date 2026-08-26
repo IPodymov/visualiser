@@ -28,6 +28,8 @@ FIT_IMPORT_ADMISSION_YEAR="2025"
 
 Импорт идемпотентен для неизменённого файла благодаря SHA-256. Он не удаляет записи прошлых лет. Перед очисткой базы сделайте backup, посчитайте записи-кандидаты и после транзакции повторно проверьте годы, количество файлов, hashes и планы без дисциплин.
 
+Утверждённые исходники хранятся в `FIT/<год>/...`. Корневые `FIT/*.xlsx`, создаваемые локальной HTTP-загрузкой, являются runtime-файлами и не версионируются.
+
 При изменении Prisma schema:
 
 ```bash
@@ -89,6 +91,10 @@ Backend использует Vitest + Supertest, frontend — Vitest + jsdom + T
 - `npm audit --audit-level=low`.
 
 Не ослабляйте CORS, Helmet, validation или rate limits ради прохождения локального запроса. Для loopback development разрешены `localhost`, `127.0.0.1` и `[::1]`; в production они валидатором запрещены.
+
+## Автоматический анализ кода
+
+Workflow `.github/workflows/codeql.yml` запускает CodeQL-анализ JavaScript/TypeScript при push и pull request в `main`, а также по еженедельному расписанию. Он дополняет, но не заменяет локальные lint, build, tests, coverage и security gate.
 
 ## Обновление скриншотов
 
