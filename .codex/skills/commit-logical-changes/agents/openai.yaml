@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Logical Changes"
+  short_description: "Group work into safe, reversible commits"
+  default_prompt: "Use $commit-logical-changes to split the current worktree into coherent, reversible commits."

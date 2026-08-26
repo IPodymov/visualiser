@@ -61,7 +61,7 @@ Root-команды запускают обе workspace последовател
 6. Запустите целевые проверки, затем полный quality gate.
 7. Обновите документацию и screenshots, если изменился видимый сценарий.
 
-Для frontend product work обязательны проектные skills из `.agents/skills` согласно `AGENTS.md`.
+Для frontend product work обязательны проектные skills из `.codex/skills` согласно `AGENTS.md`; `.agents/skills` содержит symlink-каталоги для автоматического обнаружения Codex.
 
 ## Тестирование
 
