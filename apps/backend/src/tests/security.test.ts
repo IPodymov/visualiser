@@ -1,12 +1,14 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
 import { env } from '../config/env';
 import { authService } from '../modules/auth/auth.service';
 import { facultiesService } from '../modules/faculties/faculties.service';
+import { filesService } from '../modules/files/files.service';
 import { usersService } from '../modules/users/users.service';
 import { AppError } from '../shared/app-error';
 import { signAccessToken } from '../shared/jwt';
@@ -22,8 +24,17 @@ const user = {
 const token = () => signAccessToken({ userId: user.id, email: user.email });
 
 describe('web application security controls', () => {
+  let uploadDirectory: string;
+
   beforeEach(() => {
     vi.restoreAllMocks();
+    uploadDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'eduplan-security-uploads-'));
+    vi.spyOn(filesService, 'fitUploadDirectory').mockReturnValue(uploadDirectory);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    fs.rmSync(uploadDirectory, { recursive: true, force: true });
   });
 
   it('sets browser security headers and removes framework disclosure', async () => {
@@ -261,7 +272,6 @@ describe('web application security controls', () => {
   });
 
   it('rejects disguised and path-traversal upload names without retaining the file', async () => {
-    const uploadDirectory = path.resolve(process.cwd(), env.FIT_DIR.split(',')[0]);
     const before = fs.existsSync(uploadDirectory) ? new Set(fs.readdirSync(uploadDirectory)) : new Set();
 
     await request(createApp())
