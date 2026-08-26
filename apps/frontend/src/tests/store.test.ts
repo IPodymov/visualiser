@@ -6,7 +6,7 @@ const profile = vi.hoisted(() => ({
   removeFavorite: vi.fn(),
 }));
 
-vi.mock('../services/api/profile', () => ({
+vi.mock('@features/profile/api/profile', () => ({
   profileApi: {
     addFavorite: profile.addFavorite,
     removeFavorite: profile.removeFavorite,
@@ -22,7 +22,7 @@ const user = {
 
 const loadStore = async () => {
   vi.resetModules();
-  return (await import('../store/useAppStore')).useAppStore;
+  return (await import('@features/workspace/model/useWorkspaceStore')).useWorkspaceStore;
 };
 
 beforeEach(() => {
@@ -59,7 +59,10 @@ describe('persisted app state', () => {
 
     localStorage.setItem('eduplan-user', JSON.stringify({ id: 'not-number' }));
     localStorage.setItem('eduplan-favorites', JSON.stringify({ value: 1 }));
-    localStorage.setItem('eduplan-compare', JSON.stringify({ version: 1, ids: [1, 2], levels: ['A', 'A'] }));
+    localStorage.setItem(
+      'eduplan-compare',
+      JSON.stringify({ version: 1, ids: [1, 2], levels: ['A', 'A'] }),
+    );
     store = await loadStore();
     expect(store.getState()).toMatchObject({ user: null, favorites: [], compareIds: [null, null] });
 
@@ -162,7 +165,9 @@ describe('app state actions', () => {
     expect(store.getState().setComparePlan(0, master)).toBe('incompatible');
     expect(store.getState().setComparePlan(1, null)).toBe('added');
     expect(store.getState().compareIds).toEqual([1, null]);
-    expect(JSON.parse(localStorage.getItem('eduplan-compare') ?? 'null')).toMatchObject({ version: 2 });
+    expect(JSON.parse(localStorage.getItem('eduplan-compare') ?? 'null')).toMatchObject({
+      version: 2,
+    });
   });
 
   it('adds comparison plans to empty and full selections and removes them with their levels', async () => {
@@ -179,7 +184,10 @@ describe('app state actions', () => {
     expect(store.getState().compareIds).toEqual([1, 3]);
 
     store.getState().removeFromCompare(1);
-    expect(store.getState()).toMatchObject({ compareIds: [null, 3], compareLevels: [null, 'Бакалавриат'] });
+    expect(store.getState()).toMatchObject({
+      compareIds: [null, 3],
+      compareLevels: [null, 'Бакалавриат'],
+    });
     expect(store.getState().addToCompare(second)).toBe('added');
     expect(store.getState().compareIds).toEqual([2, 3]);
     store.getState().removeFromCompare(99);

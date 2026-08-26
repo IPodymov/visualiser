@@ -6,12 +6,14 @@ const api = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-vi.mock('../services/api/client', () => ({ apiClient: api }));
+vi.mock('@shared/api/client', () => ({ apiClient: api }));
 
-import { authApi } from '../services/api/auth';
-import { facultiesApi } from '../services/api/faculties';
-import { plansApi } from '../services/api/plans';
-import { profileApi } from '../services/api/profile';
+import { facultiesApi } from '@entities/faculty/api/faculties';
+import { plansApi } from '@entities/plan/api/plans';
+import { recommendationsApi } from '@features/admission-survey/api/recommendations';
+import { authApi } from '@features/auth/api/auth';
+import { comparisonApi } from '@features/comparison/api/comparison';
+import { profileApi } from '@features/profile/api/profile';
 import { backendCurriculum, backendDiscipline } from './fixtures';
 
 const axiosError = (options: {
@@ -58,7 +60,11 @@ describe('plans API', () => {
   it('enriches missing metrics in bounded batches and keeps a list item when detail fails', async () => {
     const list = [
       backendCurriculum({ id: 1, disciplines: [backendDiscipline()] }),
-      backendCurriculum({ id: 2, disciplines: undefined, semesters: [{ number: 1, disciplines: [backendDiscipline()] }] }),
+      backendCurriculum({
+        id: 2,
+        disciplines: undefined,
+        semesters: [{ number: 1, disciplines: [backendDiscipline()] }],
+      }),
       ...Array.from({ length: 5 }, (_, index) =>
         backendCurriculum({ id: index + 3, disciplines: [], semesters: [] }),
       ),
@@ -111,15 +117,32 @@ describe('plans API', () => {
               {
                 name: 'Алгоритмы',
                 first: comparisonDiscipline,
-                second: { ...comparisonDiscipline, curriculumDisciplineId: undefined, moduleName: 'Модуль' },
+                second: {
+                  ...comparisonDiscipline,
+                  curriculumDisciplineId: undefined,
+                  moduleName: 'Модуль',
+                },
                 differences: [{ field: 'semesterNumber', firstValue: 1, secondValue: 2 }],
               },
             ],
             onlyInFirst: [
-              { ...comparisonDiscipline, curriculumDisciplineId: undefined, disciplineId: undefined, moduleName: null, partName: null },
+              {
+                ...comparisonDiscipline,
+                curriculumDisciplineId: undefined,
+                disciplineId: undefined,
+                moduleName: null,
+                partName: null,
+              },
             ],
             onlyInSecond: [
-              { ...comparisonDiscipline, curriculumDisciplineId: undefined, disciplineId: 22, moduleName: null, partName: null, blockName: null },
+              {
+                ...comparisonDiscipline,
+                curriculumDisciplineId: undefined,
+                disciplineId: 22,
+                moduleName: null,
+                partName: null,
+                blockName: null,
+              },
             ],
           },
         };
@@ -127,7 +150,7 @@ describe('plans API', () => {
       return { data: backendCurriculum({ id: Number(url.split('/').pop()) }) };
     });
 
-    const result = await plansApi.compare(1, 2);
+    const result = await comparisonApi.compare(1, 2);
 
     expect(result.firstPlan.id).toBe(1);
     expect(result.secondPlan.id).toBe(2);
@@ -144,7 +167,7 @@ describe('plans API', () => {
     const payload = { educationLevel: 'bachelor' as const, weights: { ai: 100 }, limit: 3 };
     api.post.mockResolvedValue({ data: [{ planId: 1 }] });
 
-    await expect(plansApi.recommend(payload)).resolves.toEqual([{ planId: 1 }]);
+    await expect(recommendationsApi.recommend(payload)).resolves.toEqual([{ planId: 1 }]);
     expect(api.post).toHaveBeenCalledWith('/api/curricula/recommendations', payload);
   });
 
@@ -152,7 +175,9 @@ describe('plans API', () => {
     api.get.mockRejectedValueOnce(axiosError({ response: false }));
     await expect(plansApi.getById(1)).rejects.toThrow('Сервер учебных планов недоступен');
 
-    api.get.mockRejectedValueOnce(axiosError({ status: 400, data: { message: 'Некорректный id' } }));
+    api.get.mockRejectedValueOnce(
+      axiosError({ status: 400, data: { message: 'Некорректный id' } }),
+    );
     await expect(plansApi.getById(1)).rejects.toThrow(
       'Не удалось загрузить учебный план: Некорректный id',
     );
@@ -177,7 +202,7 @@ describe('plans API', () => {
     await expect(plansApi.list()).rejects.toThrow('Не удалось загрузить учебные планы');
 
     api.get.mockRejectedValue('compare failure');
-    await expect(plansApi.compare(1, 2)).rejects.toThrow('Не удалось сравнить учебные планы');
+    await expect(comparisonApi.compare(1, 2)).rejects.toThrow('Не удалось сравнить учебные планы');
   });
 });
 
@@ -211,11 +236,17 @@ describe('authentication API', () => {
     api.post.mockRejectedValueOnce(axiosError({ status: 409 }));
     await expect(authApi.register('A', 'a@b.c', 'password')).rejects.toThrow('уже существует');
 
-    api.post.mockRejectedValueOnce(axiosError({ status: 400, data: { message: 'Слишком короткий пароль' } }));
-    await expect(authApi.register('A', 'a@b.c', 'password')).rejects.toThrow('Слишком короткий пароль');
+    api.post.mockRejectedValueOnce(
+      axiosError({ status: 400, data: { message: 'Слишком короткий пароль' } }),
+    );
+    await expect(authApi.register('A', 'a@b.c', 'password')).rejects.toThrow(
+      'Слишком короткий пароль',
+    );
 
     api.post.mockRejectedValueOnce(axiosError({ status: 400, data: { message: 42 } }));
-    await expect(authApi.register('A', 'a@b.c', 'password')).rejects.toThrow('Проверьте заполнение');
+    await expect(authApi.register('A', 'a@b.c', 'password')).rejects.toThrow(
+      'Проверьте заполнение',
+    );
 
     api.post.mockRejectedValueOnce(axiosError({ status: 500, data: null }));
     await expect(authApi.login('a@b.c', 'x')).rejects.toThrow('Не удалось войти');

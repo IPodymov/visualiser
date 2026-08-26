@@ -116,7 +116,7 @@ Button, Badge, Card, Label, Dialog, Drawer, Pagination, Tooltip и исполь�
 - `PlanSelector`, `ComparisonIndicator`;
 - `InterfaceState` и domain cards/tables.
 
-Перед новым компонентом обязательно проверить `apps/frontend/src/components`.
+Перед новым компонентом обязательно проверить `apps/frontend/src/shared/ui`, `entities/*/ui`, `features/*/ui` и `widgets`.
 
 ## Система цвета и данных
 

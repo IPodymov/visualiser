@@ -6,7 +6,7 @@ vi.mock('react-dom/client', () => ({
   default: { createRoot: root.createRoot },
   createRoot: root.createRoot,
 }));
-vi.mock('../App', () => ({ App: () => null }));
+vi.mock('@app/App', () => ({ App: () => null }));
 
 describe('browser entrypoint', () => {
   beforeEach(() => {

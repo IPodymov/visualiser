@@ -1,0 +1,30 @@
+.auth-form {
+    display: grid;
+    gap: 1.15rem;
+}
+
+.auth-form__error {
+    padding: 0.8rem;
+    color: var(--color-error);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    background: var(--color-error-soft);
+    border: 1px solid #f3c6c2;
+    border-radius: 0.6rem;
+}
+
+.auth-form__switch {
+    margin: 0;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.auth-form__switch a {
+    color: var(--color-brand-strong);
+    font-weight: 650;
+}
+
+.auth-form__switch a:hover {
+    text-decoration: underline;
+}

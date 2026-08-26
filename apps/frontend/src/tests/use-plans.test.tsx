@@ -7,10 +7,10 @@ const api = vi.hoisted(() => ({
   listFaculties: vi.fn(),
 }));
 
-vi.mock('../services/api/plans', () => ({ plansApi: { list: api.listPlans } }));
-vi.mock('../services/api/faculties', () => ({ facultiesApi: { list: api.listFaculties } }));
+vi.mock('@entities/plan/api/plans', () => ({ plansApi: { list: api.listPlans } }));
+vi.mock('@entities/faculty/api/faculties', () => ({ facultiesApi: { list: api.listFaculties } }));
 
-import { usePlans } from '../hooks/usePlans';
+import { usePlans } from '@features/plan-catalog/model/usePlans';
 
 const plans = [
   plan({

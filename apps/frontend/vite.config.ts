@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 
 const workspaceRoot = fileURLToPath(new URL('../..', import.meta.url));
+const sourceRoot = fileURLToPath(new URL('./src', import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const environmentMode = mode === 'production' ? 'prod' : mode;
@@ -20,6 +21,15 @@ export default defineConfig(({ mode }) => {
         ? { 'import.meta.env.VITE_API_BASE_URL': JSON.stringify(apiBaseUrl ?? '') }
         : undefined,
     plugins: [react()],
+    resolve: {
+      alias: {
+        '@app': `${sourceRoot}/app`,
+        '@entities': `${sourceRoot}/entities`,
+        '@features': `${sourceRoot}/features`,
+        '@shared': `${sourceRoot}/shared`,
+        '@widgets': `${sourceRoot}/widgets`,
+      },
+    },
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/tests/setup.ts'],
@@ -45,7 +55,9 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined;
-            if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)) {
+            if (
+              /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)
+            ) {
               return 'react';
             }
             if (id.includes('/recharts/')) return 'charts';

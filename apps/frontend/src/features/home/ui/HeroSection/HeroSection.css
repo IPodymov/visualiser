@@ -1,0 +1,283 @@
+.home-hero {
+    display: grid;
+    min-height: calc(100vh - 4.5rem);
+    padding-block: clamp(3rem, 6vw, 4rem);
+    align-items: center;
+    gap: clamp(3rem, 7vw, 6rem);
+}
+
+.home-hero .display-title {
+    font-size: clamp(2.75rem, 5vw, 4.25rem);
+}
+
+.home-hero__proof {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    padding: 0;
+    margin: 1.5rem 0 0;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+    list-style: none;
+}
+
+.home-hero__proof li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.home-hero__proof svg {
+    color: var(--color-shared);
+}
+
+.comparison-demo {
+    position: relative;
+    width: 100%;
+    max-width: 40rem;
+    justify-self: center;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.comparison-demo::before {
+    position: absolute;
+    inset: -0.75rem 0.75rem 0.75rem -0.75rem;
+    z-index: -1;
+    content: '';
+    background: var(--color-brand-soft);
+    border-radius: 1rem;
+}
+
+.comparison-demo__topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-ink-soft);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.comparison-demo__programs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2rem minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.625rem;
+    margin-top: 1.5rem;
+}
+
+.comparison-demo__program {
+    display: flex;
+    min-width: 0;
+    min-height: 4.5rem;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.8rem;
+    border: 1px solid var(--color-border);
+    border-top-width: 3px;
+    border-radius: 0.75rem;
+}
+
+.comparison-demo__program--a {
+    border-top-color: var(--color-program-a);
+}
+
+.comparison-demo__program--b {
+    border-top-color: var(--color-program-b);
+}
+
+.comparison-demo__program > span {
+    display: grid;
+    width: 1.8rem;
+    height: 1.8rem;
+    flex: 0 0 auto;
+    place-items: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+}
+
+.comparison-demo__program--a > span {
+    background: var(--color-program-a);
+}
+
+.comparison-demo__program--b > span {
+    background: var(--color-program-b);
+}
+
+.comparison-demo__program strong,
+.comparison-demo__program small {
+    display: block;
+}
+
+.comparison-demo__program-copy {
+    min-width: 0;
+}
+
+.comparison-demo__program strong {
+    color: var(--color-ink);
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.comparison-demo__program small {
+    margin-top: 0.2rem;
+    color: var(--color-ink-soft);
+    font-size: 0.68rem;
+    line-height: 1.4;
+}
+
+.comparison-demo__connector {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    align-self: center;
+    place-items: center;
+    color: var(--color-ink-soft);
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+}
+
+.comparison-demo__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+
+.comparison-demo__metric {
+    display: grid;
+    min-width: 0;
+    min-height: 5.75rem;
+    align-content: start;
+    padding: 0.9rem;
+    border-radius: 0.75rem;
+}
+
+.comparison-demo__metric strong,
+.comparison-demo__metric span {
+    display: block;
+}
+
+.comparison-demo__metric strong {
+    color: var(--color-ink);
+    font-size: 1.35rem;
+}
+
+.comparison-demo__metric span {
+    margin-top: 0.25rem;
+    color: var(--color-ink-soft);
+    font-size: 0.68rem;
+    line-height: 1.35;
+}
+
+.comparison-demo__metric--shared {
+    background: var(--color-shared-soft);
+}
+
+.comparison-demo__metric--programA {
+    background: var(--color-program-a-soft);
+}
+
+.comparison-demo__metric--programB {
+    background: var(--color-program-b-soft);
+}
+
+.comparison-demo__overlap {
+    display: flex;
+    height: 0.65rem;
+    margin-top: 1rem;
+    overflow: hidden;
+    background: var(--color-surface-subtle);
+    border-radius: 999px;
+}
+
+.comparison-demo__bar-a {
+    background: var(--color-program-a);
+}
+
+.comparison-demo__bar-shared {
+    background: var(--color-shared);
+}
+
+.comparison-demo__bar-b {
+    background: var(--color-program-b);
+}
+
+.comparison-demo__difference {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    color: var(--color-brand-strong);
+    border-top: 1px solid var(--color-border);
+}
+
+.comparison-demo__difference span,
+.comparison-demo__difference strong {
+    display: block;
+}
+
+.comparison-demo__difference span {
+    color: var(--color-ink-soft);
+    font-size: 0.72rem;
+}
+
+.comparison-demo__difference strong {
+    margin-top: 0.15rem;
+    color: var(--color-ink);
+    font-size: 0.95rem;
+}
+
+@media (min-width: 1024px) {
+    .home-hero {
+        grid-template-columns: minmax(0, 1.05fr) minmax(28rem, 0.95fr);
+    }
+
+    .comparison-demo {
+        max-width: none;
+    }
+}
+
+@media (max-width: 440px) {
+    .home-hero {
+        min-height: 0;
+    }
+
+    .comparison-demo__programs {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .comparison-demo__program {
+        min-height: 0;
+    }
+
+    .comparison-demo__connector {
+        width: 2rem;
+        height: 2rem;
+        justify-self: center;
+        transform: rotate(90deg);
+    }
+
+    .comparison-demo__metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .comparison-demo__metric {
+        min-height: 5.25rem;
+        padding: 0.75rem;
+    }
+
+    .comparison-demo__metric--shared {
+        grid-column: 1 / -1;
+    }
+}

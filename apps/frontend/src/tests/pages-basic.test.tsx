@@ -2,21 +2,22 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthPage } from '../pages/AuthPage/AuthPage';
-import { HomePage } from '../pages/HomePage/HomePage';
-import { PlansPage } from '../pages/PlansPage/PlansPage';
-import { ProfilePage } from '../pages/ProfilePage/ProfilePage';
-import { profileApi } from '../services/api/profile';
-import { useAppStore } from '../store/useAppStore';
-import type { PlanFilters, UserProfile } from '../types/plan';
+import type { UserProfile } from '@entities/user/model/types';
+import { AuthPage } from '@features/auth/ui/AuthPage';
+import { HomePage } from '@features/home/ui/HomePage';
+import { PlansPage } from '@features/plan-catalog/ui/PlansPage';
+import { profileApi } from '@features/profile/api/profile';
+import { ProfilePage } from '@features/profile/ui/ProfilePage';
+import type { PlanFilters } from '@features/plan-catalog/model/filter.types';
+import { useWorkspaceStore as useAppStore } from '@features/workspace/model/useWorkspaceStore';
 import { plan } from './fixtures';
 
 const plansHook = vi.hoisted(() => ({
   value: {} as Record<string, unknown>,
 }));
 
-vi.mock('../hooks/usePlans', () => ({ usePlans: () => plansHook.value }));
-vi.mock('../services/api/profile', () => ({
+vi.mock('@features/plan-catalog/model/usePlans', () => ({ usePlans: () => plansHook.value }));
+vi.mock('@features/profile/api/profile', () => ({
   profileApi: {
     favorites: vi.fn(),
     history: vi.fn(),
@@ -116,17 +117,27 @@ describe('static product pages', () => {
     expect(screen.getByRole('heading', { name: 'Что можно узнать' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Как работает сервис' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Какие данные анализируются' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Кому пригодится EduPlan Compare' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Кому пригодится EduPlan Compare' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Открыть каталог/ })).toHaveAttribute('href', '/plans');
     expect(screen.getAllByText('Абитуриентам').length).toBeGreaterThan(0);
   });
 
   it('renders distinct login and registration propositions', () => {
     const { rerender } = renderRoute(<AuthPage mode="login" />);
-    expect(screen.getByRole('heading', { name: 'Продолжите анализ учебных программ' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Продолжите анализ учебных программ' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Войдите в аккаунт' })).toBeInTheDocument();
-    rerender(<MemoryRouter><AuthPage mode="register" /></MemoryRouter>);
-    expect(screen.getByRole('heading', { name: 'Сохраните свой образовательный поиск' })).toBeInTheDocument();
+    rerender(
+      <MemoryRouter>
+        <AuthPage mode="register" />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Сохраните свой образовательный поиск' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Создайте аккаунт' })).toBeInTheDocument();
     expect(screen.getByText('Это займёт меньше минуты.')).toBeInTheDocument();
   });
@@ -150,7 +161,11 @@ describe('plans catalog scenarios', () => {
     expect(screen.getByText('Ищем программы…')).toBeInTheDocument();
 
     setPlansHook({ plans: [], filteredPlans: [], error: 'offline' });
-    rerender(<MemoryRouter><PlansPage /></MemoryRouter>);
+    rerender(
+      <MemoryRouter>
+        <PlansPage />
+      </MemoryRouter>,
+    );
     await userEvent.click(screen.getByRole('button', { name: 'Повторить' }));
     expect(reload).toHaveBeenCalledWith(filters);
   });
@@ -161,15 +176,28 @@ describe('plans catalog scenarios', () => {
     expect(screen.getByText('Учебные планы пока не загружены')).toBeInTheDocument();
 
     setPlansHook({ plans: [plan()], filteredPlans: [] });
-    rerender(<MemoryRouter><PlansPage /></MemoryRouter>);
-    expect(screen.getByText('По выбранным параметрам учебные планы не найдены')).toBeInTheDocument();
+    rerender(
+      <MemoryRouter>
+        <PlansPage />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByText('По выбранным параметрам учебные планы не найдены'),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }));
     expect(setFilters).toHaveBeenCalledWith(filters);
   });
 
   it('builds active filter chips, removes each kind and paginates results', async () => {
-    const manyPlans = Array.from({ length: 11 }, (_, index) => plan({ id: index + 1, title: `Программа ${index + 1}` }));
-    const activeFilters = { ...filters, query: 'web', level: 'Бакалавриат' };
+    const manyPlans = Array.from({ length: 11 }, (_, index) =>
+      plan({ id: index + 1, title: `Программа ${index + 1}` }),
+    );
+    const activeFilters = {
+      ...filters,
+      query: 'web',
+      direction: 'Неизвестное направление',
+      level: 'Бакалавриат',
+    };
     setPlansHook({ plans: manyPlans, filteredPlans: manyPlans, filters: activeFilters });
     renderRoute(<PlansPage />);
 
@@ -178,6 +206,10 @@ describe('plans catalog scenarios', () => {
     expect(setFilters).toHaveBeenCalledWith({ ...activeFilters, query: '' });
     await userEvent.click(within(chips).getByRole('button', { name: /Уровень: Бакалавриат/ }));
     expect(setFilters).toHaveBeenCalledWith({ ...activeFilters, level: 'all' });
+    await userEvent.click(
+      within(chips).getByRole('button', { name: /Направление: Неизвестное направление/ }),
+    );
+    expect(setFilters).toHaveBeenCalledWith({ ...activeFilters, direction: 'all' });
     expect(screen.getAllByRole('article')).toHaveLength(9);
     await userEvent.click(screen.getByRole('button', { name: /Показать ещё/ }));
     expect(screen.getAllByRole('article')).toHaveLength(11);
@@ -189,9 +221,16 @@ describe('plans catalog scenarios', () => {
     expect(screen.getByText('Добавьте ещё одну программу')).toBeInTheDocument();
 
     useAppStore.setState({ compareIds: [1, 2], compareLevels: ['Бакалавриат', 'Бакалавриат'] });
-    rerender(<MemoryRouter><PlansPage /></MemoryRouter>);
+    rerender(
+      <MemoryRouter>
+        <PlansPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('Программы готовы к сравнению')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Перейти к сравнению/ })).toHaveAttribute('href', '/compare');
+    expect(screen.getByRole('link', { name: /Перейти к сравнению/ })).toHaveAttribute(
+      'href',
+      '/compare',
+    );
   });
 });
 
@@ -200,12 +239,17 @@ describe('profile scenarios', () => {
     renderRoute(<ProfilePage />);
     expect(screen.getByText('Войдите в EduPlan Compare')).toBeInTheDocument();
     expect(profileApi.favorites).not.toHaveBeenCalled();
-    expect(screen.getByRole('link', { name: 'Создать аккаунт' })).toHaveAttribute('href', '/register');
+    expect(screen.getByRole('link', { name: 'Создать аккаунт' })).toHaveAttribute(
+      'href',
+      '/register',
+    );
   });
 
   it('loads and renders saved and recent programs and synchronizes IDs', async () => {
     const saved = plan();
-    const history = Array.from({ length: 10 }, (_, index) => plan({ id: index + 20, title: `История ${index}` }));
+    const history = Array.from({ length: 10 }, (_, index) =>
+      plan({ id: index + 20, title: `История ${index}` }),
+    );
     vi.mocked(profileApi.favorites).mockResolvedValue([saved]);
     vi.mocked(profileApi.history).mockResolvedValue(history);
     useAppStore.setState({ user: userProfile });
@@ -229,8 +273,12 @@ describe('profile scenarios', () => {
   });
 
   it('shows a private-data failure and retries successfully', async () => {
-    vi.mocked(profileApi.favorites).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]);
-    vi.mocked(profileApi.history).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]);
+    vi.mocked(profileApi.favorites)
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce([]);
+    vi.mocked(profileApi.history)
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce([]);
     useAppStore.setState({ user: userProfile });
     renderRoute(<ProfilePage />);
     expect(await screen.findByText('Личный раздел временно недоступен')).toBeInTheDocument();

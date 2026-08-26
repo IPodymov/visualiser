@@ -1,5 +1,5 @@
-import type { EducationPlan } from '../types/plan';
-import type { BackendCurriculum, BackendDiscipline } from '../services/api/planMapper';
+import type { BackendCurriculum, BackendDiscipline } from '@entities/plan/api/planMapper';
+import type { EducationPlan } from '@entities/plan/model/types';
 
 export const backendDiscipline = (
   overrides: Partial<BackendDiscipline> = {},

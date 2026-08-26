@@ -2,22 +2,29 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PlanDetailsPage } from '../pages/PlanDetailsPage/PlanDetailsPage';
-import { plansApi } from '../services/api/plans';
-import { profileApi } from '../services/api/profile';
-import { useAppStore } from '../store/useAppStore';
-import type { EducationPlan, UserProfile } from '../types/plan';
+import { plansApi } from '@entities/plan/api/plans';
+import type { EducationPlan } from '@entities/plan/model/types';
+import type { UserProfile } from '@entities/user/model/types';
+import { PlanDetailsPage } from '@features/plan-details/ui/PlanDetailsPage';
+import { profileApi } from '@features/profile/api/profile';
+import { useWorkspaceStore as useAppStore } from '@features/workspace/model/useWorkspaceStore';
 import { plan } from './fixtures';
 
-vi.mock('../services/api/plans', () => ({
+vi.mock('@entities/plan/api/plans', () => ({
   plansApi: { list: vi.fn(), get: vi.fn(), getById: vi.fn(), compare: vi.fn() },
 }));
-vi.mock('../services/api/profile', () => ({
-  profileApi: { addFavorite: vi.fn(), removeFavorite: vi.fn(), favorites: vi.fn(), history: vi.fn() },
+vi.mock('@features/profile/api/profile', () => ({
+  profileApi: {
+    addFavorite: vi.fn(),
+    removeFavorite: vi.fn(),
+    favorites: vi.fn(),
+    history: vi.fn(),
+  },
 }));
 vi.mock('recharts', async () => {
   const React = await import('react');
-  const container = ({ children }: { children?: React.ReactNode }) => React.createElement('div', null, children);
+  const container = ({ children }: { children?: React.ReactNode }) =>
+    React.createElement('div', null, children);
   return {
     ResponsiveContainer: container,
     BarChart: container,
@@ -46,16 +53,94 @@ const userProfile: UserProfile = {
 const detailedPlan: EducationPlan = plan({
   profile: undefined,
   disciplines: [
-    { ...plan().disciplines[0], id: 1, name: 'Алгоритмы', module: 'Разработка', semester: 2, controlForm: 'Экзамен', hours: 144, credits: 4, lectureHours: 36, practiceHours: 18, labHours: 18, independentHours: 72 },
-    { ...plan().disciplines[0], id: 2, name: 'Базы данных', module: 'Данные', semester: 1, controlForm: 'Зачёт', hours: 108, credits: 3, lectureHours: 18, practiceHours: 36, labHours: 0, independentHours: 54 },
-    { ...plan().disciplines[0], id: 3, name: 'Практика', module: 'Практика', semester: null, controlForm: null, hours: 0, credits: 0, lectureHours: 0, practiceHours: 0, labHours: 0, independentHours: 0 },
+    {
+      ...plan().disciplines[0],
+      id: 1,
+      name: 'Алгоритмы',
+      module: 'Разработка',
+      semester: 2,
+      controlForm: 'Экзамен',
+      hours: 144,
+      credits: 4,
+      lectureHours: 36,
+      practiceHours: 18,
+      labHours: 18,
+      independentHours: 72,
+    },
+    {
+      ...plan().disciplines[0],
+      id: 2,
+      name: 'Базы данных',
+      module: 'Данные',
+      semester: 1,
+      controlForm: 'Зачёт',
+      hours: 108,
+      credits: 3,
+      lectureHours: 18,
+      practiceHours: 36,
+      labHours: 0,
+      independentHours: 54,
+    },
+    {
+      ...plan().disciplines[0],
+      id: 3,
+      name: 'Практика',
+      module: 'Практика',
+      semester: null,
+      controlForm: null,
+      hours: 0,
+      credits: 0,
+      lectureHours: 0,
+      practiceHours: 0,
+      labHours: 0,
+      independentHours: 0,
+    },
   ],
   visualization: {
-    totals: { disciplinesCount: 3, totalHours: 252, credits: 7, lectureHours: 54, practiceHours: 54, labHours: 18, independentHours: 126, contactHours: 126 },
+    totals: {
+      disciplinesCount: 3,
+      totalHours: 252,
+      credits: 7,
+      lectureHours: 54,
+      practiceHours: 54,
+      labHours: 18,
+      independentHours: 126,
+      contactHours: 126,
+    },
     bySemester: [
-      { key: 'unknown', label: 'Без семестра', disciplinesCount: 1, totalHours: 0, credits: 0, lectureHours: 0, practiceHours: 0, labHours: 0, independentHours: 0 },
-      { key: '1', label: '1 семестр', disciplinesCount: 1, totalHours: 108, credits: 3, lectureHours: 18, practiceHours: 36, labHours: 0, independentHours: 54 },
-      { key: '2', label: '2 семестр', disciplinesCount: 1, totalHours: 144, credits: 4, lectureHours: 36, practiceHours: 18, labHours: 18, independentHours: 72 },
+      {
+        key: 'unknown',
+        label: 'Без семестра',
+        disciplinesCount: 1,
+        totalHours: 0,
+        credits: 0,
+        lectureHours: 0,
+        practiceHours: 0,
+        labHours: 0,
+        independentHours: 0,
+      },
+      {
+        key: '1',
+        label: '1 семестр',
+        disciplinesCount: 1,
+        totalHours: 108,
+        credits: 3,
+        lectureHours: 18,
+        practiceHours: 36,
+        labHours: 0,
+        independentHours: 54,
+      },
+      {
+        key: '2',
+        label: '2 семестр',
+        disciplinesCount: 1,
+        totalHours: 144,
+        credits: 4,
+        lectureHours: 36,
+        practiceHours: 18,
+        labHours: 18,
+        independentHours: 72,
+      },
     ],
     byBlock: [],
     byPart: [],
@@ -129,9 +214,14 @@ describe('plan detail user journey', () => {
     expect(screen.getByText('Не указан отдельно')).toBeInTheDocument();
     expect(screen.getByText('252 ч.')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /нагрузки по семестрам/ })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: /Самостоятельная работа: 126 часов/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /Самостоятельная работа: 126 часов/ }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Чаще всего в плане встречается форма контроля/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Сохранить программу/ })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('link', { name: /Сохранить программу/ })).toHaveAttribute(
+      'href',
+      '/login',
+    );
     expect(screen.getAllByTestId('chart-tooltip')).toHaveLength(1);
   });
 
@@ -158,7 +248,9 @@ describe('plan detail user journey', () => {
     useAppStore.setState({ compareIds: [2, null], compareLevels: ['Магистратура', null] });
     renderAt('/plans/1');
     expect(await screen.findAllByRole('button', { name: 'Другой уровень' })).toHaveLength(2);
-    expect(screen.getAllByRole('tooltip').every((item) => item.textContent?.includes('Магистратура'))).toBe(true);
+    expect(
+      screen.getAllByRole('tooltip').every((item) => item.textContent?.includes('Магистратура')),
+    ).toBe(true);
   });
 
   it('lets an authenticated user add and remove a favorite', async () => {
@@ -200,7 +292,9 @@ describe('plan detail user journey', () => {
   });
 
   it('renders explicit no-evidence states for a plan without measurable workload', async () => {
-    vi.mocked(plansApi.getById).mockResolvedValue(plan({ disciplines: [], visualization: undefined }));
+    vi.mocked(plansApi.getById).mockResolvedValue(
+      plan({ disciplines: [], visualization: undefined }),
+    );
     renderAt('/plans/1');
     expect(await screen.findByText('Нет данных по семестрам')).toBeInTheDocument();
     expect(screen.getByText('Нет данных по форматам')).toBeInTheDocument();
@@ -209,10 +303,33 @@ describe('plan detail user journey', () => {
 
   it('uses the first insight when workload exists without semester evidence', async () => {
     const workloadOnly = plan({
-      disciplines: [{ ...plan().disciplines[0], semester: null, hours: 0, lectureHours: 10, practiceHours: 0, labHours: 0, independentHours: 0 }],
+      disciplines: [
+        {
+          ...plan().disciplines[0],
+          semester: null,
+          hours: 0,
+          lectureHours: 10,
+          practiceHours: 0,
+          labHours: 0,
+          independentHours: 0,
+        },
+      ],
       visualization: {
-        totals: { disciplinesCount: 1, totalHours: 0, credits: 4, lectureHours: 10, practiceHours: 0, labHours: 0, independentHours: 0, contactHours: 10 },
-        bySemester: [], byBlock: [], byPart: [], workload: [{ key: 'lectureHours', label: 'Лекции', hours: 10 }], controlForms: [{ form: 'Экзамен', count: 1 }],
+        totals: {
+          disciplinesCount: 1,
+          totalHours: 0,
+          credits: 4,
+          lectureHours: 10,
+          practiceHours: 0,
+          labHours: 0,
+          independentHours: 0,
+          contactHours: 10,
+        },
+        bySemester: [],
+        byBlock: [],
+        byPart: [],
+        workload: [{ key: 'lectureHours', label: 'Лекции', hours: 10 }],
+        controlForms: [{ form: 'Экзамен', count: 1 }],
       },
     });
     vi.mocked(plansApi.getById).mockResolvedValue(workloadOnly);
@@ -224,11 +341,45 @@ describe('plan detail user journey', () => {
 
   it('uses the control insight after semester evidence without format hours', async () => {
     const semesterOnly = plan({
-      disciplines: [{ ...plan().disciplines[0], semester: 1, hours: 10, lectureHours: 0, practiceHours: 0, labHours: 0, independentHours: 0 }],
+      disciplines: [
+        {
+          ...plan().disciplines[0],
+          semester: 1,
+          hours: 10,
+          lectureHours: 0,
+          practiceHours: 0,
+          labHours: 0,
+          independentHours: 0,
+        },
+      ],
       visualization: {
-        totals: { disciplinesCount: 1, totalHours: 10, credits: 4, lectureHours: 0, practiceHours: 0, labHours: 0, independentHours: 0, contactHours: 0 },
-        bySemester: [{ key: '1', label: '1 семестр', disciplinesCount: 1, totalHours: 10, credits: 4, lectureHours: 0, practiceHours: 0, labHours: 0, independentHours: 0 }],
-        byBlock: [], byPart: [], workload: [], controlForms: [{ form: 'Экзамен', count: 1 }],
+        totals: {
+          disciplinesCount: 1,
+          totalHours: 10,
+          credits: 4,
+          lectureHours: 0,
+          practiceHours: 0,
+          labHours: 0,
+          independentHours: 0,
+          contactHours: 0,
+        },
+        bySemester: [
+          {
+            key: '1',
+            label: '1 семестр',
+            disciplinesCount: 1,
+            totalHours: 10,
+            credits: 4,
+            lectureHours: 0,
+            practiceHours: 0,
+            labHours: 0,
+            independentHours: 0,
+          },
+        ],
+        byBlock: [],
+        byPart: [],
+        workload: [],
+        controlForms: [{ form: 'Экзамен', count: 1 }],
       },
     });
     vi.mocked(plansApi.getById).mockResolvedValue(semesterOnly);

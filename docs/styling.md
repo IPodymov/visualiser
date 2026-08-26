@@ -58,7 +58,7 @@ apps/frontend/src/styles/
 
 ## Компонентные правила
 
-- сначала ищите primitive или доменный эквивалент в `src/components`;
+- сначала ищите primitive или доменный эквивалент в `src/shared/ui`, `entities/*/ui`, `features/*/ui` и `widgets`;
 - используйте `PageHeader`, `PageSection`, `SectionHeader`, `NextAction` для композиции страницы;
 - для метрики используйте `MetricCard`, для графика — `ChartCard`;
 - loading/error/empty собирайте через `InterfaceState`;

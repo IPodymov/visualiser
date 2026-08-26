@@ -2,49 +2,63 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthForm } from '../components/AuthForm/AuthForm';
-import { Breadcrumbs } from '../components/Breadcrumbs/Breadcrumbs';
-import { ChartCard } from '../components/ChartCard/ChartCard';
-import { CompareTable } from '../components/CompareTable/CompareTable';
-import { ComparisonIndicator } from '../components/ComparisonIndicator/ComparisonIndicator';
-import { DisciplineTable } from '../components/DisciplineTable/DisciplineTable';
-import { EmptyState } from '../components/EmptyState/EmptyState';
-import { Footer } from '../components/Footer/Footer';
-import { Header } from '../components/Header/Header';
-import { HeroSection } from '../components/HeroSection/HeroSection';
+import type { UserProfile } from '@entities/user/model/types';
+import { DisciplineTable } from '@entities/plan/ui/DisciplineTable/DisciplineTable';
+import { SemesterAccordion } from '@entities/plan/ui/SemesterAccordion/SemesterAccordion';
+import { authApi } from '@features/auth/api/auth';
+import { AuthForm } from '@features/auth/ui/AuthForm/AuthForm';
+import { CompareTable } from '@features/comparison/ui/CompareTable/CompareTable';
+import { ComparisonIndicator } from '@features/comparison/ui/ComparisonIndicator/ComparisonIndicator';
+import { PlanSelector } from '@features/comparison/ui/PlanSelector/PlanSelector';
+import type { PlanComparison } from '@features/comparison/model/types';
+import { HeroSection } from '@features/home/ui/HeroSection/HeroSection';
+import { PlanCard } from '@features/plan-actions/ui/PlanCard/PlanCard';
+import type { PlanFilters } from '@features/plan-catalog/model/filter.types';
+import { SearchFilters } from '@features/plan-catalog/ui/SearchFilters/SearchFilters';
+import { profileApi } from '@features/profile/api/profile';
+import { useWorkspaceStore as useAppStore } from '@features/workspace/model/useWorkspaceStore';
+import { Breadcrumbs } from '@shared/ui/Breadcrumbs/Breadcrumbs';
+import { ChartCard } from '@shared/ui/ChartCard/ChartCard';
+import { EmptyState } from '@shared/ui/EmptyState/EmptyState';
 import {
   ErrorState,
   InlineLoading,
   LoadingState,
   SuccessState,
-} from '../components/InterfaceState/InterfaceState';
-import { MetricCard } from '../components/MetricCard/MetricCard';
-import { NextAction, PageHeader, PageSection, SectionHeader } from '../components/PageLayout/PageLayout';
-import { PlanCard } from '../components/PlanCard/PlanCard';
-import { PlanSelector } from '../components/PlanSelector/PlanSelector';
-import { SearchFilters } from '../components/SearchFilters/SearchFilters';
-import { SemesterAccordion } from '../components/SemesterAccordion/SemesterAccordion';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../components/ui/accordion';
-import { Badge, badgeVariants } from '../components/ui/badge';
-import { Button, buttonVariants } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
-import { Dialog } from '../components/ui/dialog';
-import { Drawer } from '../components/ui/drawer';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Pagination } from '../components/ui/pagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Skeleton } from '../components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Tooltip } from '../components/ui/tooltip';
-import { authApi } from '../services/api/auth';
-import { profileApi } from '../services/api/profile';
-import { useAppStore } from '../store/useAppStore';
-import type { PlanComparison, PlanFilters, UserProfile } from '../types/plan';
+} from '@shared/ui/InterfaceState/InterfaceState';
+import { MetricCard } from '@shared/ui/MetricCard/MetricCard';
+import {
+  NextAction,
+  PageHeader,
+  PageSection,
+  SectionHeader,
+} from '@shared/ui/PageLayout/PageLayout';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@shared/ui/accordion';
+import { Badge, badgeVariants } from '@shared/ui/badge';
+import { Button, buttonVariants } from '@shared/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
+import { Dialog } from '@shared/ui/dialog';
+import { Drawer } from '@shared/ui/drawer';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Pagination } from '@shared/ui/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
+import { Skeleton } from '@shared/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
+import { Tooltip } from '@shared/ui/tooltip';
+import { Footer } from '@widgets/Footer/Footer';
+import { Header } from '@widgets/Header/Header';
 import { plan } from './fixtures';
 
-vi.mock('../services/api/auth', () => ({
+vi.mock('@features/auth/api/auth', () => ({
   authApi: { login: vi.fn(), register: vi.fn() },
 }));
 
@@ -72,29 +86,75 @@ beforeEach(() => {
 
 describe('UI primitives', () => {
   it('renders all simple primitives, variants and optional class names', () => {
-    const variants = ['default', 'secondary', 'ghost', 'outline', 'destructive', 'strong', 'programA', 'programB'] as const;
+    const variants = [
+      'default',
+      'secondary',
+      'ghost',
+      'outline',
+      'destructive',
+      'strong',
+      'programA',
+      'programB',
+    ] as const;
     const sizes = ['default', 'sm', 'lg', 'icon'] as const;
-    const badgeTones = ['neutral', 'brand', 'shared', 'programA', 'programB', 'success', 'warning'] as const;
+    const badgeTones = [
+      'neutral',
+      'brand',
+      'shared',
+      'programA',
+      'programB',
+      'success',
+      'warning',
+    ] as const;
 
     render(
       <div>
         {variants.map((variant, index) => (
-          <Button key={variant} variant={variant} size={sizes[index % sizes.length]} className={index ? undefined : 'custom'}>
+          <Button
+            key={variant}
+            variant={variant}
+            size={sizes[index % sizes.length]}
+            className={index ? undefined : 'custom'}
+          >
             {variant}
           </Button>
         ))}
-        <Button asChild><a href="/target">child button</a></Button>
-        {badgeTones.map((variant) => <Badge key={variant} variant={variant}>{variant}</Badge>)}
+        <Button asChild>
+          <a href="/target">child button</a>
+        </Button>
+        {badgeTones.map((variant) => (
+          <Badge key={variant} variant={variant}>
+            {variant}
+          </Badge>
+        ))}
         <Card className="card-custom">
-          <CardHeader className="header-custom"><CardTitle className="title-custom">Заголовок</CardTitle><CardDescription className="description-custom">Описание</CardDescription></CardHeader>
+          <CardHeader className="header-custom">
+            <CardTitle className="title-custom">Заголовок</CardTitle>
+            <CardDescription className="description-custom">Описание</CardDescription>
+          </CardHeader>
           <CardContent className="content-custom">Контент</CardContent>
           <CardFooter className="footer-custom">Подвал</CardFooter>
         </Card>
-        <Label className="label-custom" htmlFor="field">Поле</Label>
+        <Label className="label-custom" htmlFor="field">
+          Поле
+        </Label>
         <Input id="field" className="input-custom" type="text" />
         <Skeleton className="skeleton-custom" data-testid="skeleton" />
-        <Table className="table-custom"><TableHeader className="thead-custom"><TableRow className="row-custom"><TableHead className="head-custom">Колонка</TableHead></TableRow></TableHeader><TableBody className="body-custom"><TableRow><TableCell className="cell-custom">Значение</TableCell></TableRow></TableBody></Table>
-        <Tooltip content="Подсказка"><span>Наведи</span></Tooltip>
+        <Table className="table-custom">
+          <TableHeader className="thead-custom">
+            <TableRow className="row-custom">
+              <TableHead className="head-custom">Колонка</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="body-custom">
+            <TableRow>
+              <TableCell className="cell-custom">Значение</TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+        <Tooltip content="Подсказка">
+          <span>Наведи</span>
+        </Tooltip>
       </div>,
     );
 
@@ -113,16 +173,33 @@ describe('UI primitives', () => {
     render(
       <div>
         <Tabs defaultValue="first">
-          <TabsList className="tabs-list"><TabsTrigger className="tabs-trigger" value="first">Первая</TabsTrigger><TabsTrigger value="second">Вторая</TabsTrigger></TabsList>
-          <TabsContent className="tabs-content" value="first">Первый контент</TabsContent>
+          <TabsList className="tabs-list">
+            <TabsTrigger className="tabs-trigger" value="first">
+              Первая
+            </TabsTrigger>
+            <TabsTrigger value="second">Вторая</TabsTrigger>
+          </TabsList>
+          <TabsContent className="tabs-content" value="first">
+            Первый контент
+          </TabsContent>
           <TabsContent value="second">Второй контент</TabsContent>
         </Tabs>
         <Accordion type="single" collapsible>
-          <AccordionItem className="accordion-item" value="one"><AccordionTrigger className="accordion-trigger">Раздел</AccordionTrigger><AccordionContent className="accordion-content">Содержимое</AccordionContent></AccordionItem>
+          <AccordionItem className="accordion-item" value="one">
+            <AccordionTrigger className="accordion-trigger">Раздел</AccordionTrigger>
+            <AccordionContent className="accordion-content">Содержимое</AccordionContent>
+          </AccordionItem>
         </Accordion>
         <Select onValueChange={onValueChange}>
-          <SelectTrigger className="select-trigger" aria-label="Тестовый выбор"><SelectValue placeholder="Выберите" /></SelectTrigger>
-          <SelectContent className="select-content"><SelectItem className="select-item" value="one">Один</SelectItem><SelectItem value="two">Два</SelectItem></SelectContent>
+          <SelectTrigger className="select-trigger" aria-label="Тестовый выбор">
+            <SelectValue placeholder="Выберите" />
+          </SelectTrigger>
+          <SelectContent className="select-content">
+            <SelectItem className="select-item" value="one">
+              Один
+            </SelectItem>
+            <SelectItem value="two">Два</SelectItem>
+          </SelectContent>
         </Select>
       </div>,
     );
@@ -138,7 +215,17 @@ describe('UI primitives', () => {
 
   it('opens and closes dialogs from close, cancel, backdrop and controlled state', async () => {
     const onOpenChange = vi.fn();
-    const { rerender } = render(<Dialog open onOpenChange={onOpenChange} title="Окно" description="Описание" className="custom-dialog">Тело</Dialog>);
+    const { rerender } = render(
+      <Dialog
+        open
+        onOpenChange={onOpenChange}
+        title="Окно"
+        description="Описание"
+        className="custom-dialog"
+      >
+        Тело
+      </Dialog>,
+    );
     const dialog = screen.getByRole('dialog', { hidden: true });
     expect(dialog).toHaveAttribute('open');
     await userEvent.click(screen.getByRole('button', { name: 'Закрыть', hidden: true }));
@@ -148,12 +235,20 @@ describe('UI primitives', () => {
     expect(onOpenChange).toHaveBeenCalledTimes(3);
     fireEvent.click(within(dialog).getByText('Тело'));
     expect(onOpenChange).toHaveBeenCalledTimes(3);
-    rerender(<Dialog open={false} onOpenChange={onOpenChange} title="Окно">Тело</Dialog>);
+    rerender(
+      <Dialog open={false} onOpenChange={onOpenChange} title="Окно">
+        Тело
+      </Dialog>,
+    );
     expect(dialog).not.toHaveAttribute('open');
     fireEvent(dialog, new Event('close'));
     expect(onOpenChange).toHaveBeenCalledTimes(4);
 
-    render(<Drawer open={false} onOpenChange={vi.fn()} title="Панель">Панель содержимое</Drawer>);
+    render(
+      <Drawer open={false} onOpenChange={vi.fn()} title="Панель">
+        Панель содержимое
+      </Drawer>,
+    );
     expect(screen.getByText('Панель содержимое')).toBeInTheDocument();
   });
 
@@ -174,10 +269,24 @@ describe('shared content components', () => {
         <Breadcrumbs items={[{ label: 'Главная', to: '/' }, { label: 'Раздел' }]} />
         <HeroSection />
         <Footer />
-        <PageHeader eyebrow="Контекст" title="Страница" description="Описание" breadcrumbs={<span>Крошки</span>} actions={<button>Действие</button>} />
+        <PageHeader
+          eyebrow="Контекст"
+          title="Страница"
+          description="Описание"
+          breadcrumbs={<span>Крошки</span>}
+          actions={<button>Действие</button>}
+        />
         <PageHeader title="Без опций" description="Описание 2" />
-        <PageSection className="section-custom" labelledBy="section-id"><span>Секция</span></PageSection>
-        <SectionHeader eyebrow="Этап" title="Раздел страницы" description="Расшифровка" action={<button>Ещё</button>} id="section-id" />
+        <PageSection className="section-custom" labelledBy="section-id">
+          <span>Секция</span>
+        </PageSection>
+        <SectionHeader
+          eyebrow="Этап"
+          title="Раздел страницы"
+          description="Расшифровка"
+          action={<button>Ещё</button>}
+          id="section-id"
+        />
         <SectionHeader title="Минимальный раздел" />
         <NextAction className="next-custom">Следующий шаг</NextAction>
       </>,
@@ -194,11 +303,34 @@ describe('shared content components', () => {
     const retry = vi.fn();
     render(
       <>
-        <ChartCard title="График" description="Описание графика" actions={<button>Экспорт</button>} insight={<span>Вывод</span>}><div>Диаграмма</div></ChartCard>
-        <ChartCard title="Без вывода" description="Описание"><div>Данные</div></ChartCard>
-        <MetricCard label="Метрика" value={42} note="Комментарий" icon={<span>Иконка</span>} tone="brand" className="metric-custom" />
-        {(['neutral', 'programA', 'programB', 'shared'] as const).map((tone) => <MetricCard key={tone} label={tone} value={0} tone={tone} />)}
-        <EmptyState title="Пусто" text="Здесь ничего нет" action={<button>Добавить</button>} icon={<span>Своя иконка</span>} />
+        <ChartCard
+          title="График"
+          description="Описание графика"
+          actions={<button>Экспорт</button>}
+          insight={<span>Вывод</span>}
+        >
+          <div>Диаграмма</div>
+        </ChartCard>
+        <ChartCard title="Без вывода" description="Описание">
+          <div>Данные</div>
+        </ChartCard>
+        <MetricCard
+          label="Метрика"
+          value={42}
+          note="Комментарий"
+          icon={<span>Иконка</span>}
+          tone="brand"
+          className="metric-custom"
+        />
+        {(['neutral', 'programA', 'programB', 'shared'] as const).map((tone) => (
+          <MetricCard key={tone} label={tone} value={0} tone={tone} />
+        ))}
+        <EmptyState
+          title="Пусто"
+          text="Здесь ничего нет"
+          action={<button>Добавить</button>}
+          icon={<span>Своя иконка</span>}
+        />
         <EmptyState title="Ещё пусто" text="Нет данных" />
         <LoadingState />
         <LoadingState label="Особая загрузка" rows={1} />
@@ -216,7 +348,15 @@ describe('shared content components', () => {
   });
 
   it('renders all comparison indicators', () => {
-    render(<>{(['more', 'less', 'equal', 'onlyA', 'onlyB'] as const).map((state) => <ComparisonIndicator key={state} state={state} className="indicator-custom">{state}</ComparisonIndicator>)}</>);
+    render(
+      <>
+        {(['more', 'less', 'equal', 'onlyA', 'onlyB'] as const).map((state) => (
+          <ComparisonIndicator key={state} state={state} className="indicator-custom">
+            {state}
+          </ComparisonIndicator>
+        ))}
+      </>,
+    );
     expect(screen.getByText('more')).toBeInTheDocument();
     expect(screen.getByText('onlyB')).toBeInTheDocument();
   });
@@ -226,7 +366,18 @@ describe('curriculum components', () => {
   it('renders desktop/mobile disciplines including missing and zero values', () => {
     const disciplines = [
       plan().disciplines[0],
-      { ...plan().disciplines[0], id: 2, name: 'Без данных', semester: null, hours: 0, credits: 0, controlForm: '', lectureHours: null, practiceHours: 0, labHours: undefined },
+      {
+        ...plan().disciplines[0],
+        id: 2,
+        name: 'Без данных',
+        semester: null,
+        hours: 0,
+        credits: 0,
+        controlForm: '',
+        lectureHours: null,
+        practiceHours: 0,
+        labHours: undefined,
+      },
     ];
     render(<DisciplineTable disciplines={disciplines} />);
     expect(screen.getAllByText('Алгоритмы')).toHaveLength(2);
@@ -235,7 +386,12 @@ describe('curriculum components', () => {
   });
 
   it('groups disciplines by regular and absent semester', async () => {
-    const curriculum = plan({ disciplines: [plan().disciplines[0], { ...plan().disciplines[0], id: 2, name: 'Практика', semester: null, hours: 20 }] });
+    const curriculum = plan({
+      disciplines: [
+        plan().disciplines[0],
+        { ...plan().disciplines[0], id: 2, name: 'Практика', semester: null, hours: 20 },
+      ],
+    });
     render(<SemesterAccordion plan={curriculum} />);
     expect(screen.getByText('Без семестра')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /1 семестр/ }));
@@ -243,7 +399,20 @@ describe('curriculum components', () => {
   });
 
   it('renders an empty comparison and every difference direction and formatter', () => {
-    const empty: PlanComparison = { firstPlan: plan(), secondPlan: plan({ id: 2 }), summary: { firstDisciplinesCount: 1, secondDisciplinesCount: 1, commonCount: 1, onlyFirstCount: 0, onlySecondCount: 0 }, commonDisciplines: [], onlyInFirst: [], onlyInSecond: [] };
+    const empty: PlanComparison = {
+      firstPlan: plan(),
+      secondPlan: plan({ id: 2 }),
+      summary: {
+        firstDisciplinesCount: 1,
+        secondDisciplinesCount: 1,
+        commonCount: 1,
+        onlyFirstCount: 0,
+        onlySecondCount: 0,
+      },
+      commonDisciplines: [],
+      onlyInFirst: [],
+      onlyInSecond: [],
+    };
     const { rerender } = render(<CompareTable comparison={empty} />);
     expect(screen.getByText(/не найдено различий/)).toBeInTheDocument();
 
@@ -262,7 +431,27 @@ describe('curriculum components', () => {
       { field: 'lectureHours', firstValue: 10, secondValue: 20 },
       { field: 'custom', firstValue: 'A', secondValue: 'B' },
     ];
-    rerender(<CompareTable comparison={{ ...empty, commonDisciplines: [{ name: 'Алгоритмы', first: plan().disciplines[0], second: plan().disciplines[0], differences }, { name: 'Одинаковая', first: plan().disciplines[0], second: plan().disciplines[0], differences: [] }] }} />);
+    rerender(
+      <CompareTable
+        comparison={{
+          ...empty,
+          commonDisciplines: [
+            {
+              name: 'Алгоритмы',
+              first: plan().disciplines[0],
+              second: plan().disciplines[0],
+              differences,
+            },
+            {
+              name: 'Одинаковая',
+              first: plan().disciplines[0],
+              second: plan().disciplines[0],
+              differences: [],
+            },
+          ],
+        }}
+      />,
+    );
     expect(screen.getAllByText('Оба значения не указаны').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/только в программе B/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('4 ЗЕТ').length).toBeGreaterThan(0);
@@ -279,21 +468,52 @@ describe('curriculum components', () => {
     await user.click(screen.getByRole('button', { name: /К сравнению/ }));
     expect(useAppStore.getState().compareIds).toEqual([1, null]);
 
-    useAppStore.setState({ user: userProfile, favorites: [], compareIds: [1, null], compareLevels: ['Бакалавриат', null] });
-    rerender(<MemoryRouter><PlanCard plan={curriculum} /></MemoryRouter>);
+    useAppStore.setState({
+      user: userProfile,
+      favorites: [],
+      compareIds: [1, null],
+      compareLevels: ['Бакалавриат', null],
+    });
+    rerender(
+      <MemoryRouter>
+        <PlanCard plan={curriculum} />
+      </MemoryRouter>,
+    );
     await user.click(screen.getByRole('button', { name: /В сравнении/ }));
     expect(useAppStore.getState().compareIds).toEqual([null, null]);
     await user.click(screen.getByRole('button', { name: /В избранное/ }));
     expect(useAppStore.getState().favorites).toEqual([1]);
 
-    useAppStore.setState({ user: userProfile, favorites: [1], compareIds: [2, null], compareLevels: ['Магистратура', null] });
-    rerender(<MemoryRouter><PlanCard plan={curriculum} variant="compact" /></MemoryRouter>);
+    useAppStore.setState({
+      user: userProfile,
+      favorites: [1],
+      compareIds: [2, null],
+      compareLevels: ['Магистратура', null],
+    });
+    rerender(
+      <MemoryRouter>
+        <PlanCard plan={curriculum} variant="compact" />
+      </MemoryRouter>,
+    );
     expect(screen.getByRole('button', { name: /Другой уровень/ })).toBeDisabled();
     expect(screen.getByRole('tooltip')).toHaveTextContent('Магистратура');
     await user.click(screen.getByRole('button', { name: /Сохранено/ }));
     expect(useAppStore.getState().favorites).toEqual([]);
 
-    rerender(<MemoryRouter><PlanCard plan={plan({ id: 3, profile: 'Профиль', direction: 'Направление', totalHours: 0, credits: 0, code: undefined })} /></MemoryRouter>);
+    rerender(
+      <MemoryRouter>
+        <PlanCard
+          plan={plan({
+            id: 3,
+            profile: 'Профиль',
+            direction: 'Направление',
+            totalHours: 0,
+            credits: 0,
+            code: undefined,
+          })}
+        />
+      </MemoryRouter>,
+    );
     expect(screen.getByText('Код не указан')).toBeInTheDocument();
     expect(screen.getByText(/Направление:/)).toBeInTheDocument();
   });
@@ -302,8 +522,17 @@ describe('curriculum components', () => {
 describe('forms, navigation and filters', () => {
   it('logs in, registers and displays Error and non-Error failures', async () => {
     const user = userEvent.setup();
-    vi.mocked(authApi.login).mockResolvedValueOnce(userProfile).mockRejectedValueOnce(new Error('Неверные данные')).mockRejectedValueOnce('failure');
-    const { unmount } = router(<Routes><Route path="/login" element={<AuthForm mode="login" />} /><Route path="/profile" element={<div>Профиль открыт</div>} /></Routes>, ['/login']);
+    vi.mocked(authApi.login)
+      .mockResolvedValueOnce(userProfile)
+      .mockRejectedValueOnce(new Error('Неверные данные'))
+      .mockRejectedValueOnce('failure');
+    const { unmount } = router(
+      <Routes>
+        <Route path="/login" element={<AuthForm mode="login" />} />
+        <Route path="/profile" element={<div>Профиль открыт</div>} />
+      </Routes>,
+      ['/login'],
+    );
     await user.type(screen.getByLabelText('Электронная почта'), userProfile.email);
     await user.type(screen.getByLabelText('Пароль'), 'long-secure-password');
     await user.click(screen.getByRole('button', { name: /Войти и открыть профиль/ }));
@@ -321,13 +550,23 @@ describe('forms, navigation and filters', () => {
     failed.unmount();
 
     vi.mocked(authApi.register).mockResolvedValueOnce(userProfile);
-    router(<Routes><Route path="/register" element={<AuthForm mode="register" />} /><Route path="/profile" element={<div>Новый профиль</div>} /></Routes>, ['/register']);
+    router(
+      <Routes>
+        <Route path="/register" element={<AuthForm mode="register" />} />
+        <Route path="/profile" element={<div>Новый профиль</div>} />
+      </Routes>,
+      ['/register'],
+    );
     await user.type(screen.getByLabelText('Имя и фамилия'), userProfile.fullName);
     await user.type(screen.getByLabelText('Электронная почта'), userProfile.email);
     await user.type(screen.getByLabelText('Пароль'), 'long-secure-password');
     await user.click(screen.getByRole('button', { name: /Создать аккаунт/ }));
     expect(await screen.findByText('Новый профиль')).toBeInTheDocument();
-    expect(authApi.register).toHaveBeenCalledWith(userProfile.fullName, userProfile.email, 'long-secure-password');
+    expect(authApi.register).toHaveBeenCalledWith(
+      userProfile.fullName,
+      userProfile.email,
+      'long-secure-password',
+    );
   });
 
   it('navigates in the header as a guest and authenticated user', async () => {
@@ -341,7 +580,11 @@ describe('forms, navigation and filters', () => {
     await user.click(screen.getByRole('link', { name: 'Подбор по интересам', hidden: true }));
 
     useAppStore.setState({ user: userProfile });
-    rerender(<MemoryRouter><Header /></MemoryRouter>);
+    rerender(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>,
+    );
     await user.click(screen.getByRole('button', { name: 'Открыть меню профиля' }));
     await user.click(screen.getByRole('link', { name: 'Избранное и история' }));
     await user.click(screen.getByRole('button', { name: 'Открыть меню профиля' }));
@@ -349,30 +592,66 @@ describe('forms, navigation and filters', () => {
     expect(useAppStore.getState().user).toBeNull();
 
     useAppStore.setState({ user: userProfile });
-    rerender(<MemoryRouter><Header /></MemoryRouter>);
+    rerender(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>,
+    );
     await user.click(screen.getByRole('button', { name: 'Открыть меню' }));
     const mobileNav = screen.getByRole('navigation', { name: 'Мобильная навигация', hidden: true });
-    await user.click(within(mobileNav).getByRole('link', { name: 'Избранное и история', hidden: true }));
+    await user.click(
+      within(mobileNav).getByRole('link', { name: 'Избранное и история', hidden: true }),
+    );
     await user.click(screen.getByRole('button', { name: 'Открыть меню' }));
     await user.click(within(mobileNav).getByRole('button', { name: 'Выйти', hidden: true }));
     expect(useAppStore.getState().user).toBeNull();
 
-    rerender(<MemoryRouter><Header /></MemoryRouter>);
+    rerender(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>,
+    );
     await user.click(screen.getByRole('button', { name: 'Открыть меню' }));
-    await user.click(within(screen.getByRole('navigation', { name: 'Мобильная навигация', hidden: true })).getByRole('link', { name: 'Войти в аккаунт', hidden: true }));
+    await user.click(
+      within(
+        screen.getByRole('navigation', { name: 'Мобильная навигация', hidden: true }),
+      ).getByRole('link', { name: 'Войти в аккаунт', hidden: true }),
+    );
   });
 
   it('selects and clears comparison plans while enforcing education level', async () => {
     const user = userEvent.setup();
-    const plans = [plan(), plan({ id: 2, title: 'Магистратура', level: 'Магистратура' }), plan({ id: 3, title: 'Вторая программа' })];
+    const plans = [
+      plan(),
+      plan({ id: 2, title: 'Магистратура', level: 'Магистратура' }),
+      plan({ id: 3, title: 'Вторая программа' }),
+    ];
     const onChange = vi.fn();
-    const { rerender } = render(<PlanSelector side="A" value={null} plans={plans} excludedId={null} requiredLevel={null} onChange={onChange} />);
+    const { rerender } = render(
+      <PlanSelector
+        side="A"
+        value={null}
+        plans={plans}
+        excludedId={null}
+        requiredLevel={null}
+        onChange={onChange}
+      />,
+    );
     expect(screen.getByText(/Первая программа задаст уровень/)).toBeInTheDocument();
     await user.click(screen.getByRole('combobox'));
     await user.click(await screen.findByRole('option', { name: /Вторая программа/ }));
     expect(onChange).toHaveBeenCalledWith(3);
 
-    rerender(<PlanSelector side="B" value={1} plans={plans} excludedId={3} requiredLevel="Бакалавриат" onChange={onChange} />);
+    rerender(
+      <PlanSelector
+        side="B"
+        value={1}
+        plans={plans}
+        excludedId={3}
+        requiredLevel="Бакалавриат"
+        onChange={onChange}
+      />,
+    );
     expect(screen.getAllByText(/Разработка программного обеспечения/).length).toBeGreaterThan(0);
     await user.click(screen.getByRole('button', { name: /Очистить/ }));
     expect(onChange).toHaveBeenCalledWith(null);
@@ -381,31 +660,74 @@ describe('forms, navigation and filters', () => {
     expect(await screen.findByRole('option', { name: /Вторая программа/ })).toHaveAttribute(
       'data-disabled',
     );
-    rerender(<PlanSelector side="B" value={null} plans={plans} excludedId={null} requiredLevel="Бакалавриат" onChange={onChange} />);
+    rerender(
+      <PlanSelector
+        side="B"
+        value={null}
+        plans={plans}
+        excludedId={null}
+        requiredLevel="Бакалавриат"
+        onChange={onChange}
+      />,
+    );
     expect(screen.getByText('Доступны только программы уровня «Бакалавриат».')).toBeInTheDocument();
   });
 
   it('searches, filters and resets on desktop and mobile', async () => {
     const user = userEvent.setup();
-    const filters: PlanFilters = { query: '', faculty: 'all', direction: 'all', profile: 'all', level: 'all', studyForm: 'all' };
-    const config = [{ key: 'level' as const, label: 'Уровень', placeholder: 'Любой', options: [{ value: 'Бакалавриат', label: 'Бакалавриат' }] }];
+    const filters: PlanFilters = {
+      query: '',
+      faculty: 'all',
+      direction: 'all',
+      profile: 'all',
+      level: 'all',
+      studyForm: 'all',
+    };
+    const config = [
+      {
+        key: 'level' as const,
+        label: 'Уровень',
+        placeholder: 'Любой',
+        options: [{ value: 'Бакалавриат', label: 'Бакалавриат' }],
+      },
+    ];
     const onChange = vi.fn();
     const onReset = vi.fn();
-    const { rerender } = render(<SearchFilters config={config} filters={filters} onChange={onChange} onReset={onReset} activeCount={0} />);
+    const { rerender } = render(
+      <SearchFilters
+        config={config}
+        filters={filters}
+        onChange={onChange}
+        onReset={onReset}
+        activeCount={0}
+      />,
+    );
     await user.type(screen.getByLabelText('Название, направление или код'), 'web');
     expect(onChange).toHaveBeenLastCalledWith({ ...filters, query: 'b' });
     await user.click(screen.getAllByRole('combobox', { name: 'Уровень' })[0]);
     await user.click(await screen.findByRole('option', { name: 'Бакалавриат' }));
     expect(onChange).toHaveBeenCalledWith({ ...filters, level: 'Бакалавриат' });
 
-    rerender(<SearchFilters config={config} filters={{ ...filters, query: 'web' }} onChange={onChange} onReset={onReset} activeCount={1} />);
+    rerender(
+      <SearchFilters
+        config={config}
+        filters={{ ...filters, query: 'web' }}
+        onChange={onChange}
+        onReset={onReset}
+        activeCount={1}
+      />,
+    );
     await user.click(screen.getByRole('button', { name: 'Сбросить' }));
     expect(onReset).toHaveBeenCalledOnce();
     await user.click(screen.getByRole('button', { name: /Фильтры/ }));
     const dialog = screen.getByRole('dialog', { hidden: true });
-    await user.click(within(dialog).getByRole('button', { name: 'Показать программы', hidden: true }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Показать программы', hidden: true }),
+    );
     await user.click(screen.getByRole('button', { name: /Фильтры/ }));
-    await user.click(within(dialog).getByRole('button', { name: 'Сбросить фильтры', hidden: true }));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Сбросить фильтры', hidden: true }),
+    );
     expect(onReset).toHaveBeenCalledTimes(2);
   });
 });

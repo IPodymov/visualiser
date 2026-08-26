@@ -1,25 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { defaultFaculty } from '../constants/curriculum';
-import {
-  asNumber,
-  facultyFromSource,
-  levelByCode,
-  toPlan,
-} from '../services/api/planMapper';
-import { cn } from '../utils/cn';
-import {
-  areEducationLevelsCompatible,
-  getEducationLevelKey,
-} from '../utils/compareEligibility';
-import { getCreditsNorm, getCreditsPercent, getCreditsSummary } from '../utils/credits';
+import { defaultFaculty } from '@entities/plan/model/curriculum';
+import { asNumber, facultyFromSource, levelByCode, toPlan } from '@entities/plan/api/planMapper';
+import { getCreditsNorm, getCreditsPercent, getCreditsSummary } from '@entities/plan/lib/credits';
 import {
   formatMetric,
   getPlanInsights,
   getPlanTotals,
   getSemesterBuckets,
   getWorkload,
-} from '../utils/planAnalytics';
-import { buildPlanFilterConfig } from '../utils/planFilters';
+} from '@entities/plan/lib/planAnalytics';
+import {
+  areEducationLevelsCompatible,
+  getEducationLevelKey,
+} from '@features/comparison/lib/compareEligibility';
+import { buildPlanFilterConfig } from '@features/plan-catalog/model/planFilters';
+import { cn } from '@shared/lib/cn';
 import { backendCurriculum, backendDiscipline, plan } from './fixtures';
 
 describe('curriculum mapping', () => {
@@ -44,11 +39,51 @@ describe('curriculum mapping', () => {
   it('flattens semester DTOs and covers every discipline fallback', () => {
     const disciplines = [
       backendDiscipline({ curriculumDisciplineId: 1, moduleName: 'Модуль', semesterNumber: null }),
-      backendDiscipline({ curriculumDisciplineId: undefined, disciplineId: 2, moduleName: null, partName: 'Часть' }),
-      backendDiscipline({ curriculumDisciplineId: undefined, disciplineId: undefined, id: 3, moduleName: null, partName: null, blockName: 'Блок' }),
-      backendDiscipline({ curriculumDisciplineId: undefined, disciplineId: undefined, id: undefined, name: undefined, discipline: { name: 'Базы данных' }, moduleName: null, partName: null, blockName: null, classifications: [{ groupCode: 'G', valueName: 'Классификация' }] }),
-      backendDiscipline({ curriculumDisciplineId: undefined, disciplineId: undefined, id: undefined, name: undefined, discipline: undefined, moduleName: null, partName: null, blockName: null, classifications: [{ groupCode: 'G', valueName: undefined as never, groupName: 'Группа' }] }),
-      backendDiscipline({ curriculumDisciplineId: undefined, disciplineId: undefined, id: undefined, moduleName: null, partName: null, blockName: null, classifications: [] }),
+      backendDiscipline({
+        curriculumDisciplineId: undefined,
+        disciplineId: 2,
+        moduleName: null,
+        partName: 'Часть',
+      }),
+      backendDiscipline({
+        curriculumDisciplineId: undefined,
+        disciplineId: undefined,
+        id: 3,
+        moduleName: null,
+        partName: null,
+        blockName: 'Блок',
+      }),
+      backendDiscipline({
+        curriculumDisciplineId: undefined,
+        disciplineId: undefined,
+        id: undefined,
+        name: undefined,
+        discipline: { name: 'Базы данных' },
+        moduleName: null,
+        partName: null,
+        blockName: null,
+        classifications: [{ groupCode: 'G', valueName: 'Классификация' }],
+      }),
+      backendDiscipline({
+        curriculumDisciplineId: undefined,
+        disciplineId: undefined,
+        id: undefined,
+        name: undefined,
+        discipline: undefined,
+        moduleName: null,
+        partName: null,
+        blockName: null,
+        classifications: [{ groupCode: 'G', valueName: undefined as never, groupName: 'Группа' }],
+      }),
+      backendDiscipline({
+        curriculumDisciplineId: undefined,
+        disciplineId: undefined,
+        id: undefined,
+        moduleName: null,
+        partName: null,
+        blockName: null,
+        classifications: [],
+      }),
     ];
     const mapped = toPlan(
       backendCurriculum({
@@ -153,7 +188,17 @@ describe('plan analytics', () => {
           contactHours: 35,
         },
         bySemester: [
-          { key: '1', label: '1 семестр', disciplinesCount: 1, totalHours: 100, credits: 3, lectureHours: 20, practiceHours: 10, labHours: 5, independentHours: 65 },
+          {
+            key: '1',
+            label: '1 семестр',
+            disciplinesCount: 1,
+            totalHours: 100,
+            credits: 3,
+            lectureHours: 20,
+            practiceHours: 10,
+            labHours: 5,
+            independentHours: 65,
+          },
         ],
         byBlock: [],
         byPart: [],
@@ -171,14 +216,29 @@ describe('plan analytics', () => {
   it('derives rounded totals, semester buckets, workload and insights from disciplines', () => {
     const source = plan({
       disciplines: [
-        { id: 1, name: 'A', module: 'M', semester: 2, hours: 100, credits: 1.234, lectureHours: 20, practiceHours: 10, labHours: 5, independentHours: 65 },
+        {
+          id: 1,
+          name: 'A',
+          module: 'M',
+          semester: 2,
+          hours: 100,
+          credits: 1.234,
+          lectureHours: 20,
+          practiceHours: 10,
+          labHours: 5,
+          independentHours: 65,
+        },
         { id: 2, name: 'B', module: 'M', semester: null, hours: 50, credits: 2.345 },
         { id: 3, name: 'C', module: 'M', semester: 1, hours: 200, credits: 3 },
       ],
       visualization: undefined,
     });
 
-    expect(getPlanTotals(source)).toMatchObject({ totalHours: 350, credits: 6.58, contactHours: 35 });
+    expect(getPlanTotals(source)).toMatchObject({
+      totalHours: 350,
+      credits: 6.58,
+      contactHours: 35,
+    });
     expect(getSemesterBuckets(source).map((item) => item.key)).toEqual(['unknown', '1', '2']);
     expect(getWorkload(source).map((item) => item.hours)).toEqual([20, 10, 5, 65]);
     expect(getPlanInsights(source)).toEqual([
@@ -196,9 +256,32 @@ describe('plan analytics', () => {
 describe('filters, comparisons and formatting', () => {
   it('builds unique sorted filters from plans or authoritative faculty options', () => {
     const plans = [
-      plan({ id: 1, facultyId: 2, faculty: 'ЯФ', direction: 'Б', profile: undefined, level: 'Магистратура', year: 2024 }),
-      plan({ id: 2, facultyId: 1, faculty: 'АФ', direction: 'А', profile: 'Профиль', level: 'Бакалавриат', year: 2025 }),
-      plan({ id: 3, facultyId: undefined, faculty: 'Без id', direction: 'А', profile: null as never, year: 2025 }),
+      plan({
+        id: 1,
+        facultyId: 2,
+        faculty: 'ЯФ',
+        direction: 'Б',
+        profile: undefined,
+        level: 'Магистратура',
+        year: 2024,
+      }),
+      plan({
+        id: 2,
+        facultyId: 1,
+        faculty: 'АФ',
+        direction: 'А',
+        profile: 'Профиль',
+        level: 'Бакалавриат',
+        year: 2025,
+      }),
+      plan({
+        id: 3,
+        facultyId: undefined,
+        faculty: 'Без id',
+        direction: 'А',
+        profile: null as never,
+        year: 2025,
+      }),
     ];
     const fallback = buildPlanFilterConfig(plans);
     const authoritative = buildPlanFilterConfig(plans, [
@@ -207,7 +290,13 @@ describe('filters, comparisons and formatting', () => {
 
     expect(fallback[0].options.map((item) => item.label)).toEqual(['АФ', 'ЯФ']);
     expect(fallback[1].options.map((item) => item.label)).toEqual(['А', 'Б']);
-    expect(fallback.map((filter) => filter.key)).toEqual(['faculty', 'direction', 'profile', 'level', 'studyForm']);
+    expect(fallback.map((filter) => filter.key)).toEqual([
+      'faculty',
+      'direction',
+      'profile',
+      'level',
+      'studyForm',
+    ]);
     expect(authoritative[0].options).toEqual([{ label: 'Факультет 9', value: '9' }]);
     expect(buildPlanFilterConfig(plans, [])[0].options).toEqual(fallback[0].options);
   });

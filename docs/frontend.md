@@ -6,21 +6,18 @@ Frontend расположен в `apps/frontend` и реализован как 
 
 ```text
 apps/frontend/src/
-├── components/        # доменные блоки и UI-примитивы
-├── hooks/             # загрузка и пользовательское состояние
-├── layouts/           # общий каркас приложения
-├── pages/             # route-level экраны
-├── services/api/      # Axios-клиенты и DTO mapping
-├── store/             # Zustand store
-├── styles/            # токены и глобальные стили
-├── tests/             # интеграционные и security-focused тесты
-├── types/             # frontend-модели
-├── utils/             # фильтры, сравнение, форматирование
-├── App.tsx             # browser router и восстановление сессии
+├── app/                # router, layout и глобальные стили
+├── entities/           # plan, faculty и user: модели, API, lib, UI
+├── features/           # вертикальные пользовательские сценарии
+├── shared/             # общий API client, lib и UI-примитивы
+├── widgets/            # Header и Footer
+├── tests/              # интеграционные и security-focused тесты
 └── main.tsx
 ```
 
-Все страницы загружаются через `React.lazy`. `AppLayout` содержит общую шапку, навигацию, основной контейнер и mobile-поведение.
+Каждый feature-срез использует только нужные сегменты `api`, `model`, `lib` и `ui`. Все route-level экраны загружаются через `React.lazy` из соответствующих фич. `app/layouts/AppLayout.tsx` содержит общую шапку, навигацию, основной контейнер и mobile-поведение.
+
+Алиасы импортов отражают архитектурную роль: `@app`, `@features`, `@entities`, `@widgets`, `@shared`. Нижние слои не импортируют `app`; относительные импорты используются для связей внутри одного среза. Эти направления дополнительно защищены правилами `no-restricted-imports` в `eslint.config.js`.
 
 ## Страницы
 
@@ -38,7 +35,7 @@ apps/frontend/src/
 
 ## Состояние
 
-Zustand store хранит:
+`features/workspace/model/useWorkspaceStore.ts` хранит:
 
 - `user` — текущий профиль;
 - `favorites` — ID избранных планов;
@@ -59,7 +56,7 @@ Local Storage keys:
 
 ## API-слой
 
-Общий Axios client:
+Общий Axios client находится в `shared/api/client.ts`:
 
 - берёт базовый URL из `VITE_API_BASE_URL`;
 - удаляет конечный `/` и ошибочно добавленный `/api`;
@@ -70,20 +67,27 @@ Local Storage keys:
 
 В development пустой base URL допустим: Vite проксирует `/api` и `/health` на `http://localhost:4000`.
 
+Клиенты разделены по владельцу сценария:
+
+- `entities/plan/api/plans.ts` загружает список и детали учебных планов;
+- `features/comparison/api/comparison.ts` выполняет A/B-сравнение;
+- `features/admission-survey/api/recommendations.ts` запрашивает рекомендации;
+- `features/auth/api/auth.ts` и `features/profile/api/profile.ts` обслуживают пользовательские сценарии.
+
 ## Загрузка и состояния интерфейса
 
-`usePlans` параллельно загружает программы и факультеты, затем возвращает:
+`features/plan-catalog/model/usePlans.ts` параллельно загружает программы и факультеты, затем возвращает:
 
 - исходный и отфильтрованный список;
 - конфигурацию опций на основе реальных данных;
 - текущие фильтры;
 - `loading`, `error` и `reload`.
 
-Каждый data-driven экран должен явно обрабатывать loading, error, empty и success. Для повторяющихся состояний используется `InterfaceState`. Не скрывайте ошибку пустым экраном.
+Каждый data-driven экран должен явно обрабатывать loading, error, empty и success. Для повторяющихся состояний используется `shared/ui/InterfaceState`. Не скрывайте ошибку пустым экраном.
 
 ## Компоненты
 
-Перед добавлением компонента ищите эквивалент в `src/components`. Базовые переиспользуемые элементы включают:
+Перед добавлением компонента ищите эквивалент в `shared/ui`, `entities/*/ui`, `features/*/ui` и `widgets`. Базовые переиспользуемые элементы включают:
 
 - `PageLayout` и `Breadcrumbs`;
 - `MetricCard` и `ChartCard`;
@@ -91,7 +95,7 @@ Local Storage keys:
 - `InterfaceState`;
 - primitives `dialog`, `drawer`, `label`, `pagination`, `tooltip`.
 
-Компонент страницы не должен дублировать токены или алгоритм сравнения. Общую логику переносите в `utils`, запросы — в `services/api`, визуальный паттерн — в существующий composed component.
+Компонент экрана не должен дублировать токены или алгоритм сравнения. Нейтральную логику переносите в `shared/lib`, предметные расчёты — в `entities/*/lib`, сценарную логику и запросы — в соответствующую фичу, визуальный паттерн — в существующий компонент его слоя.
 
 ## Визуализация
 

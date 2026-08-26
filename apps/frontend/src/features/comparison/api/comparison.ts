@@ -1,0 +1,83 @@
+import { asNumber, type BackendCurriculum, toPlan } from '@entities/plan/api/planMapper';
+import { toPlansApiError } from '@entities/plan/api/plans';
+import { apiClient } from '@shared/api/client';
+import type { PlanComparison } from '../model/types';
+
+type BackendComparison = {
+  firstCurriculum: BackendCurriculum;
+  secondCurriculum: BackendCurriculum;
+  summary: PlanComparison['summary'];
+  commonDisciplines: Array<{
+    name: string;
+    first: BackendComparisonDiscipline;
+    second: BackendComparisonDiscipline;
+    differences: PlanComparison['commonDisciplines'][number]['differences'];
+  }>;
+  onlyInFirst: BackendComparisonDiscipline[];
+  onlyInSecond: BackendComparisonDiscipline[];
+};
+
+type BackendComparisonDiscipline = {
+  curriculumDisciplineId?: number;
+  disciplineId?: number;
+  name: string;
+  semesterNumber?: number | null;
+  totalHours?: number | null;
+  credits?: string | number | null;
+  controlForm?: string | null;
+  blockName?: string | null;
+  partName?: string | null;
+  moduleName?: string | null;
+  recordType?: string | null;
+  lectureHours?: number | null;
+  practiceHours?: number | null;
+  labHours?: number | null;
+  independentHours?: number | null;
+};
+
+const toComparisonDiscipline = (item: BackendComparisonDiscipline, index: number) => ({
+  id: item.curriculumDisciplineId ?? item.disciplineId ?? index,
+  name: item.name,
+  module: item.moduleName ?? item.partName ?? item.blockName ?? 'Без модуля',
+  semester: item.semesterNumber ?? null,
+  hours: item.totalHours ?? 0,
+  credits: asNumber(item.credits),
+  controlForm: item.controlForm,
+  blockName: item.blockName,
+  partName: item.partName,
+  moduleName: item.moduleName,
+  recordType: item.recordType,
+  lectureHours: item.lectureHours,
+  practiceHours: item.practiceHours,
+  labHours: item.labHours,
+  independentHours: item.independentHours,
+});
+
+export const comparisonApi = {
+  async compare(firstId: number, secondId: number): Promise<PlanComparison> {
+    try {
+      const [response, firstResponse, secondResponse] = await Promise.all([
+        apiClient.get<BackendComparison>('/api/comparison', {
+          params: { firstCurriculumId: firstId, secondCurriculumId: secondId },
+        }),
+        apiClient.get<BackendCurriculum>(`/api/curricula/${firstId}`),
+        apiClient.get<BackendCurriculum>(`/api/curricula/${secondId}`),
+      ]);
+      return {
+        firstPlan: toPlan(firstResponse.data),
+        secondPlan: toPlan(secondResponse.data),
+        summary: response.data.summary,
+        commonDisciplines: response.data.commonDisciplines.map((item, index) => ({
+          name: item.name,
+          first: toComparisonDiscipline(item.first, index),
+          second: toComparisonDiscipline(item.second, index),
+          differences: item.differences,
+        })),
+        onlyInFirst: response.data.onlyInFirst.map(toComparisonDiscipline),
+        onlyInSecond: response.data.onlyInSecond.map(toComparisonDiscipline),
+      };
+    } catch (error) {
+      throw toPlansApiError(error, 'Не удалось сравнить учебные планы');
+    }
+  },
+};

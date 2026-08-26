@@ -1,0 +1,75 @@
+export type Discipline = {
+  id: number;
+  name: string;
+  module: string;
+  semester: number | null;
+  hours: number;
+  credits: number;
+  controlForm?: string | null;
+  blockName?: string | null;
+  partName?: string | null;
+  moduleName?: string | null;
+  recordType?: string | null;
+  lectureHours?: number | null;
+  practiceHours?: number | null;
+  labHours?: number | null;
+  independentHours?: number | null;
+};
+
+export type PlanChartBucket = {
+  key: string;
+  label: string;
+  disciplinesCount: number;
+  totalHours: number;
+  credits: number;
+  lectureHours: number;
+  practiceHours: number;
+  labHours: number;
+  independentHours: number;
+};
+
+export type PlanVisualization = {
+  totals: {
+    disciplinesCount: number;
+    totalHours: number;
+    credits: number;
+    lectureHours: number;
+    practiceHours: number;
+    labHours: number;
+    independentHours: number;
+    contactHours: number;
+  };
+  bySemester: PlanChartBucket[];
+  byBlock: PlanChartBucket[];
+  byPart: PlanChartBucket[];
+  workload: Array<{ key: string; label: string; hours: number }>;
+  controlForms: Array<{ form: string; count: number }>;
+};
+
+export type CompetencyScore = {
+  name: 'Математика' | 'Программирование' | 'Аналитика' | 'Soft Skills' | 'Практика';
+  value: number;
+};
+
+export type EducationPlan = {
+  id: number;
+  title: string;
+  direction: string;
+  profile?: string;
+  facultyId?: number;
+  faculty: string;
+  level: string;
+  studyForm: string;
+  year: number;
+  duration: string;
+  description: string;
+  totalHours: number;
+  credits: number;
+  semesters: number;
+  competencies: CompetencyScore[];
+  disciplines: Discipline[];
+  visualization?: PlanVisualization;
+  sourceFileName?: string;
+  code?: string;
+  uploadedAt?: string;
+};
