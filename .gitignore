@@ -32,6 +32,10 @@ lerna-debug.log*
 prisma/dev.db
 **/prisma/dev.db
 **/prisma/dev.db-journal
+apps/backend/prisma/seed.js
+
+# Runtime curriculum uploads (curated source files live in year subdirectories)
+FIT/*.xlsx
 
 # Docker and local volumes
 .docker/
