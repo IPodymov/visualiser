@@ -30,6 +30,20 @@ VITE_API_BASE_URL=https://your-api.up.railway.app
 
 После изменения `VITE_API_BASE_URL` нужен новый build: Vite встраивает значение в bundle.
 
+## Frontend на Railway
+
+Production frontend: `https://visualiser-frontend-production.up.railway.app`.
+Сервис `visualiser-frontend` находится в проекте `visualiser`, environment `production`.
+Сборка загружается из корня монорепозитория через `railway up --service visualiser-frontend --environment production`.
+
+Настройки сервиса: Dockerfile `apps/frontend/Dockerfile`, healthcheck `/`, публичный порт `80`.
+Переменные: `RAILWAY_DOCKERFILE_PATH=apps/frontend/Dockerfile`, `PORT=80`,
+`VITE_API_BASE_URL=https://visualiser-backend.up.railway.app`.
+Конфигурация frontend задаётся в Railway; корневой `railway.json` относится к backend.
+Nginx возвращает `index.html` для клиентских маршрутов, включая `/plans`.
+После изменения API URL требуется повторная сборка. В backend `FRONTEND_URL` указывает
+на Railway frontend, а `CORS_ORIGIN` сохраняет также `https://eplans.vercel.app`.
+
 ## Backend и PostgreSQL на Railway
 
 Backend собирается из корня репозитория по `railway.json`/`apps/backend/Dockerfile`. Подключите PostgreSQL service и настройте:
