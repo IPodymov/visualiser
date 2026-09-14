@@ -55,5 +55,9 @@
     --space-16: 4rem;
     --space-20: 5rem;
     --space-24: 6rem;
-    --transition-base: 160ms ease;
+    --motion-fast: 140ms;
+    --motion-base: 180ms;
+    --motion-page: 240ms;
+    --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --transition-base: var(--motion-base) var(--motion-ease);
 }

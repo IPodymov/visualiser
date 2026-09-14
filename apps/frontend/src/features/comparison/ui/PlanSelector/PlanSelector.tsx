@@ -56,7 +56,7 @@ export const PlanSelector = ({
           ))}
         </SelectContent>
       </Select>
-      <div className="plan-selector__summary">
+      <div key={value ?? 'empty'} className="plan-selector__summary motion-selection-summary">
         {selected ? (
           <>
             <strong>{selected.title}</strong>

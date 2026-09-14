@@ -1,0 +1,118 @@
+/* Motion follows the same quiet, precise rhythm across every route. */
+@keyframes page-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes surface-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes surface-exit {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes drawer-enter {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes selection-confirm {
+    from { opacity: 0.5; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes plan-card-content-enter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .page-transition {
+        animation: page-enter var(--motion-page) var(--motion-ease);
+    }
+
+    .motion-tab-panel[data-state="active"],
+    .motion-selection-summary,
+    .admission-survey__question-head,
+    .admission-survey__options,
+    .admission-survey__results,
+    .site-header__profile-menu,
+    .plan-card,
+    .plans-active-filters > button {
+        animation: surface-enter var(--motion-base) var(--motion-ease);
+    }
+
+    .plan-card > * {
+        animation: plan-card-content-enter var(--motion-base) var(--motion-ease) backwards;
+    }
+
+    .plan-card > *:nth-child(1) { animation-delay: 40ms; }
+    .plan-card > *:nth-child(2) { animation-delay: 85ms; }
+    .plan-card > *:nth-child(3) { animation-delay: 130ms; }
+    .plan-card > *:nth-child(4) { animation-delay: 175ms; }
+    .plan-card > *:nth-child(5) { animation-delay: 220ms; }
+
+    .native-dialog[open] {
+        animation: page-enter var(--motion-page) var(--motion-ease);
+    }
+
+    .native-dialog[open]::backdrop {
+        animation: surface-enter var(--motion-base) var(--motion-ease);
+    }
+
+    .drawer-dialog[open] {
+        animation-name: drawer-enter;
+    }
+
+    .motion-select-content[data-state="open"] {
+        animation: surface-enter var(--motion-fast) var(--motion-ease);
+    }
+
+    .motion-select-content[data-state="closed"] {
+        animation: surface-exit var(--motion-fast) var(--motion-ease);
+    }
+
+    .motion-button,
+    .motion-tab,
+    .motion-select-trigger,
+    .motion-select-item,
+    .site-header__nav-link,
+    .site-header__mobile-link,
+    .site-header__profile-item,
+    .plans-active-filters > button {
+        transition: color var(--transition-base), background-color var(--transition-base),
+            border-color var(--transition-base), box-shadow var(--transition-base),
+            transform var(--motion-fast) var(--motion-ease);
+    }
+
+    .motion-select-trigger > svg {
+        transition: transform var(--transition-base);
+    }
+
+    .motion-select-trigger[data-state="open"] > svg {
+        transform: rotate(180deg);
+    }
+
+    .motion-button:active:not(:disabled):not([aria-disabled="true"]),
+    .motion-tab:active:not(:disabled),
+    .admission-survey__option:active {
+        transform: translateY(1px);
+    }
+
+    .motion-button[aria-pressed="true"] > svg,
+    .admission-survey__option--selected .admission-survey__option-marker > svg,
+    .motion-select-item[data-state="checked"] svg {
+        animation: selection-confirm var(--motion-base) var(--motion-ease);
+    }
+}
+
+/* Keep state changes visible without spatial movement or delayed content. */
+@media (prefers-reduced-motion: reduce) {
+    .admission-survey__option:hover,
+    .admission-survey__option--selected {
+        transform: none;
+    }
+}

@@ -45,6 +45,7 @@ export const PlanCard = ({
       size="sm"
       variant={isInCompare ? 'secondary' : 'outline'}
       disabled={!isCompareCompatible}
+      aria-pressed={isInCompare}
       onClick={toggleCompare}
     >
       {isInCompare ? <Check className="h-4 w-4" /> : <GitCompareArrows className="h-4 w-4" />}
@@ -115,7 +116,13 @@ export const PlanCard = ({
           </Tooltip>
         )}
         {user ? (
-          <Button type="button" size="sm" variant="ghost" onClick={() => toggleFavorite(plan.id)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            aria-pressed={isFavorite}
+            onClick={() => toggleFavorite(plan.id)}
+          >
             <Heart className={cn('h-4 w-4', isFavorite && 'fill-current')} />
             {isFavorite ? 'Сохранено' : 'В избранное'}
           </Button>

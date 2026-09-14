@@ -14,25 +14,31 @@ const ScrollToTop = () => {
   return null;
 };
 
-export const AppLayout = () => (
-  <>
-    <ScrollToTop />
-    <div className="app-shell">
-      <div className="subtle-grid min-h-screen">
-        <Header />
-        <Suspense
-          fallback={
-            <main className="page-main">
-              <div className="container">
-                <LoadingState label="Открываем страницу" rows={4} />
-              </div>
-            </main>
-          }
-        >
-          <Outlet />
-        </Suspense>
-        <Footer />
+export const AppLayout = () => {
+  const { pathname } = useLocation();
+
+  return (
+    <>
+      <ScrollToTop />
+      <div className="app-shell">
+        <div className="subtle-grid min-h-screen">
+          <Header />
+          <Suspense
+            fallback={
+              <main className="page-main">
+                <div className="container">
+                  <LoadingState label="Открываем страницу" rows={4} />
+                </div>
+              </main>
+            }
+          >
+            <div key={pathname} className="page-transition">
+              <Outlet />
+            </div>
+          </Suspense>
+          <Footer />
+        </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};

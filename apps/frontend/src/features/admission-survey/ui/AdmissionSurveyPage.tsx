@@ -730,7 +730,7 @@ export const AdmissionSurveyPage = () => {
           </div>
         ) : (
           <div className="admission-survey__card">
-            <div className="admission-survey__question-head">
+            <div key={`heading-${currentQuestion.id}`} className="admission-survey__question-head">
               <div>
                 <span className="admission-survey__block-label">{currentBlock.title}</span>
                 <h2>{currentQuestion.title}</h2>
@@ -740,13 +740,14 @@ export const AdmissionSurveyPage = () => {
               <BrainCircuit className="h-8 w-8 text-cyan-200" />
             </div>
 
-            <div className="admission-survey__options">
+            <div key={currentQuestion.id} className="admission-survey__options">
               {currentQuestion.options.map((option) => {
                 const selected = answerMap[currentQuestion.id] === option.id;
                 return (
                   <button
                     key={option.id}
                     type="button"
+                    aria-pressed={selected}
                     className={cn(
                       'admission-survey__option',
                       selected && 'admission-survey__option--selected',
