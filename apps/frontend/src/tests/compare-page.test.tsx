@@ -395,7 +395,9 @@ describe('comparison user journey', () => {
     useAppStore.setState({ compareIds: [1, 2], compareLevels: ['Бакалавриат', 'Бакалавриат'] });
     renderPage();
     expect(
-      await screen.findByRole('img', { name: 'Сравнение нагрузки программ A и B по семестрам' }),
+      await screen.findByRole('img', {
+        name: `Нагрузка по семестрам: ${onlySecondSemester.firstPlan.title} и ${onlySecondSemester.secondPlan.title}`,
+      }),
     ).toBeInTheDocument();
   });
 });

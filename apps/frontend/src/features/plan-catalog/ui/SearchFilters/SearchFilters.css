@@ -8,12 +8,14 @@
 
 .search-filters__search-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: end;
     gap: 0.75rem;
 }
 
 .search-filters__search {
-    flex: 1;
+    flex: 1 0 100%;
+    min-width: 0;
 }
 
 .search-filters__search-control {
@@ -64,13 +66,11 @@
     font-weight: 700;
 }
 
-.search-filters__actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
 @media (min-width: 900px) {
+    .search-filters__search {
+        flex: 1;
+    }
+
     .search-filters {
         padding: 1.25rem;
     }

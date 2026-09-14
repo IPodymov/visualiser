@@ -14,6 +14,7 @@ type Props = {
   onChange: (filters: PlanFilters) => void;
   onReset: () => void;
   activeCount: number;
+  hasComparisonSelection?: boolean;
 };
 
 const programFilterKeys = new Set<SelectFilterConfig['key']>(['faculty', 'direction', 'profile']);
@@ -85,8 +86,16 @@ const FilterGroups = ({
   );
 };
 
-export const SearchFilters = ({ config, filters, onChange, onReset, activeCount }: Props) => {
+export const SearchFilters = ({
+  config,
+  filters,
+  onChange,
+  onReset,
+  activeCount,
+  hasComparisonSelection = false,
+}: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const canReset = activeCount > 0 || hasComparisonSelection;
 
   return (
     <section className="search-filters" aria-label="Поиск и фильтры учебных планов">
@@ -103,6 +112,16 @@ export const SearchFilters = ({ config, filters, onChange, onReset, activeCount 
             />
           </div>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={!canReset}
+          onClick={onReset}
+          title="Очистить поиск, фильтры и выбранные для сравнения учебные планы"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+          Сбросить всё
+        </Button>
         <Button
           className="search-filters__mobile-button"
           type="button"
@@ -121,14 +140,6 @@ export const SearchFilters = ({ config, filters, onChange, onReset, activeCount 
           onChange={onChange}
           idPrefix="filter-desktop"
         />
-        {activeCount > 0 && (
-          <div className="search-filters__actions">
-            <Button type="button" variant="ghost" onClick={onReset}>
-              <X className="h-4 w-4" />
-              Сбросить
-            </Button>
-          </div>
-        )}
       </div>
 
       <Drawer
@@ -147,7 +158,7 @@ export const SearchFilters = ({ config, filters, onChange, onReset, activeCount 
           <Button type="button" onClick={() => setDrawerOpen(false)}>
             Показать программы
           </Button>
-          {activeCount > 0 && (
+          {canReset && (
             <Button
               type="button"
               variant="ghost"
@@ -156,7 +167,7 @@ export const SearchFilters = ({ config, filters, onChange, onReset, activeCount 
                 setDrawerOpen(false);
               }}
             >
-              Сбросить фильтры
+              Сбросить всё
             </Button>
           )}
         </div>

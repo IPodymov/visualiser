@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { facultiesApi, type FacultyOption } from '@entities/faculty/api/faculties';
 import { plansApi } from '@entities/plan/api/plans';
 import type { EducationPlan } from '@entities/plan/model/types';
+import { areEducationLevelsCompatible } from '@features/comparison/lib/compareEligibility';
 import type { PlanFilters } from './filter.types';
 import { buildPlanFilterConfig } from './planFilters';
 
@@ -14,12 +15,33 @@ const defaultFilters: PlanFilters = {
   studyForm: 'all',
 };
 
-export const usePlans = () => {
+export const usePlans = (comparisonLevel: string | null = null) => {
   const [plans, setPlans] = useState<EducationPlan[]>([]);
   const [faculties, setFaculties] = useState<FacultyOption[]>([]);
-  const [filters, setFilterState] = useState<PlanFilters>(defaultFilters);
+  const [filterState, setFilterState] = useState<PlanFilters>(defaultFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const availablePlans = useMemo(
+    () =>
+      comparisonLevel
+        ? plans.filter((plan) => areEducationLevelsCompatible(plan.level, comparisonLevel))
+        : plans,
+    [plans, comparisonLevel],
+  );
+  const filters = useMemo(() => {
+    if (!comparisonLevel) return filterState;
+    const next = { ...filterState, level: 'all' };
+    for (const filter of buildPlanFilterConfig(availablePlans)) {
+      if (
+        next[filter.key] !== 'all' &&
+        !filter.options.some((option) => option.value === next[filter.key])
+      ) {
+        next[filter.key] = 'all';
+      }
+    }
+    return next;
+  }, [filterState, comparisonLevel, availablePlans]);
 
   const setFilters = (nextFilters: PlanFilters) => {
     setFilterState((previous) => {
@@ -28,6 +50,7 @@ export const usePlans = () => {
       for (const filter of buildPlanFilterConfig(plans, faculties, next.level)) {
         if (
           filter.key !== 'level' &&
+          next[filter.key] === previous[filter.key] &&
           next[filter.key] !== 'all' &&
           !filter.options.some((option) => option.value === next[filter.key])
         ) {
@@ -65,7 +88,7 @@ export const usePlans = () => {
 
   const filteredPlans = useMemo(
     () =>
-      plans.filter((plan) => {
+      availablePlans.filter((plan) => {
         const query = filters.query.trim().toLowerCase();
         const matchesQuery =
           !query ||
@@ -90,12 +113,15 @@ export const usePlans = () => {
           matchesForm
         );
       }),
-    [filters, plans],
+    [filters, availablePlans],
   );
 
   const filterConfig = useMemo(
-    () => buildPlanFilterConfig(plans, faculties, filters.level),
-    [plans, faculties, filters.level],
+    () =>
+      comparisonLevel
+        ? buildPlanFilterConfig(availablePlans).filter((filter) => filter.key !== 'level')
+        : buildPlanFilterConfig(plans, faculties, filters.level),
+    [plans, faculties, filters.level, comparisonLevel, availablePlans],
   );
 
   return { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload: load };

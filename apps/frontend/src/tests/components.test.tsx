@@ -717,7 +717,7 @@ describe('forms, navigation and filters', () => {
         activeCount={1}
       />,
     );
-    await user.click(screen.getByRole('button', { name: 'Сбросить' }));
+    await user.click(screen.getByRole('button', { name: 'Сбросить всё' }));
     expect(onReset).toHaveBeenCalledOnce();
     await user.click(screen.getByRole('button', { name: /Фильтры/ }));
     const dialog = screen.getByRole('dialog', { hidden: true });
@@ -726,7 +726,7 @@ describe('forms, navigation and filters', () => {
     );
     await user.click(screen.getByRole('button', { name: /Фильтры/ }));
     await user.click(
-      within(dialog).getByRole('button', { name: 'Сбросить фильтры', hidden: true }),
+      within(dialog).getByRole('button', { name: 'Сбросить всё', hidden: true }),
     );
     expect(onReset).toHaveBeenCalledTimes(2);
   });

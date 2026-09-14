@@ -23,8 +23,13 @@ const defaultFilters: PlanFilters = {
 };
 
 export const PlansPage = () => {
+  const comparisonLevel = useWorkspaceStore(
+    (state) => state.compareLevels.find((level) => level !== null) ?? null,
+  );
+  const compareIds = useWorkspaceStore((state) => state.compareIds);
+  const removeFromCompare = useWorkspaceStore((state) => state.removeFromCompare);
   const { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload } =
-    usePlans();
+    usePlans(comparisonLevel);
   const [visibleCount, setVisibleCount] = useState(9);
   const compareCount = useWorkspaceStore((state) => state.compareIds.filter(Boolean).length);
 
@@ -45,6 +50,12 @@ export const PlansPage = () => {
   useEffect(() => setVisibleCount(9), [filters]);
 
   const reset = () => setFilters(defaultFilters);
+  const resetAll = () => {
+    reset();
+    compareIds.forEach((id) => {
+      if (id !== null) removeFromCompare(id);
+    });
+  };
   const removeFilter = (key: keyof PlanFilters) =>
     setFilters({ ...filters, [key]: key === 'query' ? '' : 'all' });
   const visiblePlans = filteredPlans.slice(0, visibleCount);
@@ -59,12 +70,32 @@ export const PlansPage = () => {
         />
 
         <PageSection>
+          {comparisonLevel && (
+            <div role="status">
+              <p>
+                Для сравнения показаны только учебные планы уровня «{comparisonLevel}». Выберите ещё
+                один план или очистите выбор, чтобы вернуться ко всем уровням.
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  compareIds.forEach((id) => {
+                    if (id !== null) removeFromCompare(id);
+                  });
+                }}
+              >
+                Очистить выбор для сравнения
+              </Button>
+            </div>
+          )}
           <SearchFilters
             config={filterConfig}
             filters={filters}
             onChange={setFilters}
-            onReset={reset}
+            onReset={resetAll}
             activeCount={activeFilters.length}
+            hasComparisonSelection={compareCount > 0}
           />
 
           <div className="plans-results-bar">
