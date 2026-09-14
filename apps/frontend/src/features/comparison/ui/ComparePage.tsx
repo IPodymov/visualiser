@@ -52,10 +52,10 @@ const tooltipStyle = {
   color: 'var(--color-ink)',
 };
 
-const deltaText = (first: number, second: number, unit: string) => {
+const deltaText = (first: number, second: number, unit: string, title: string) => {
   const difference = Math.abs(first - second);
   if (difference === 0) return `Одинаково: ${formatMetric(first)} ${unit}`;
-  return `В программе A на ${formatMetric(difference)} ${unit} ${first > second ? 'больше' : 'меньше'}`;
+  return `В «${title}» на ${formatMetric(difference)} ${unit} ${first > second ? 'больше' : 'меньше'}`;
 };
 
 const UniqueList = ({
@@ -255,7 +255,7 @@ export const ComparePage = () => {
         {!bothSelected ? (
           <EmptyState
             title="Выберите две образовательные программы"
-            text="Добавьте программу A и программу B одного уровня образования. Выбор сохранится, если вы вернётесь в каталог."
+            text="Добавьте две программы одного уровня образования. Выбор сохранится, если вы вернётесь в каталог."
             action={
               <Button asChild variant="outline">
                 <Link to="/plans">Открыть каталог</Link>
@@ -316,16 +316,16 @@ export const ComparePage = () => {
                   icon={<BookOpenCheck className="h-5 w-5" />}
                 />
                 <MetricCard
-                  label="Только в программе A"
+                  label={`Только в «${comparison.firstPlan.title}»`}
                   value={comparison.summary.onlyFirstCount}
                   tone="programA"
-                  note={`Всего в A: ${comparison.summary.firstDisciplinesCount}`}
+                  note={`Всего дисциплин: ${comparison.summary.firstDisciplinesCount}`}
                 />
                 <MetricCard
-                  label="Только в программе B"
+                  label={`Только в «${comparison.secondPlan.title}»`}
                   value={comparison.summary.onlySecondCount}
                   tone="programB"
-                  note={`Всего в B: ${comparison.summary.secondDisciplinesCount}`}
+                  note={`Всего дисциплин: ${comparison.summary.secondDisciplinesCount}`}
                 />
                 <MetricCard
                   label="Разница общей нагрузки"
@@ -334,6 +334,7 @@ export const ComparePage = () => {
                     analytics.firstTotals.totalHours,
                     analytics.secondTotals.totalHours,
                     'ч.',
+                    comparison.firstPlan.title,
                   )}
                   icon={<Clock3 className="h-5 w-5" />}
                 />
@@ -344,6 +345,7 @@ export const ComparePage = () => {
                     analytics.firstTotals.credits,
                     analytics.secondTotals.credits,
                     'ЗЕТ',
+                    comparison.firstPlan.title,
                   )}
                   icon={<WalletCards className="h-5 w-5" />}
                 />
@@ -359,13 +361,13 @@ export const ComparePage = () => {
               />
               {analytics.hasWorkload ? (
                 <ChartCard
-                  title="Нагрузка программы A и программы B"
+                  title="Нагрузка выбранных программ"
                   description="Для каждого формата показано точное количество академических часов."
                 >
                   <div
                     className="compare-chart"
                     role="img"
-                    aria-label="Сгруппированная столбчатая диаграмма нагрузки программ A и B"
+                    aria-label={`Нагрузка: ${comparison.firstPlan.title} и ${comparison.secondPlan.title}`}
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -393,11 +395,13 @@ export const ComparePage = () => {
                           contentStyle={tooltipStyle}
                           formatter={(value, name) => [
                             `${Number(value ?? 0)} ч.`,
-                            name === 'a' ? 'Программа A' : 'Программа B',
+                            name === 'a' ? comparison.firstPlan.title : comparison.secondPlan.title,
                           ]}
                         />
                         <Legend
-                          formatter={(value) => (value === 'a' ? 'Программа A' : 'Программа B')}
+                          formatter={(value) =>
+                            value === 'a' ? comparison.firstPlan.title : comparison.secondPlan.title
+                          }
                         />
                         <Bar dataKey="a" fill="var(--color-program-a)" radius={[0, 5, 5, 0]} />
                         <Bar dataKey="b" fill="var(--color-program-b)" radius={[0, 5, 5, 0]} />
@@ -412,11 +416,13 @@ export const ComparePage = () => {
                           <ComparisonIndicator state="equal">Одинаково</ComparisonIndicator>
                         ) : item.a > item.b ? (
                           <ComparisonIndicator state="more">
-                            В A на {formatMetric(item.a - item.b)} ч. больше
+                            В «{comparison.firstPlan.title}» на {formatMetric(item.a - item.b)} ч.
+                            больше
                           </ComparisonIndicator>
                         ) : (
                           <ComparisonIndicator state="less">
-                            В A на {formatMetric(item.b - item.a)} ч. меньше
+                            В «{comparison.firstPlan.title}» на {formatMetric(item.b - item.a)} ч.
+                            меньше
                           </ComparisonIndicator>
                         )}
                       </div>
@@ -440,13 +446,13 @@ export const ComparePage = () => {
               />
               {analytics.hasSemesterWorkload ? (
                 <ChartCard
-                  title="Динамика нагрузки A/B"
+                  title="Динамика нагрузки выбранных программ"
                   description="По горизонтали — номер семестра, по вертикали — суммарные академические часы дисциплин."
                 >
                   <div
                     className="compare-semester-chart"
                     role="img"
-                    aria-label="Сравнение нагрузки программ A и B по семестрам"
+                    aria-label={`Нагрузка по семестрам: ${comparison.firstPlan.title} и ${comparison.secondPlan.title}`}
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -467,11 +473,13 @@ export const ComparePage = () => {
                           contentStyle={tooltipStyle}
                           formatter={(value, name) => [
                             `${Number(value ?? 0)} ч.`,
-                            name === 'a' ? 'Программа A' : 'Программа B',
+                            name === 'a' ? comparison.firstPlan.title : comparison.secondPlan.title,
                           ]}
                         />
                         <Legend
-                          formatter={(value) => (value === 'a' ? 'Программа A' : 'Программа B')}
+                          formatter={(value) =>
+                            value === 'a' ? comparison.firstPlan.title : comparison.secondPlan.title
+                          }
                         />
                         <Bar dataKey="a" fill="var(--color-program-a)" radius={[5, 5, 0, 0]} />
                         <Bar dataKey="b" fill="var(--color-program-b)" radius={[5, 5, 0, 0]} />
@@ -482,7 +490,7 @@ export const ComparePage = () => {
               ) : (
                 <EmptyState
                   title="Нет данных о нагрузке по семестрам"
-                  text="В выбранных планах не указаны часы по семестрам, поэтому динамику программы A и программы B нельзя сопоставить."
+                  text="В выбранных планах не указаны часы по семестрам, поэтому динамику выбранных программ нельзя сопоставить."
                 />
               )}
             </PageSection>
@@ -512,7 +520,7 @@ export const ComparePage = () => {
               ) : (
                 <EmptyState
                   title="Общих дисциплин не найдено"
-                  text="Названия дисциплин в выбранных планах не совпали. Посмотрите уникальные списки программы A и программы B ниже."
+                  text="Названия дисциплин в выбранных планах не совпали. Посмотрите уникальные списки выбранных программ ниже."
                 />
               )}
             </PageSection>
@@ -526,12 +534,12 @@ export const ComparePage = () => {
               />
               <div className="compare-unique-grid">
                 <UniqueList
-                  title="Только в программе A"
+                  title={`Только в «${comparison.firstPlan.title}»`}
                   side="A"
                   disciplines={comparison.onlyInFirst}
                 />
                 <UniqueList
-                  title="Только в программе B"
+                  title={`Только в «${comparison.secondPlan.title}»`}
                   side="B"
                   disciplines={comparison.onlyInSecond}
                 />
@@ -566,15 +574,17 @@ export const ComparePage = () => {
                     каждой траектории.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="compare-plan-links flex flex-wrap gap-3">
                   <Button asChild variant="secondary">
                     <Link to={`/plans/${comparison.firstPlan.id}`}>
-                      Программа A<ArrowRight className="h-4 w-4" />
+                      {comparison.firstPlan.title}
+                      <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
                   <Button asChild variant="secondary">
                     <Link to={`/plans/${comparison.secondPlan.id}`}>
-                      Программа B<ArrowRight className="h-4 w-4" />
+                      {comparison.secondPlan.title}
+                      <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
                 </div>

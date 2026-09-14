@@ -453,7 +453,7 @@ describe('curriculum components', () => {
       />,
     );
     expect(screen.getAllByText('Оба значения не указаны').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/только в программе B/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Указано только в «Разработка программного обеспечения»/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('4 ЗЕТ').length).toBeGreaterThan(0);
     expect(screen.getAllByText('custom').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/11 семестров позже/).length).toBeGreaterThan(0);

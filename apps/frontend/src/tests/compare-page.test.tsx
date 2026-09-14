@@ -330,14 +330,21 @@ describe('comparison user journey', () => {
     expect(await screen.findByText('Насколько программы похожи')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByText('Одинаково: 200 ч.')).toBeInTheDocument();
-    expect(screen.getByText(/В программе A на 1 ЗЕТ больше/)).toBeInTheDocument();
-    expect(screen.getByText(/В A на 50 ч. больше/)).toBeInTheDocument();
-    expect(screen.getAllByText(/В A на 10 ч. меньше/)).toHaveLength(2);
+    expect(screen.getByText(/В «Программа Альфа» на 1 ЗЕТ больше/)).toBeInTheDocument();
+    expect(screen.getByText(/В «Программа Альфа» на 50 ч. больше/)).toBeInTheDocument();
+    expect(screen.getAllByText(/В «Программа Альфа» на 10 ч. меньше/)).toHaveLength(2);
     expect(screen.getByText('Параметры совпадают')).toBeInTheDocument();
     expect(screen.getByText('Семестр не указан')).toBeInTheDocument();
     expect(screen.getByText('часы не указаны')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Программа A/ })).toHaveAttribute('href', '/plans/1');
+    expect(screen.getByRole('link', { name: /Программа Альфа/ })).toHaveAttribute(
+      'href',
+      '/plans/1',
+    );
     expect(screen.getAllByTestId('chart-tooltip')).toHaveLength(2);
+    expect(screen.getByRole('columnheader', { name: first.title })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: second.title })).toBeInTheDocument();
+    expect(screen.queryByText('Программа A')).not.toBeInTheDocument();
+    expect(screen.queryByText('Программа B')).not.toBeInTheDocument();
   });
 
   it('explains absent analytical evidence and empty discipline intersections', async () => {
@@ -368,8 +375,8 @@ describe('comparison user journey', () => {
     vi.mocked(comparisonApi.compare).mockResolvedValue(reversed);
     useAppStore.setState({ compareIds: [1, 2], compareLevels: ['Бакалавриат', 'Бакалавриат'] });
     renderPage();
-    expect(await screen.findByText(/В программе A на 10 ч. меньше/)).toBeInTheDocument();
-    expect(screen.getByText(/В программе A на 1 ЗЕТ меньше/)).toBeInTheDocument();
+    expect(await screen.findByText(/В «Малая A» на 10 ч. меньше/)).toBeInTheDocument();
+    expect(screen.getByText(/В «Малая A» на 1 ЗЕТ меньше/)).toBeInTheDocument();
   });
 
   it('builds semester evidence when only program B has a numbered semester', async () => {

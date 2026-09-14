@@ -17,9 +17,26 @@ const defaultFilters: PlanFilters = {
 export const usePlans = () => {
   const [plans, setPlans] = useState<EducationPlan[]>([]);
   const [faculties, setFaculties] = useState<FacultyOption[]>([]);
-  const [filters, setFilters] = useState<PlanFilters>(defaultFilters);
+  const [filters, setFilterState] = useState<PlanFilters>(defaultFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const setFilters = (nextFilters: PlanFilters) => {
+    setFilterState((previous) => {
+      if (previous.level === nextFilters.level) return nextFilters;
+      const next = { ...nextFilters };
+      for (const filter of buildPlanFilterConfig(plans, faculties, next.level)) {
+        if (
+          filter.key !== 'level' &&
+          next[filter.key] !== 'all' &&
+          !filter.options.some((option) => option.value === next[filter.key])
+        ) {
+          next[filter.key] = 'all';
+        }
+      }
+      return next;
+    });
+  };
 
   const load = async (nextFilters = filters) => {
     setLoading(true);
@@ -76,7 +93,10 @@ export const usePlans = () => {
     [filters, plans],
   );
 
-  const filterConfig = useMemo(() => buildPlanFilterConfig(plans, faculties), [plans, faculties]);
+  const filterConfig = useMemo(
+    () => buildPlanFilterConfig(plans, faculties, filters.level),
+    [plans, faculties, filters.level],
+  );
 
   return { plans, filteredPlans, filterConfig, filters, setFilters, loading, error, reload: load };
 };

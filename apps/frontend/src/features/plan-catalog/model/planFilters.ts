@@ -39,35 +39,39 @@ const facultyOptions = (plans: EducationPlan[], faculties?: FacultyOption[]) => 
 export const buildPlanFilterConfig = (
   plans: EducationPlan[],
   faculties?: FacultyOption[],
-): SelectFilterConfig[] => [
-  {
-    key: 'faculty',
-    label: 'Факультет',
-    placeholder: 'Факультет',
-    options: facultyOptions(plans, faculties),
-  },
-  {
-    key: 'direction',
-    label: 'Направление',
-    placeholder: 'Направление',
-    options: uniqueSortedOptions(plans.map((plan) => plan.direction)),
-  },
-  {
-    key: 'profile',
-    label: 'Профиль',
-    placeholder: 'Профиль',
-    options: uniqueSortedOptions(plans.map((plan) => plan.profile)),
-  },
-  {
-    key: 'level',
-    label: 'Уровень',
-    placeholder: 'Уровень',
-    options: uniqueSortedOptions(plans.map((plan) => plan.level)),
-  },
-  {
-    key: 'studyForm',
-    label: 'Форма',
-    placeholder: 'Форма',
-    options: uniqueSortedOptions(plans.map((plan) => plan.studyForm)),
-  },
-];
+  level = 'all',
+): SelectFilterConfig[] => {
+  const levelPlans = level === 'all' ? plans : plans.filter((plan) => plan.level === level);
+  return [
+    {
+      key: 'faculty',
+      label: 'Факультет',
+      placeholder: 'Факультет',
+      options: facultyOptions(levelPlans, level === 'all' ? faculties : undefined),
+    },
+    {
+      key: 'direction',
+      label: 'Направление',
+      placeholder: 'Направление',
+      options: uniqueSortedOptions(levelPlans.map((plan) => plan.direction)),
+    },
+    {
+      key: 'profile',
+      label: 'Профиль',
+      placeholder: 'Профиль',
+      options: uniqueSortedOptions(levelPlans.map((plan) => plan.profile)),
+    },
+    {
+      key: 'level',
+      label: 'Уровень',
+      placeholder: 'Уровень',
+      options: uniqueSortedOptions(plans.map((plan) => plan.level)),
+    },
+    {
+      key: 'studyForm',
+      label: 'Форма',
+      placeholder: 'Форма',
+      options: uniqueSortedOptions(levelPlans.map((plan) => plan.studyForm)),
+    },
+  ];
+};

@@ -69,19 +69,25 @@ const Direction = ({
   field,
   firstValue,
   secondValue,
+  firstTitle,
+  secondTitle,
 }: {
   field: string;
   firstValue: unknown;
   secondValue: unknown;
+  firstTitle: string;
+  secondTitle: string;
 }) => {
   if (isMissing(firstValue) && isMissing(secondValue)) {
     return <ComparisonIndicator state="equal">Оба значения не указаны</ComparisonIndicator>;
   }
   if (isMissing(firstValue)) {
-    return <ComparisonIndicator state="onlyB">Указано только в программе B</ComparisonIndicator>;
+    return (
+      <ComparisonIndicator state="onlyB">Указано только в «{secondTitle}»</ComparisonIndicator>
+    );
   }
   if (isMissing(secondValue)) {
-    return <ComparisonIndicator state="onlyA">Указано только в программе A</ComparisonIndicator>;
+    return <ComparisonIndicator state="onlyA">Указано только в «{firstTitle}»</ComparisonIndicator>;
   }
   if (!numericFields.has(field)) return <Badge variant="warning">Разные значения</Badge>;
   const first = Number(firstValue);
@@ -94,18 +100,18 @@ const Direction = ({
     const difference = Math.abs(first - second);
     return first < second ? (
       <ComparisonIndicator state="less">
-        В программе A на {difference} {semesterUnit(difference)} раньше
+        В «{firstTitle}» на {difference} {semesterUnit(difference)} раньше
       </ComparisonIndicator>
     ) : (
       <ComparisonIndicator state="more">
-        В программе A на {difference} {semesterUnit(difference)} позже
+        В «{firstTitle}» на {difference} {semesterUnit(difference)} позже
       </ComparisonIndicator>
     );
   }
   return first > second ? (
-    <ComparisonIndicator state="more">В программе A больше</ComparisonIndicator>
+    <ComparisonIndicator state="more">В «{firstTitle}» больше</ComparisonIndicator>
   ) : (
-    <ComparisonIndicator state="less">В программе A меньше</ComparisonIndicator>
+    <ComparisonIndicator state="less">В «{firstTitle}» меньше</ComparisonIndicator>
   );
 };
 
@@ -131,8 +137,8 @@ export const CompareTable = ({ comparison }: { comparison: PlanComparison }) => 
             <TableRow>
               <TableHead>Дисциплина</TableHead>
               <TableHead>Параметр</TableHead>
-              <TableHead>Программа A</TableHead>
-              <TableHead>Программа B</TableHead>
+              <TableHead>{comparison.firstPlan.title}</TableHead>
+              <TableHead>{comparison.secondPlan.title}</TableHead>
               <TableHead>Разница</TableHead>
               <TableHead>Как читать</TableHead>
             </TableRow>
@@ -153,6 +159,8 @@ export const CompareTable = ({ comparison }: { comparison: PlanComparison }) => 
                   <TableCell>{formatValue(row.field, row.secondValue)}</TableCell>
                   <TableCell>
                     <Direction
+                      firstTitle={comparison.firstPlan.title}
+                      secondTitle={comparison.secondPlan.title}
                       field={row.field}
                       firstValue={row.firstValue}
                       secondValue={row.secondValue}
@@ -182,6 +190,8 @@ export const CompareTable = ({ comparison }: { comparison: PlanComparison }) => 
                   <div className="compare-table__mobile-label">
                     <Badge>{meta.label}</Badge>
                     <Direction
+                      firstTitle={comparison.firstPlan.title}
+                      secondTitle={comparison.secondPlan.title}
                       field={difference.field}
                       firstValue={difference.firstValue}
                       secondValue={difference.secondValue}
@@ -189,11 +199,11 @@ export const CompareTable = ({ comparison }: { comparison: PlanComparison }) => 
                   </div>
                   <dl>
                     <div>
-                      <dt>Программа A</dt>
+                      <dt>{comparison.firstPlan.title}</dt>
                       <dd>{formatValue(difference.field, difference.firstValue)}</dd>
                     </div>
                     <div>
-                      <dt>Программа B</dt>
+                      <dt>{comparison.secondPlan.title}</dt>
                       <dd>{formatValue(difference.field, difference.secondValue)}</dd>
                     </div>
                   </dl>

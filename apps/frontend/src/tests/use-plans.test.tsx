@@ -49,6 +49,65 @@ beforeEach(() => {
 });
 
 describe('usePlans', () => {
+  it('rebuilds available options by level and clears incompatible selections', async () => {
+    const { result } = renderHook(() => usePlans());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() =>
+      result.current.setFilters({
+        ...result.current.filters,
+        faculty: '1',
+        direction: 'Программная инженерия',
+        profile: 'Искусственный интеллект',
+        studyForm: 'Очная',
+        level: 'Бакалавриат',
+      }),
+    );
+    expect(result.current.filters.direction).toBe('Программная инженерия');
+
+    act(() => result.current.setFilters({ ...result.current.filters, level: 'Магистратура' }));
+    expect(result.current.filteredPlans).toEqual([plans[1]]);
+    expect(result.current.filters).toMatchObject({
+      faculty: 'all',
+      direction: 'all',
+      profile: 'all',
+      studyForm: 'all',
+    });
+    const options = (key: string) =>
+      result.current.filterConfig.find((item) => item.key === key)!.options;
+    expect(options('direction')).toEqual([{ label: 'Информатика', value: 'Информатика' }]);
+    expect(options('profile')).toEqual([]);
+    expect(options('faculty')).toEqual([{ label: 'ФЭиУ', value: '2' }]);
+    expect(options('level')).toHaveLength(2);
+
+    act(() => result.current.setFilters({ ...result.current.filters, level: 'all' }));
+    expect(result.current.filteredPlans).toEqual(plans);
+    expect(options('direction')).toHaveLength(2);
+  });
+
+  it('keeps search and compatible selections when switching levels', async () => {
+    api.listPlans.mockResolvedValue([
+      plans[0],
+      plan({ ...plans[0], id: 3, level: 'Магистратура' }),
+    ]);
+    const { result } = renderHook(() => usePlans());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() =>
+      result.current.setFilters({
+        ...result.current.filters,
+        query: 'Интеллектуальные',
+        faculty: '1',
+        direction: plans[0].direction,
+        profile: plans[0].profile!,
+        studyForm: 'Очная',
+        level: 'Бакалавриат',
+      }),
+    );
+    const previous = result.current.filters;
+    act(() => result.current.setFilters({ ...previous, level: 'Магистратура' }));
+    expect(result.current.filters).toEqual({ ...previous, level: 'Магистратура' });
+    expect(result.current.filteredPlans.map((item) => item.id)).toEqual([3]);
+  });
+
   it('loads plans and faculties and applies every catalog filter', async () => {
     const { result } = renderHook(() => usePlans());
     expect(result.current.loading).toBe(true);

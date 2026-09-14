@@ -31,7 +31,7 @@ export const PlanSelector = ({
   return (
     <div className={cn('plan-selector', side === 'A' ? 'plan-selector--a' : 'plan-selector--b')}>
       <div className="plan-selector__heading">
-        <Badge variant={side === 'A' ? 'programA' : 'programB'}>Программа {side}</Badge>
+        <Badge variant={side === 'A' ? 'programA' : 'programB'}>{side}</Badge>
         {value && (
           <Button type="button" size="sm" variant="ghost" onClick={() => onChange(null)}>
             <X className="h-4 w-4" />
@@ -44,7 +44,9 @@ export const PlanSelector = ({
       </Label>
       <Select value={value ? String(value) : ''} onValueChange={(next) => onChange(Number(next))}>
         <SelectTrigger id={id}>
-          <SelectValue placeholder={`Выберите программу ${side}`} />
+          <SelectValue
+            placeholder={`${side === 'A' ? 'Выберите первый учебный план' : 'Выберите второй учебный план'}`}
+          />
         </SelectTrigger>
         <SelectContent>
           {availablePlans.map((plan) => (
