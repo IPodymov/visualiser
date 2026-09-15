@@ -92,7 +92,7 @@ describe('web application security controls', () => {
     }));
 
     try {
-      const { createApp: createProductionApp } = await import('../app');
+      const { createApp: createProductionApp } = await import('../app.js');
       const response = await request(createProductionApp())
         .get('/health')
         .set('Origin', 'http://127.0.0.1:5173')

@@ -26,7 +26,7 @@ const setEnvironment = (values: Record<string, string | undefined>) => {
 const importEnvironment = async () => {
   vi.resetModules();
   vi.doMock('dotenv', () => ({ default: { config: vi.fn() } }));
-  return import('../config/env');
+  return import('../config/env.js');
 };
 
 describe('environment validation', () => {

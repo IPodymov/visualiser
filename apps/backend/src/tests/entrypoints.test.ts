@@ -30,7 +30,7 @@ describe('executable entrypoints', () => {
   });
 
   it('starts the HTTP application on the configured port', async () => {
-    await import('../main');
+    await import('../main.js');
 
     expect(mocks.listen).toHaveBeenCalledWith(4321, expect.any(Function));
     expect(console.log).toHaveBeenCalledWith('Backend API is running on http://localhost:4321');
@@ -38,7 +38,7 @@ describe('executable entrypoints', () => {
   });
 
   it('runs the FIT import command and always disconnects Prisma', async () => {
-    await import('../scripts/import-fit');
+    await import('../scripts/import-fit.js');
     await vi.waitFor(() => expect(mocks.disconnect).toHaveBeenCalledOnce());
 
     expect(mocks.importFit).toHaveBeenCalledOnce();
@@ -50,7 +50,7 @@ describe('executable entrypoints', () => {
     mocks.importFit.mockRejectedValue(new Error('Import failed'));
     vi.resetModules();
 
-    await import('../scripts/import-fit');
+    await import('../scripts/import-fit.js');
     await vi.waitFor(() => expect(mocks.disconnect).toHaveBeenCalledOnce());
 
     expect(console.error).toHaveBeenCalledWith(expect.objectContaining({ message: 'Import failed' }));
