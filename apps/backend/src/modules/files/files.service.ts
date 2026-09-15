@@ -8,12 +8,20 @@ export class FilesService {
     return path.resolve(process.cwd(), env.FIT_DIR);
   }
 
+  uploadedFilePath(file: Express.Multer.File) {
+    const fileName = path.basename(file.filename);
+    const uploadDirectory = this.fitUploadDirectory();
+
+    return path.resolve(uploadDirectory, fileName);
+  }
+
   async uploaded(file?: Express.Multer.File) {
     if (!file) {
       throw new AppError(400, 'A valid XLSX file is required');
     }
 
-    const handle = await fs.open(file.path, 'r');
+    const filePath = this.uploadedFilePath(file);
+    const handle = await fs.open(filePath, 'r');
     const signature = Buffer.alloc(4);
     try {
       await handle.read(signature, 0, signature.length, 0);
@@ -23,13 +31,14 @@ export class FilesService {
 
     const isZipWorkbook = signature.equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
     if (!isZipWorkbook) {
-      await fs.unlink(file.path).catch(() => undefined);
+      await fs.unlink(filePath).catch(() => undefined);
       throw new AppError(400, 'The uploaded file is not a valid XLSX workbook');
     }
 
+    const fileName = path.basename(file.filename);
     return {
-      fileName: file.filename,
-      path: file.filename,
+      fileName,
+      path: fileName,
     };
   }
 }

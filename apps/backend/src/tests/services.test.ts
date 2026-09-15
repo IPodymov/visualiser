@@ -604,6 +604,7 @@ describe('downloads and files services', () => {
     const filePath = path.join(directory, 'opaque.xlsx');
     fs.writeFileSync(filePath, Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x00]));
     const service = new FilesService();
+    vi.spyOn(service, 'fitUploadDirectory').mockReturnValue(directory);
 
     await expect(
       service.uploaded({ path: filePath, filename: 'opaque.xlsx' } as Express.Multer.File),
@@ -614,8 +615,9 @@ describe('downloads and files services', () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'eduplan-upload-cleanup-'));
     const filePath = path.join(directory, 'invalid.xlsx');
     fs.writeFileSync(filePath, 'not-a-workbook');
-    const unlink = vi.spyOn(fsPromises, 'unlink').mockRejectedValueOnce(new Error('locked'));
     const service = new FilesService();
+    vi.spyOn(service, 'fitUploadDirectory').mockReturnValue(directory);
+    const unlink = vi.spyOn(fsPromises, 'unlink').mockRejectedValueOnce(new Error('locked'));
 
     await expect(
       service.uploaded({ path: filePath, filename: 'invalid.xlsx' } as Express.Multer.File),
@@ -623,5 +625,19 @@ describe('downloads and files services', () => {
     expect(unlink).toHaveBeenCalledWith(filePath);
     unlink.mockRestore();
     fs.unlinkSync(filePath);
+  });
+
+  it('does not use a multipart path outside the upload directory', async () => {
+    const uploadDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'eduplan-upload-service-'));
+    const outsideDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'eduplan-upload-outside-'));
+    const outsidePath = path.join(outsideDirectory, 'opaque.xlsx');
+    fs.writeFileSync(outsidePath, Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x00]));
+    const service = new FilesService();
+    vi.spyOn(service, 'fitUploadDirectory').mockReturnValue(uploadDirectory);
+
+    await expect(
+      service.uploaded({ path: outsidePath, filename: 'opaque.xlsx' } as Express.Multer.File),
+    ).rejects.toThrow();
+    expect(fs.existsSync(outsidePath)).toBe(true);
   });
 });
