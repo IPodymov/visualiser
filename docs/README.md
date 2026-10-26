@@ -23,7 +23,8 @@
 ## Быстрые ссылки
 
 - Первый локальный запуск: [development.md](./development.md#первый-запуск).
-- Импорт только планов 2025 года: [backend.md](./backend.md#импорт-fit-файлов).
+- Импорт текущего года и архива прошлого года: [backend.md](./backend.md#импорт-fit-файлов).
+- Сравнение плана с прошлым годом: [comparison-system.md](./comparison-system.md#сравнение-с-прошлым-годом).
 - Ограничение сравнения по уровню образования: [comparison-system.md](./comparison-system.md#инварианты-выбора).
 - Полный список API: [api.md](./api.md).
 - Production checklist: [deployment.md](./deployment.md#чек-лист-перед-релизом).

@@ -71,6 +71,7 @@ Local Storage keys:
 
 - `entities/plan/api/plans.ts` загружает список и детали учебных планов;
 - `features/comparison/api/comparison.ts` выполняет A/B-сравнение;
+- `features/year-comparison/api/yearComparison.ts` находит версию плана прошлого года и сравнивает с ней текущий план; хук `useYearComparison` и `YearComparisonSection` выводят раздел на странице плана;
 - `features/admission-survey/api/recommendations.ts` запрашивает рекомендации;
 - `features/auth/api/auth.ts` и `features/profile/api/profile.ts` обслуживают пользовательские сценарии.
 

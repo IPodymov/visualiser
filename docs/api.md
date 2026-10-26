@@ -59,21 +59,58 @@ Development base URL: `http://localhost:4000`. Все прикладные endpo
 | POST  | `/api/curricula/recommendations` | нет      | рекомендации по весам интересов               |
 | GET   | `/api/curricula/:id`             | optional | план с дисциплинами; с JWT фиксирует просмотр |
 | GET   | `/api/curricula/:id/disciplines` | нет      | строки дисциплин плана                        |
+| GET   | `/api/curricula/:id/versions`    | нет      | версии программы по годам набора              |
 | GET   | `/api/curricula/:id/validation`  | нет      | результат проверки плана                      |
 | POST  | `/api/curricula/import-fit`      | JWT      | запустить импорт каталогов из `FIT_DIR`       |
 
 Параметры списка:
 
-| Query            | Тип              | Описание                       |
-| ---------------- | ---------------- | ------------------------------ |
-| `specialityName` | string           | фильтр по названию направления |
-| `specialityCode` | string           | фильтр по коду направления     |
-| `facultyId`      | positive integer | фильтр по факультету           |
-| `admissionYear`  | integer          | год приёма                     |
+| Query            | Тип              | Описание                                        |
+| ---------------- | ---------------- | ----------------------------------------------- |
+| `specialityName` | string           | фильтр по названию направления                  |
+| `specialityCode` | string           | фильтр по коду направления                      |
+| `facultyId`      | positive integer | фильтр по факультету                            |
+| `admissionYear`  | integer          | год приёма; по умолчанию — последний год в базе |
 
 ```bash
 curl "http://localhost:4000/api/curricula?facultyId=1&admissionYear=2025"
 ```
+
+Без `admissionYear` список, рекомендации и `/api/faculties` ограничены последним годом набора в базе (каталожный год). Архивные планы остаются доступны по `/api/curricula/:id`.
+
+`GET /api/curricula/:id/versions` находит планы той же программы в других годах набора: совпадают направление, форма обучения, уровень и нормализованный профиль. Если за год загружено несколько файлов, выбирается файл с большим номером документа, а `candidatesCount` показывает их число.
+
+```json
+{
+  "curriculumId": 88,
+  "admissionYear": 2025,
+  "catalogYear": 2025,
+  "isArchived": false,
+  "previous": {
+    "curriculumId": 103,
+    "admissionYear": 2024,
+    "sourceFileName": "2024-000020661-level-03-veb-tehnologii.xlsx",
+    "candidatesCount": 1
+  },
+  "next": null,
+  "versions": [
+    {
+      "curriculumId": 88,
+      "admissionYear": 2025,
+      "sourceFileName": "2025-000021767-level-03-veb-tehnologii.xlsx",
+      "candidatesCount": 1
+    },
+    {
+      "curriculumId": 103,
+      "admissionYear": 2024,
+      "sourceFileName": "2024-000020661-level-03-veb-tehnologii.xlsx",
+      "candidatesCount": 1
+    }
+  ]
+}
+```
+
+Само сравнение с прошлым годом использует `GET /api/comparison`, где `firstCurriculumId` — текущий план, а `secondCurriculumId` — `previous.curriculumId`.
 
 Frontend-фильтры уровня, формы, профиля и поисковой строки применяются на клиенте после получения списка. Это описано в [filters.md](./filters.md).
 
@@ -135,14 +172,14 @@ curl "http://localhost:4000/api/comparison?firstCurriculumId=99&secondCurriculum
 
 ## Справочники
 
-| Метод | URL                     | Auth | Назначение                                          |
-| ----- | ----------------------- | ---- | --------------------------------------------------- |
-| GET   | `/api/faculties`        | нет  | факультеты; поддерживается optional `admissionYear` |
-| GET   | `/api/specialities`     | нет  | направления подготовки                              |
-| GET   | `/api/specialities/:id` | нет  | направление по ID                                   |
-| GET   | `/api/disciplines`      | нет  | дисциплины                                          |
-| GET   | `/api/disciplines/:id`  | нет  | дисциплина по ID                                    |
-| GET   | `/api/users/:id`        | JWT  | пользователь по ID                                  |
+| Метод | URL                     | Auth | Назначение                                            |
+| ----- | ----------------------- | ---- | ----------------------------------------------------- |
+| GET   | `/api/faculties`        | нет  | факультеты каталожного года; optional `admissionYear` |
+| GET   | `/api/specialities`     | нет  | направления подготовки                                |
+| GET   | `/api/specialities/:id` | нет  | направление по ID                                     |
+| GET   | `/api/disciplines`      | нет  | дисциплины                                            |
+| GET   | `/api/disciplines/:id`  | нет  | дисциплина по ID                                      |
+| GET   | `/api/users/:id`        | JWT  | пользователь по ID                                    |
 
 ## Профиль
 
