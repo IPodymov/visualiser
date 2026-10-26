@@ -17,19 +17,17 @@ const hashFile = async (filePath: string) => {
 
 const facultyNameBySlug: Record<string, string> = {
   fit: 'ФИТ',
-  'фит': 'ФИТ',
+  фит: 'ФИТ',
   feiu: 'ФЭиУ',
-  'фэиу': 'ФЭиУ',
+  фэиу: 'ФЭиУ',
   'fakultet-ekonomiki-i-upravleniya': 'Факультет экономики и управления',
   'fakultet-himicheskoy-tehnologii-i-biotehnologii':
     'Факультет химической технологии и биотехнологии',
   'fakultet-mashinostroeniya': 'Факультет машиностроения',
-  'fakultet-urbanistiki-i-gorodskogo-hozyaystva':
-    'Факультет урбанистики и городского хозяйства',
+  'fakultet-urbanistiki-i-gorodskogo-hozyaystva': 'Факультет урбанистики и городского хозяйства',
   'institut-grafiki-i-iskusstva-knigi-imeni-v-a-favorskogo':
     'Институт графики и искусства книги имени В. А. Фаворского',
-  'institut-izdatelskogo-dela-i-zhurnalistiki':
-    'Институт издательского дела и журналистики',
+  'institut-izdatelskogo-dela-i-zhurnalistiki': 'Институт издательского дела и журналистики',
   'poligraficheskiy-institut': 'Полиграфический институт',
   'transportnyy-fakultet': 'Транспортный факультет',
 };
@@ -182,63 +180,66 @@ export const importFitCurricula = async () => {
         continue;
       }
 
-      const curriculum = await prisma.$transaction(async (tx: PrismaTransactionClient) => {
-        const faculty = await tx.faculty.upsert({
-          where: { slug: facultyInfo.slug },
-          create: facultyInfo,
-          update: { name: facultyInfo.name },
-        });
-
-        const speciality = await tx.speciality.upsert({
-          where: { code: parsed.specialityCode },
-          create: { code: parsed.specialityCode, name: parsed.specialityName },
-          update: { name: parsed.specialityName },
-        });
-
-        const created = await tx.curriculum.create({
-          data: {
-            specialityId: speciality.id,
-            facultyId: faculty.id,
-            admissionYear: parsed.admissionYear,
-            educationLevel: parsed.educationLevel,
-            educationForm: parsed.educationForm,
-            profileName: parsed.profileName,
-            sourceFileName: path.basename(filePath),
-            sourceFilePath: filePath,
-            sourceFileHash,
-          },
-        });
-
-        for (const parsedDiscipline of parsed.disciplines) {
-          const discipline = await tx.discipline.upsert({
-            where: { name: parsedDiscipline.name },
-            create: { name: parsedDiscipline.name },
-            update: {},
+      const curriculum = await prisma.$transaction(
+        async (tx: PrismaTransactionClient) => {
+          const faculty = await tx.faculty.upsert({
+            where: { slug: facultyInfo.slug },
+            create: facultyInfo,
+            update: { name: facultyInfo.name },
           });
 
-          await tx.curriculumDiscipline.create({
+          const speciality = await tx.speciality.upsert({
+            where: { code: parsed.specialityCode },
+            create: { code: parsed.specialityCode, name: parsed.specialityName },
+            update: { name: parsed.specialityName },
+          });
+
+          const created = await tx.curriculum.create({
             data: {
-              curriculumId: created.id,
-              disciplineId: discipline.id,
-              externalDisciplineCode: parsedDiscipline.externalDisciplineCode,
-              semesterNumber: parsedDiscipline.semesterNumber,
-              controlForm: parsedDiscipline.controlForm,
-              blockName: parsedDiscipline.blockName,
-              partName: parsedDiscipline.partName,
-              moduleName: parsedDiscipline.moduleName,
-              recordType: parsedDiscipline.recordType,
-              totalHours: parsedDiscipline.totalHours,
-              credits: parsedDiscipline.credits,
-              lectureHours: parsedDiscipline.lectureHours,
-              practiceHours: parsedDiscipline.practiceHours,
-              labHours: parsedDiscipline.labHours,
-              independentHours: parsedDiscipline.independentHours,
+              specialityId: speciality.id,
+              facultyId: faculty.id,
+              admissionYear: parsed.admissionYear,
+              educationLevel: parsed.educationLevel,
+              educationForm: parsed.educationForm,
+              profileName: parsed.profileName,
+              sourceFileName: path.basename(filePath),
+              sourceFilePath: filePath,
+              sourceFileHash,
             },
           });
-        }
 
-        return created;
-      });
+          for (const parsedDiscipline of parsed.disciplines) {
+            const discipline = await tx.discipline.upsert({
+              where: { name: parsedDiscipline.name },
+              create: { name: parsedDiscipline.name },
+              update: {},
+            });
+
+            await tx.curriculumDiscipline.create({
+              data: {
+                curriculumId: created.id,
+                disciplineId: discipline.id,
+                externalDisciplineCode: parsedDiscipline.externalDisciplineCode,
+                semesterNumber: parsedDiscipline.semesterNumber,
+                controlForm: parsedDiscipline.controlForm,
+                blockName: parsedDiscipline.blockName,
+                partName: parsedDiscipline.partName,
+                moduleName: parsedDiscipline.moduleName,
+                recordType: parsedDiscipline.recordType,
+                totalHours: parsedDiscipline.totalHours,
+                credits: parsedDiscipline.credits,
+                lectureHours: parsedDiscipline.lectureHours,
+                practiceHours: parsedDiscipline.practiceHours,
+                labHours: parsedDiscipline.labHours,
+                independentHours: parsedDiscipline.independentHours,
+              },
+            });
+          }
+
+          return created;
+        },
+        { maxWait: 10_000, timeout: 120_000 },
+      );
 
       result.imported += 1;
       result.items.push({

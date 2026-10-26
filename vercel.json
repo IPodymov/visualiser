@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npx prisma generate --schema apps/backend/prisma/schema.prisma && mkdir -p public && touch public/.keep",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "{FIT/**,apps/backend/prisma/schema.prisma}",
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+}
