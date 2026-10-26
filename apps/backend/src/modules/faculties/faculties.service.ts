@@ -1,12 +1,14 @@
 import { prisma } from '../../config/prisma';
+import { getCatalogYear } from '../curricula/catalog-year';
 
 export class FacultiesService {
-  list(query?: { admissionYear?: number }) {
+  async list(query?: { admissionYear?: number }) {
+    const admissionYear = query?.admissionYear ?? (await getCatalogYear());
     return prisma.faculty.findMany({
       where: {
         curricula: {
           some: {
-            admissionYear: query?.admissionYear,
+            admissionYear,
           },
         },
       },

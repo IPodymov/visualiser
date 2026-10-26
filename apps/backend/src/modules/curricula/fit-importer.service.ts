@@ -59,13 +59,18 @@ export const getFacultyFromFitPath = (filePath: string) => {
 };
 
 const supportedWorkbookExtensions = new Set(['.xlsx', '.xls', '.xlsm']);
+const ignoredWorkbookDirectories = new Set(['old', 'not-importing']);
 
 const findWorkbookFiles = async (dir: string): Promise<string[]> => {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const nested = await Promise.all(
     entries.map(async (entry) => {
       const entryPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) return findWorkbookFiles(entryPath);
+      if (entry.isDirectory()) {
+        return ignoredWorkbookDirectories.has(entry.name.toLowerCase())
+          ? []
+          : findWorkbookFiles(entryPath);
+      }
       if (
         entry.isFile() &&
         supportedWorkbookExtensions.has(path.extname(entry.name).toLowerCase()) &&
@@ -93,6 +98,15 @@ const importAdmissionYear = () => {
   return Number.isInteger(year) ? year : undefined;
 };
 
+// Earlier years are imported as archived versions for the year-over-year comparison.
+const importPreviousYears = () => {
+  const value = process.env.FIT_IMPORT_PREVIOUS_YEARS?.trim();
+  if (!value) return 1;
+
+  const years = Number(value);
+  return Number.isInteger(years) && years >= 0 ? years : 1;
+};
+
 type PrismaTransactionClient = Omit<
   PrismaClient,
   '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
@@ -115,10 +129,14 @@ export const importFitCurricula = async () => {
     .flat()
     .sort((left, right) => left.localeCompare(right));
   const targetAdmissionYear = importAdmissionYear();
+  const earliestAdmissionYear = targetAdmissionYear
+    ? targetAdmissionYear - importPreviousYears()
+    : undefined;
   const result = {
     directory: directories.join(', '),
     directories,
     targetAdmissionYear,
+    earliestAdmissionYear,
     totalFiles: files.length,
     imported: 0,
     skipped: 0,
@@ -137,12 +155,18 @@ export const importFitCurricula = async () => {
     try {
       const facultyInfo = getFacultyFromFitPath(filePath);
       const parsed = parseCurriculumWorkbook(filePath);
-      if (targetAdmissionYear && parsed.admissionYear !== targetAdmissionYear) {
+      if (
+        targetAdmissionYear &&
+        earliestAdmissionYear !== undefined &&
+        (!parsed.admissionYear ||
+          parsed.admissionYear > targetAdmissionYear ||
+          parsed.admissionYear < earliestAdmissionYear)
+      ) {
         result.ignored += 1;
         result.items.push({
           file: filePath,
           status: 'ignored',
-          reason: `Admission year ${parsed.admissionYear ?? 'unknown'} does not match ${targetAdmissionYear}`,
+          reason: `Admission year ${parsed.admissionYear ?? 'unknown'} is outside ${earliestAdmissionYear}–${targetAdmissionYear}`,
         });
         continue;
       }

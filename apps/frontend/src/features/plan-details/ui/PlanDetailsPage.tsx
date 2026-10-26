@@ -26,6 +26,8 @@ import type { EducationPlan } from '@entities/plan/model/types';
 import { SemesterAccordion } from '@entities/plan/ui/SemesterAccordion/SemesterAccordion';
 import { areEducationLevelsCompatible } from '@features/comparison/lib/compareEligibility';
 import { useWorkspaceStore } from '@features/workspace/model/useWorkspaceStore';
+import { useYearComparison } from '@features/year-comparison/model/useYearComparison';
+import { YearComparisonSection } from '@features/year-comparison/ui/YearComparisonSection/YearComparisonSection';
 import { Breadcrumbs } from '@shared/ui/Breadcrumbs/Breadcrumbs';
 import { ChartCard } from '@shared/ui/ChartCard/ChartCard';
 import { EmptyState } from '@shared/ui/EmptyState/EmptyState';
@@ -67,6 +69,7 @@ export const PlanDetailsPage = () => {
   const compareIds = useWorkspaceStore((state) => state.compareIds);
   const compareLevels = useWorkspaceStore((state) => state.compareLevels);
   const addToHistory = useWorkspaceStore((state) => state.addToHistory);
+  const yearComparison = useYearComparison(plan?.id ?? null);
 
   const load = useCallback(async () => {
     const planId = Number(id);
@@ -188,6 +191,11 @@ export const PlanDetailsPage = () => {
     <main className="page-main plan-details-page">
       <div className="container page-stack plan-details">
         <PageHeader
+          eyebrow={
+            yearComparison.data?.versions.isArchived
+              ? `Архивный план · набор ${plan.year}`
+              : undefined
+          }
           title={plan.title}
           description="Изучите ключевые параметры, распределение нагрузки и дисциплины по семестрам."
           breadcrumbs={
@@ -426,6 +434,8 @@ export const PlanDetailsPage = () => {
             </div>
           )}
         </PageSection>
+
+        <YearComparisonSection plan={plan} state={yearComparison} />
 
         <PageSection className="plan-disciplines" labelledBy="plan-disciplines">
           <SectionHeader

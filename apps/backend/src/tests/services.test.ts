@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   importFitCurricula: vi.fn(async () => ({ imported: 1 })),
   prisma: {
     user: { findUnique: vi.fn(), create: vi.fn() },
-    curriculum: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    curriculum: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), aggregate: vi.fn() },
     curriculumDiscipline: { findMany: vi.fn() },
     discipline: { findMany: vi.fn(), findUnique: vi.fn() },
     faculty: { findMany: vi.fn(), upsert: vi.fn() },
@@ -55,6 +55,7 @@ const publicUser = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.prisma.curriculum.aggregate.mockResolvedValue({ _max: { admissionYear: 2025 } });
 });
 
 describe('authentication service', () => {
@@ -131,11 +132,16 @@ describe('catalog domain services', () => {
 
     await service.list();
     expect(mocks.prisma.faculty.findMany).toHaveBeenLastCalledWith(
-      expect.objectContaining({ where: { curricula: { some: { admissionYear: undefined } } } }),
-    );
-    await service.list({ admissionYear: 2025 });
-    expect(mocks.prisma.faculty.findMany).toHaveBeenLastCalledWith(
       expect.objectContaining({ where: { curricula: { some: { admissionYear: 2025 } } } }),
+    );
+    await service.list({ admissionYear: 2024 });
+    expect(mocks.prisma.faculty.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { curricula: { some: { admissionYear: 2024 } } } }),
+    );
+    mocks.prisma.curriculum.aggregate.mockResolvedValueOnce({ _max: { admissionYear: null } });
+    await service.list();
+    expect(mocks.prisma.faculty.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { curricula: { some: { admissionYear: undefined } } } }),
     );
   });
 
@@ -309,9 +315,66 @@ describe('curricula service', () => {
     await service.list({});
     expect(mocks.prisma.curriculum.findMany).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ speciality: { code: undefined, name: undefined } }),
+        where: expect.objectContaining({
+          admissionYear: 2025,
+          speciality: { code: undefined, name: undefined },
+        }),
       }),
     );
+  });
+
+  it('finds admission-year versions of the same program', async () => {
+    mocks.prisma.curriculum.findUnique.mockResolvedValueOnce({
+      id: 10,
+      specialityId: 1,
+      admissionYear: 2025,
+      educationForm: 'Очная',
+      educationLevel: 'Бакалавриат',
+      profileName: 'Веб-технологии',
+    });
+    mocks.prisma.curriculum.findMany.mockResolvedValueOnce([
+      { id: 10, admissionYear: 2025, profileName: 'Веб-технологии', sourceFileName: '2025-1.xlsx' },
+      { id: 7, admissionYear: 2024, profileName: ' веб-технологии ', sourceFileName: '2024-1.xlsx' },
+      { id: 8, admissionYear: 2024, profileName: 'Веб-технологии', sourceFileName: '2024-2.xlsx' },
+      { id: 9, admissionYear: 2024, profileName: 'Другой профиль', sourceFileName: '2024-3.xlsx' },
+    ]);
+
+    const result = await service.getVersions(10);
+
+    expect(mocks.prisma.curriculum.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ specialityId: 1, educationForm: 'Очная' }),
+      }),
+    );
+    expect(result).toMatchObject({
+      curriculumId: 10,
+      catalogYear: 2025,
+      isArchived: false,
+      previous: { curriculumId: 8, admissionYear: 2024, candidatesCount: 2 },
+      next: null,
+    });
+    expect(result.versions.map((version) => version.admissionYear)).toEqual([2025, 2024]);
+
+    mocks.prisma.curriculum.findUnique.mockResolvedValueOnce({
+      id: 8,
+      specialityId: 1,
+      admissionYear: 2024,
+      educationForm: 'Очная',
+      educationLevel: 'Бакалавриат',
+      profileName: 'Веб-технологии',
+    });
+    mocks.prisma.curriculum.findMany.mockResolvedValueOnce([
+      { id: 10, admissionYear: 2025, profileName: 'Веб-технологии', sourceFileName: '2025-1.xlsx' },
+      { id: 8, admissionYear: 2024, profileName: 'Веб-технологии', sourceFileName: '2024-2.xlsx' },
+    ]);
+    await expect(service.getVersions(8)).resolves.toMatchObject({
+      isArchived: true,
+      previous: null,
+      next: { curriculumId: 10, admissionYear: 2025 },
+    });
+
+    mocks.prisma.curriculum.findUnique.mockResolvedValueOnce(null);
+    await expect(service.getVersions(404)).rejects.toMatchObject({ statusCode: 404 });
   });
 
   it('maps a curriculum into semesters, classifications and source-backed chart data', async () => {

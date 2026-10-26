@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma';
 import { AppError } from '../../shared/app-error';
+import { getCatalogYear } from './catalog-year';
 import { importFitCurricula } from './fit-importer.service';
 import type { CurriculumRecommendationRequest, ListCurriculaQuery } from './curricula.dto';
 import { curriculumValidatorService } from './curriculum-validator.service';
@@ -49,8 +50,9 @@ type VisualizationClassification = VisualizationDiscipline['discipline']['classi
 const decimalToNumber = (value: VisualizationDiscipline['credits']) =>
   value === null ? 0 : Number(value);
 
-const loadRecommendationCurricula = () =>
+const loadRecommendationCurricula = (admissionYear?: number) =>
   prisma.curriculum.findMany({
+    where: { admissionYear },
     include: curriculumInclude,
     orderBy: [{ admissionYear: 'desc' }, { uploadedAt: 'desc' }],
   });
@@ -92,6 +94,11 @@ const addToBucket = (bucket: ChartBucket, item: VisualizationDiscipline) => {
 };
 
 const normalize = (value: string) => value.toLowerCase().replace(/ё/g, 'е');
+
+const normalizeProfile = (value: string | null) =>
+  normalize(value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ');
 
 const inferEducationLevel = (curriculum: RecommendationCurriculum) => {
   const explicitLevel = curriculum.educationLevel?.trim();
@@ -171,7 +178,7 @@ const getDisciplineSearchText = (item: RecommendationCurriculum['disciplines'][n
 export class CurriculaService {
   async list(query: ListCurriculaQuery) {
     const where: CurriculumWhere = {
-      admissionYear: query.admissionYear,
+      admissionYear: query.admissionYear ?? (await getCatalogYear()),
       facultyId: query.facultyId,
       speciality: {
         code: query.specialityCode
@@ -237,7 +244,7 @@ export class CurriculaService {
   }
 
   async recommend(request: CurriculumRecommendationRequest) {
-    const curricula = await loadRecommendationCurricula();
+    const curricula = await loadRecommendationCurricula(await getCatalogYear());
     const topCategories = getTopCategories(request.weights);
     const strictMatchedCurricula = curricula.filter(
       (curriculum) =>
@@ -382,6 +389,68 @@ export class CurriculaService {
       curriculumId: id,
       sourceFileName: curriculum.sourceFileName,
       validation: curriculumValidatorService.validateStored(curriculum),
+    };
+  }
+
+  async getVersions(id: number) {
+    const curriculum = await prisma.curriculum.findUnique({ where: { id } });
+
+    if (!curriculum) {
+      throw new AppError(404, 'Curriculum not found');
+    }
+
+    const [catalogYear, candidates] = await Promise.all([
+      getCatalogYear(),
+      prisma.curriculum.findMany({
+        where: {
+          specialityId: curriculum.specialityId,
+          educationForm: curriculum.educationForm,
+          educationLevel: curriculum.educationLevel,
+          admissionYear: { not: null },
+        },
+        select: { id: true, admissionYear: true, profileName: true, sourceFileName: true },
+      }),
+    ]);
+
+    const profileKey = normalizeProfile(curriculum.profileName);
+    const sameProgram = candidates.filter(
+      (candidate) => normalizeProfile(candidate.profileName) === profileKey,
+    );
+    const byYear = new Map<number, typeof sameProgram>();
+    for (const candidate of sameProgram) {
+      const year = candidate.admissionYear!;
+      byYear.set(year, [...(byYear.get(year) ?? []), candidate]);
+    }
+
+    // A year can hold several revisions of one plan; the latest document number wins.
+    const versions = [...byYear.entries()]
+      .sort(([left], [right]) => right - left)
+      .map(([admissionYear, items]) => {
+        const selected =
+          items.find((item) => item.id === curriculum.id) ??
+          [...items].sort((left, right) =>
+            left.sourceFileName < right.sourceFileName ? 1 : -1,
+          )[0];
+        return {
+          curriculumId: selected.id,
+          admissionYear,
+          sourceFileName: selected.sourceFileName,
+          candidatesCount: items.length,
+        };
+      });
+
+    const findYear = (year: number | null) =>
+      year === null ? null : (versions.find((version) => version.admissionYear === year) ?? null);
+    const admissionYear = curriculum.admissionYear;
+
+    return {
+      curriculumId: curriculum.id,
+      admissionYear,
+      catalogYear: catalogYear ?? null,
+      isArchived: Boolean(admissionYear && catalogYear && admissionYear < catalogYear),
+      previous: findYear(admissionYear === null ? null : admissionYear - 1),
+      next: findYear(admissionYear === null ? null : admissionYear + 1),
+      versions,
     };
   }
 

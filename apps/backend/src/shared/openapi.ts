@@ -24,6 +24,9 @@ export const openApiDocument = {
     '/curricula/{id}/disciplines': {
       get: { summary: 'Get curriculum disciplines', tags: ['Curricula'] },
     },
+    '/curricula/{id}/versions': {
+      get: { summary: 'List admission-year versions of the same program', tags: ['Curricula'] },
+    },
     '/curricula/{id}/validation': {
       get: { summary: 'Validate imported curriculum structure and data', tags: ['Curricula'] },
     },

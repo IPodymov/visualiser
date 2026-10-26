@@ -19,6 +19,10 @@ export const curriculaController = {
     res.json(await curriculaService.recommend(req.body));
   }),
 
+  getVersions: asyncHandler(async (req: Request, res: Response) => {
+    res.json(await curriculaService.getVersions(Number(req.params.id)));
+  }),
+
   validate: asyncHandler(async (req: Request, res: Response) => {
     res.json(await curriculaService.validate(Number(req.params.id)));
   }),

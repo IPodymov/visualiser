@@ -19,5 +19,6 @@ curriculaRoutes.get(
   validate(curriculumIdSchema),
   curriculaController.getDisciplines,
 );
+curriculaRoutes.get('/:id/versions', validate(curriculumIdSchema), curriculaController.getVersions);
 curriculaRoutes.get('/:id/validation', validate(curriculumIdSchema), curriculaController.validate);
 curriculaRoutes.post('/import-fit', authMiddleware, curriculaController.importFit);

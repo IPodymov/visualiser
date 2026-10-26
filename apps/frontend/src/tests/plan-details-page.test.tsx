@@ -13,6 +13,22 @@ import { plan } from './fixtures';
 vi.mock('@entities/plan/api/plans', () => ({
   plansApi: { list: vi.fn(), get: vi.fn(), getById: vi.fn(), compare: vi.fn() },
 }));
+vi.mock('@features/year-comparison/api/yearComparison', () => ({
+  yearComparisonApi: {
+    load: vi.fn(async () => ({
+      versions: {
+        curriculumId: 1,
+        admissionYear: 2025,
+        catalogYear: 2025,
+        isArchived: false,
+        previous: null,
+        next: null,
+        versions: [],
+      },
+      comparison: null,
+    })),
+  },
+}));
 vi.mock('@features/profile/api/profile', () => ({
   profileApi: {
     addFavorite: vi.fn(),

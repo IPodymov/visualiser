@@ -62,6 +62,7 @@ const envSchema = z.object({
   JWT_AUDIENCE: z.string().default('eduplan-web'),
   FIT_DIR: z.string().default('../../FIT'),
   FIT_IMPORT_ADMISSION_YEAR: z.string().optional(),
+  FIT_IMPORT_PREVIOUS_YEARS: z.string().optional(),
   FRONTEND_URL: isProduction
     ? productionUrl('FRONTEND_URL')
     : z.string().default('http://localhost:5173'),

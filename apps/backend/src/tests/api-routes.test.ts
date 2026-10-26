@@ -65,6 +65,7 @@ describe('API user journeys', () => {
     const getById = vi.spyOn(curriculaService, 'getById').mockResolvedValue({ id: 1 } as never);
     vi.spyOn(curriculaService, 'getDisciplines').mockResolvedValue([{ id: 10 }] as never);
     vi.spyOn(curriculaService, 'validate').mockResolvedValue({ curriculumId: 1 } as never);
+    vi.spyOn(curriculaService, 'getVersions').mockResolvedValue({ curriculumId: 1 } as never);
     vi.spyOn(curriculaService, 'importFit').mockResolvedValue({ imported: 1 } as never);
     const app = createApp();
 
@@ -91,6 +92,7 @@ describe('API user journeys', () => {
       .expect(200, { id: 1 });
     await request(app).get('/api/curricula/1/disciplines').expect(200, [{ id: 10 }]);
     await request(app).get('/api/curricula/1/validation').expect(200, { curriculumId: 1 });
+    await request(app).get('/api/curricula/1/versions').expect(200, { curriculumId: 1 });
     await request(app)
       .post('/api/curricula/import-fit')
       .set('Authorization', bearer())

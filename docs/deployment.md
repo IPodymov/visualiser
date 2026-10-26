@@ -59,6 +59,7 @@ PORT=4000
 ENABLE_API_DOCS=false
 FIT_DIR=/app/FIT
 FIT_IMPORT_ADMISSION_YEAR=2025
+FIT_IMPORT_PREVIOUS_YEARS=1
 ```
 
 Origins разделяются запятыми без path. В production разрешены только валидные HTTPS origins; `*` и localhost отклоняются. Wildcard допускается только в позиции одного поддомена.

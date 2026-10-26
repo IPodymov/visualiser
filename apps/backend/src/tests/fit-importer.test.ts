@@ -154,7 +154,7 @@ describe('FIT importer', () => {
 
     mocks.parse.mockImplementation((filePath: string) => {
       const name = path.basename(filePath);
-      if (name === 'a-ignored.xlsx') return validParsed(2024);
+      if (name === 'a-ignored.xlsx') return validParsed(2023);
       if (name === 'aa-ignored-unknown.xlsx') return { ...validParsed(), admissionYear: undefined };
       if (name === 'f-error.xlsx') throw new Error('Parser failed');
       if (name === 'g-unknown-error.xlsx') throw 'unknown failure';
@@ -191,7 +191,7 @@ describe('FIT importer', () => {
       'failed',
       'failed',
     ]);
-    expect(result.items[0].reason).toContain('does not match 2025');
+    expect(result.items[0].reason).toContain('2023 is outside 2024–2025');
     expect(result.items[1].reason).toContain('Admission year unknown');
     expect(result.items[6].reason).toBe('Parser failed');
     expect(result.items[7].reason).toBe('Unknown error');
@@ -213,6 +213,29 @@ describe('FIT importer', () => {
         independentHours: 72,
       }),
     });
+  });
+
+  it('imports the previous admission year as an archive and skips retired folders', async () => {
+    const directory = path.join(root, '2024', 'fit');
+    fs.mkdirSync(path.join(directory, 'old'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'archive.xlsx'), 'archive');
+    fs.writeFileSync(path.join(directory, 'old', 'retired.xlsx'), 'retired');
+    process.env.FIT_IMPORT_ADMISSION_YEAR = '2025';
+    mocks.parse.mockReturnValue(validParsed(2024));
+
+    const result = await importFitCurricula();
+
+    expect(result).toMatchObject({
+      totalFiles: 1,
+      imported: 1,
+      targetAdmissionYear: 2025,
+      earliestAdmissionYear: 2024,
+    });
+
+    process.env.FIT_IMPORT_PREVIOUS_YEARS = '0';
+    const currentOnly = await importFitCurricula();
+    delete process.env.FIT_IMPORT_PREVIOUS_YEARS;
+    expect(currentOnly).toMatchObject({ ignored: 1, earliestAdmissionYear: 2025 });
   });
 
   it('propagates unexpected directory read errors', async () => {
